@@ -61,7 +61,12 @@ export default function AssessmentSheet({
 
   async function deleteCurrent() {
     if (!active || !isSuper) return;
-    await supabase.from("assessments").delete().eq("id", active.id);
+    // Option A: Delete across all subjects for this class, session, semester, and label
+    await supabase.from("assessments").delete()
+      .eq("class_name", cls)
+      .eq("label", active.label)
+      .eq("session_label", CONFIG.sessionLabel)
+      .eq("semester", 1);
     setConfirmDelete(false);
     await load();
   }
@@ -182,7 +187,7 @@ export default function AssessmentSheet({
       <Modal
         open={confirmDelete}
         title="Delete this assessment?"
-        message={active ? `${active.label} for ${cls} — ${subject} will be removed, along with ${sorted.length} marks.` : ""}
+        message={active ? `Delete "${active.label}"? This will permanently remove it from ALL subjects for ${cls}, along with any marks recorded.` : ""}
         confirmLabel="Delete"
         tone="danger"
         onConfirm={deleteCurrent}
