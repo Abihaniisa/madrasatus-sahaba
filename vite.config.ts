@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "robots.txt"],
       manifest: {
-        name: "Madrasatus Sahaba Li Tahfizul Qur'an",
-        short_name: "Madrasatus Sahaba",
+        name: "Madrasa",,
+        short_name: "Madrasa",,
         description: "School portal for Madrasatus Sahaba Li Tahfizul Qur'an.",
         theme_color: "#1E4830",
         background_color: "#FAF9F6",
