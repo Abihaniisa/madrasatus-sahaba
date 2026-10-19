@@ -23,86 +23,83 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
       <style>{`
         .cert-print-page{
           width:281mm; height:194mm; margin:0 auto; background:#fffdf7;
-          border:1.2mm double #b8923a; padding:4mm 6mm; box-sizing:border-box;
+          border:1.2mm double #b8923a; padding:4mm 6mm; display:flex;
+          flex-direction:column; gap:2.5mm; overflow:hidden;
           font-family: Georgia, "Times New Roman", serif; color:#1c2420;
           -webkit-print-color-adjust:exact; print-color-adjust:exact;
         }
-        .cert-print-page header{ display:flex; align-items:center; justify-content:center; gap:6mm; border-bottom:0.5mm solid #1f5a3a; padding-bottom:2mm; margin-bottom:3mm; }
+        .cert-print-page header{ display:flex; align-items:center; justify-content:center; gap:6mm; border-bottom:0.5mm solid #1f5a3a; padding-bottom:2mm; }
         .cert-print-page header img{ width:22mm; height:22mm; object-fit:contain; flex:none; }
         .cert-print-page .titles{ text-align:center; }
         .cert-print-page .school{ font-size:19pt; font-weight:bold; color:#143d27; letter-spacing:0.3pt; line-height:1.15; }
         .cert-print-page .doc{ font-size:12.5pt; color:#b8923a; letter-spacing:3pt; text-transform:uppercase; margin-top:1mm; font-weight:bold; }
         .cert-print-page .sess{ font-size:9pt; color:#555; margin-top:0.8mm; }
-        
-        .cert-print-page .info{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.2mm 5mm; background:#eef3ee; border:0.3mm solid #c9d6c9; padding:2mm 4mm; margin-bottom:3mm; }
+        .cert-print-page .info{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.2mm 5mm; background:#eef3ee; border:0.3mm solid #c9d6c9; padding:2mm 4mm; }
         .cert-print-page .info div{ font-size:9pt; display:flex; gap:2mm; align-items:baseline; }
         .cert-print-page .info span{ color:#5a6a5f; text-transform:uppercase; font-size:7pt; letter-spacing:0.6pt; white-space:nowrap; }
         .cert-print-page .info b{ font-size:10pt; }
         
-        .cert-print-page table{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; margin-bottom:3mm; }
+        .cert-print-page table{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; }
         .cert-print-page th, .cert-print-page td{ border:0.25mm solid #9fb3a5; text-align:center; font-size:11pt; padding:0; overflow:hidden; }
         .cert-print-page thead th{ background:#1f5a3a; color:#fff; height:9mm; font-weight:bold; line-height:1.15; }
         .cert-print-page thead th.sub2{ background:#143d27; }
         .cert-print-page thead tr.top th{ height:7mm; font-size:10pt; letter-spacing:0.5pt; }
         .cert-print-page thead tr.wk th{ height:7mm; font-size:9pt; }
         
-        .cert-print-page tbody td{ height:11mm; }
+        .cert-print-page tbody td{ height:12mm; }
         .cert-print-page tbody tr:nth-child(even) td{ background:#f6f9f6; }
         .cert-print-page td.subj{ text-align:left; padding-left:4mm; font-weight:bold; font-size:12.5pt; font-family:Georgia,serif; }
         .cert-print-page td.fin{ font-weight:bold; font-size:13pt; background:#fbf3df !important; }
         .cert-print-page td.grade{ font-weight:bold; font-size:15pt; color:#143d27; }
         .cert-print-page td.remark{ font-size:10.5pt; }
         
-        .cert-print-page .bottom{ display:grid; grid-template-columns:1.05fr 1fr; gap:4mm; margin-bottom:3mm; }
+        .cert-print-page .bottom{ display:grid; grid-template-columns:1.05fr 1fr; gap:4mm; }
         .cert-print-page .summary{ border:0.4mm solid #1f5a3a; display:grid; grid-template-columns:repeat(3,1fr); }
         .cert-print-page .summary div{ padding:2mm 3mm; text-align:center; border-right:0.25mm solid #b9c9bd; display:flex; flex-direction:column; justify-content:center; }
         .cert-print-page .summary div:last-child{ border-right:none; }
-        .cert-print-page .summary small{ font-family:Arial,sans-serif; font-size:7pt; text-transform:uppercase; letter-spacing:0.7pt; color:#5a6a5f; display:block; }
-        .cert-print-page .summary strong{ font-size:19pt; color:#143d27; line-height:1.25; display:block; }
-        .cert-print-page .summary em{ font-style:normal; font-size:8.5pt; color:#b8923a; font-weight:bold; display:block; }
-        
+        .cert-print-page .summary small{ font-family:Arial,sans-serif; font-size:7pt; text-transform:uppercase; letter-spacing:0.7pt; color:#5a6a5f; }
+        .cert-print-page .summary strong{ font-size:19pt; color:#143d27; line-height:1.25; }
+        .cert-print-page .summary em{ font-style:normal; font-size:8.5pt; color:#b8923a; font-weight:bold; }
         .cert-print-page .side{ display:flex; flex-direction:column; gap:2mm; }
         .cert-print-page .key{ font-family:Arial,sans-serif; font-size:7.5pt; border:0.25mm solid #c9d6c9; padding:1.8mm 3mm; background:#eef3ee; line-height:1.5; }
         .cert-print-page .key b{ color:#143d27; }
         .cert-print-page .formula{ font-family:Arial,sans-serif; font-size:7.2pt; color:#555; line-height:1.4; }
-        
-        .cert-print-page .sigs{ display:flex; justify-content:space-around; align-items:flex-end; padding:0 12mm; height:15mm; }
+        .cert-print-page .sigs{ display:flex; justify-content:space-around; align-items:flex-end; margin-top:auto; padding:0 12mm; height:15mm; }
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* CRITICAL PRINT FIX: Force block layout, remove flex/grid, force black text */
+        /* CRITICAL PRINT FIX: Remove flexbox so the table doesn't collapse */
         @media print {
           .cert-print-page {
-            display: block !important;
-            width: 100% !important;
+            display: block !important; /* This stops Chrome from destroying the table headers */
             height: auto !important;
-            margin: 0 !important;
-            padding: 10mm !important;
-            border: 1mm solid #000 !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            padding: 4mm 6mm !important;
           }
-          .cert-print-page * {
-            color: #000 !important;
-            background: transparent !important;
-          }
-          .cert-print-page table { display: table !important; width: 100% !important; margin-bottom: 5mm !important; }
+          .cert-print-page header { margin-bottom: 4mm; }
+          .cert-print-page .info { margin-bottom: 4mm; }
+          .cert-print-page table { margin-bottom: 4mm; }
+          .cert-print-page .bottom { margin-bottom: 10mm; }
+          
+          .cert-print-page table { table-layout: fixed !important; width: 100% !important; }
           .cert-print-page thead { display: table-header-group !important; }
           .cert-print-page tbody { display: table-row-group !important; }
-          .cert-print-page tr { display: table-row !important; page-break-inside: avoid !important; }
-          .cert-print-page th, .cert-print-page td { display: table-cell !important; border: 1px solid #000 !important; padding: 4px !important; }
+          .cert-print-page tr { page-break-inside: avoid !important; }
           
-          .cert-print-page .info { display: block !important; border: 1px solid #000 !important; padding: 2mm !important; margin-bottom: 5mm !important; }
-          .cert-print-page .info div { display: block !important; margin-bottom: 1mm !important; }
-          
-          .cert-print-page .bottom { display: block !important; margin-bottom: 5mm !important; }
-          .cert-print-page .summary { display: block !important; border: 1px solid #000 !important; margin-bottom: 3mm !important; padding: 2mm !important; }
-          .cert-print-page .summary div { display: block !important; border: none !important; border-bottom: 1px solid #000 !important; padding: 2mm 0 !important; text-align: left !important; }
-          .cert-print-page .summary div:last-child { border-bottom: none !important; }
-          .cert-print-page .summary small, .cert-print-page .summary strong, .cert-print-page .summary em { display: inline !important; margin-right: 4mm !important; }
-          
-          .cert-print-page .sigs { display: flex !important; justify-content: space-between !important; padding: 0 !important; }
-          .cert-print-page .sig { border-top: 1px solid #000 !important; }
-          
-          .cert-print-page thead th { background: #e0e0e0 !important; color: #000 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          /* Force colors to print */
+          .cert-print-page th, .cert-print-page td {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            overflow: visible !important;
+            background: #fff !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+          }
+          .cert-print-page thead th { background: #1f5a3a !important; color: #fff !important; }
+          .cert-print-page thead th.sub2 { background: #143d27 !important; }
         }
       `}</style>
 
