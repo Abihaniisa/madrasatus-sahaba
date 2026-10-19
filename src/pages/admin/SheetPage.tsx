@@ -22,7 +22,7 @@ export default function SheetPage() {
 
   const students = [...data.students.filter(s => s.class_name === cls)].sort((a, b) => a.name.localeCompare(b.name));
   const assessments = data.assessments
-    .filter(a => a.class_name === cls && a.subject === subject && a.session_label === CONFIG.sessionLabel && a.semester === 1)
+    .filter(a => a.class_name === cls && a.subject === subject && a.session_label === CONFIG.sessionLabel && a.semester === CONFIG.currentSemester)
     .sort((a, b) => {
       const na = parseInt(a.label.match(/(\d+)/)?.[1] ?? "0", 10);
       const nb = parseInt(b.label.match(/(\d+)/)?.[1] ?? "0", 10);

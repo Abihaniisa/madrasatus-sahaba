@@ -56,10 +56,10 @@ export function buildReport(
   assessments: Assessment[],
   marks: Mark[],
   exams: Exam[],
-  semester = 1
+  semester = CONFIG.currentSemester
 ): FullReport {
-  const classAssess = assessments.filter(a => a.class_name === student.class_name && a.semester === semester);
-  const studentExams = exams.filter(e => e.student_id === student.id && e.semester === semester);
+  const classAssess = assessments.filter(a => a.class_name === student.class_name && a.semester === semester && a.session_label === CONFIG.sessionLabel);
+  const studentExams = exams.filter(e => e.student_id === student.id && e.semester === semester && e.session_label === CONFIG.sessionLabel);
   const results = CONFIG.subjects.map(subject => {
     const marksByAssess: Record<string, number | null> = {};
     for (const a of classAssess.filter(x => x.subject === subject)) {

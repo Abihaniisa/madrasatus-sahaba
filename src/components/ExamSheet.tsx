@@ -27,7 +27,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
       .eq("class_name", cls)
       .eq("subject", subject)
       .eq("session_label", CONFIG.sessionLabel)
-      .eq("semester", 1);
+      .eq("semester", CONFIG.currentSemester);
     const map: Record<string, number | null> = {};
     for (const e of (data ?? []) as any[]) map[e.student_id] = e.value;
     setMarks(map);
@@ -74,7 +74,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
       .in("student_id", ids)
       .eq("subject", subject)
       .eq("session_label", CONFIG.sessionLabel)
-      .eq("semester", 1);
+      .eq("semester", CONFIG.currentSemester);
     await load();
   }
 

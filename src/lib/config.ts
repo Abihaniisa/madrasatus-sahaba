@@ -18,6 +18,7 @@ export const CONFIG = {
   registrationFee: 5000,
   sessionLabel: "2026/2027",
   semesterLabel: "Semester 1",
+  currentSemester: 1,
   studentLoginEnabled: true,
   builder: {
     name: "Abihani Isa",

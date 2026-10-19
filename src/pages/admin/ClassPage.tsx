@@ -45,7 +45,7 @@ export default function ClassPage() {
   async function createAssessment() {
     setBusy(true);
     const existing = (data?.assessments ?? []).filter(
-      a => a.class_name === cls && a.semester === 1 && a.session_label === CONFIG.sessionLabel
+      a => a.class_name === cls && a.semester === CONFIG.currentSemester && a.session_label === CONFIG.sessionLabel
     );
     const numbers = new Set(existing.map(a => {
       const m = a.label.match(/^Assessment\s+(\d+)$/i);

@@ -60,46 +60,48 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .summary small{ font-family:Arial,sans-serif; font-size:7pt; text-transform:uppercase; letter-spacing:0.7pt; color:#5a6a5f; }
         .cert-print-page .summary strong{ font-size:19pt; color:#143d27; line-height:1.25; }
         .cert-print-page .summary em{ font-style:normal; font-size:8.5pt; color:#b8923a; font-weight:bold; }
+        
         .cert-print-page .side{ display:flex; flex-direction:column; gap:2mm; }
         .cert-print-page .key{ font-family:Arial,sans-serif; font-size:7.5pt; border:0.25mm solid #c9d6c9; padding:1.8mm 3mm; background:#eef3ee; line-height:1.5; }
         .cert-print-page .key b{ color:#143d27; }
         .cert-print-page .formula{ font-family:Arial,sans-serif; font-size:7.2pt; color:#555; line-height:1.4; }
+        
         .cert-print-page .sigs{ display:flex; justify-content:space-around; align-items:flex-end; margin-top:auto; padding:0 12mm; height:15mm; }
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* CRITICAL PRINT FIX: Remove flexbox so the table doesn't collapse */
+        /* CLAUDE'S PRINT FIX */
         @media print {
           .cert-print-page {
-            display: block !important; /* This stops Chrome from destroying the table headers */
+            display: block !important; /* Removes flex so table works */
+            width: 100% !important;
             height: auto !important;
-            overflow: visible !important;
-            margin: 0 auto !important;
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
+            margin: 0 !important;
             padding: 4mm 6mm !important;
-          }
-          .cert-print-page header { margin-bottom: 4mm; }
-          .cert-print-page .info { margin-bottom: 4mm; }
-          .cert-print-page table { margin-bottom: 4mm; }
-          .cert-print-page .bottom { margin-bottom: 10mm; }
-          
-          .cert-print-page table { table-layout: fixed !important; width: 100% !important; }
-          .cert-print-page thead { display: table-header-group !important; }
-          .cert-print-page tbody { display: table-row-group !important; }
-          .cert-print-page tr { page-break-inside: avoid !important; }
-          
-          /* Force colors to print */
-          .cert-print-page th, .cert-print-page td {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            overflow: visible !important;
-            background: #fff !important;
-            color: #000 !important;
-            border: 1px solid #000 !important;
           }
-          .cert-print-page thead th { background: #1f5a3a !important; color: #fff !important; }
-          .cert-print-page thead th.sub2 { background: #143d27 !important; }
+          .cert-print-page table { 
+            display: table !important; 
+            width: 100% !important; 
+            table-layout: fixed !important; 
+            border-collapse: collapse !important; 
+          }
+          .cert-print-page thead { display: table-header-group !important; position: static !important; }
+          .cert-print-page tbody { display: table-row-group !important; }
+          .cert-print-page tr { display: table-row !important; break-inside: avoid !important; }
+          .cert-print-page th, .cert-print-page td { display: table-cell !important; }
+          
+          .cert-print-page th {
+            position: static !important;
+            background: #1f5a3a !important;
+            color: #fff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .cert-print-page thead th.sub2 {
+            background: #143d27 !important;
+          }
         }
       `}</style>
 

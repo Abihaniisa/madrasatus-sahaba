@@ -1,3 +1,4 @@
+import { CONFIG } from "../../lib/config";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
@@ -45,7 +46,7 @@ export default function ReportPage() {
           </div>
 
           <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
-            <button className="btn btn-primary" onClick={print}>{I.print} Print Semester Report</button>
+            <button className="btn btn-primary" onClick={print}>{I.print} Print {CONFIG.currentSemester === 1 ? "First" : "Second"} Semester Report</button>
           </div>
 
           <div className="cert-print-wrapper">

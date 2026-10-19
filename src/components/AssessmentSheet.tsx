@@ -29,7 +29,7 @@ export default function AssessmentSheet({
       .eq("class_name", cls)
       .eq("subject", subject)
       .eq("session_label", CONFIG.sessionLabel)
-      .eq("semester", 1)
+      .eq("semester", CONFIG.currentSemester)
       .order("created_at");
     const list = (data as Assessment[]) ?? [];
     setAssessments(list);
@@ -66,7 +66,7 @@ export default function AssessmentSheet({
       .eq("class_name", cls)
       .eq("label", active.label)
       .eq("session_label", CONFIG.sessionLabel)
-      .eq("semester", 1);
+      .eq("semester", CONFIG.currentSemester);
     setConfirmDelete(false);
     await load();
   }

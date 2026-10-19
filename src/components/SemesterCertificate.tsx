@@ -17,14 +17,19 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
   const overallGrade = gradeFor(pending ? null : average);
   const passed = results.filter(r => !r.pending && r.final != null && r.final >= 50).length;
   const total = results.length;
+  const semesterText = CONFIG.currentSemester === 1 ? "First" : "Second";
 
   return (
     <div className="cert-print-page">
       <style>{`
+        @page {
+          size: A4 landscape;
+          margin: 5mm;
+        }
         .cert-print-page{
-          width:281mm; height:194mm; margin:0 auto; background:#fffdf7;
+          width:100%; max-width:287mm; margin:0 auto; background:#fffdf7;
           border:1.2mm double #b8923a; padding:4mm 6mm; display:flex;
-          flex-direction:column; gap:2.5mm; overflow:hidden;
+          flex-direction:column; gap:2.5mm; box-sizing:border-box;
           font-family: Georgia, "Times New Roman", serif; color:#1c2420;
           -webkit-print-color-adjust:exact; print-color-adjust:exact;
         }
@@ -42,7 +47,8 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page table{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; }
         .cert-print-page th, .cert-print-page td{ border:0.25mm solid #9fb3a5; text-align:center; font-size:11pt; padding:0; overflow:hidden; }
         .cert-print-page thead th{ background:#1f5a3a; color:#fff; height:9mm; font-weight:bold; line-height:1.15; }
-        .cert-print-page thead th.sub2{ background:#143d27; }
+        /* FIX 1: Light green background with dark text for contrast */
+        .cert-print-page thead th.sub2{ background:#eef3ee !important; color:#143d27 !important; }
         .cert-print-page thead tr.top th{ height:7mm; font-size:10pt; letter-spacing:0.5pt; }
         .cert-print-page thead tr.wk th{ height:7mm; font-size:9pt; }
         
@@ -70,16 +76,18 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* CLAUDE'S PRINT FIX */
+        /* FIX 2: Bulletproof A4 Landscape Print */
         @media print {
           .cert-print-page {
-            display: block !important; /* Removes flex so table works */
+            display: block !important;
             width: 100% !important;
+            max-width: 287mm !important;
             height: auto !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             padding: 4mm 6mm !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
           .cert-print-page table { 
             display: table !important; 
@@ -94,13 +102,12 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
           
           .cert-print-page th {
             position: static !important;
-            background: #1f5a3a !important;
-            color: #fff !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           .cert-print-page thead th.sub2 {
-            background: #143d27 !important;
+            background: #eef3ee !important;
+            color: #143d27 !important;
           }
         }
       `}</style>
@@ -110,7 +117,7 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         <div className="titles">
           <div className="school">{CONFIG.name}</div>
           <div className="doc">Semester Report Card</div>
-          <div className="sess">{CONFIG.sessionLabel} · First Semester</div>
+          <div className="sess">{CONFIG.sessionLabel} · {semesterText} Semester</div>
         </div>
         <img src="/logo.svg" alt="" style={{ visibility: "hidden" }} />
       </header>
@@ -122,7 +129,7 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         <div><span>Section</span><b>{sectionName}</b></div>
         <div><span>Mode</span><b>{student.mode === "online" ? "Online" : "Physical"}</b></div>
         <div><span>Session</span><b>{CONFIG.sessionLabel}</b></div>
-        <div><span>Semester</span><b>First</b></div>
+        <div><span>Semester</span><b>{semesterText}</b></div>
         <div><span>Date Issued</span><b>{today}</b></div>
       </section>
 
@@ -147,23 +154,24 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
             <th rowSpan={2}>Remark</th>
           </tr>
           <tr className="wk">
-            <th className="sub2">Avg /10</th><th className="sub2">30%</th>
-            <th className="sub2">Score /100</th><th className="sub2">70%</th>
+            {/* FIX 3: Centralized Values */}
+            <th className="sub2">Avg /{CONFIG.assessmentMax}</th><th className="sub2">{CONFIG.assessmentWeight * 100}%</th>
+            <th className="sub2">Score /{CONFIG.examMax}</th><th className="sub2">{CONFIG.examWeight * 100}%</th>
           </tr>
         </thead>
         <tbody>
           {results.map(r => {
-            const assessmentOutOf10 = r.assessmentPct != null ? r.assessmentPct / 10 : null;
-            const assessment30 = r.assessmentPct != null ? r.assessmentPct * 0.30 : null;
-            const exam70 = r.examPct != null ? r.examPct * 0.70 : null;
+            const assessmentOutOfMax = r.assessmentPct != null ? (r.assessmentPct / 100) * CONFIG.assessmentMax : null;
+            const assessmentContribution = r.assessmentPct != null ? r.assessmentPct * CONFIG.assessmentWeight : null;
+            const examContribution = r.examPct != null ? r.examPct * CONFIG.examWeight : null;
             const remark = r.pending ? "Pending" : r.grade.label;
             return (
               <tr key={r.subject}>
                 <td className="subj">{r.subject}</td>
-                <td>{assessmentOutOf10 != null ? assessmentOutOf10.toFixed(2) : "—"}</td>
-                <td>{assessment30 != null ? assessment30.toFixed(2) : "—"}</td>
+                <td>{assessmentOutOfMax != null ? assessmentOutOfMax.toFixed(2) : "—"}</td>
+                <td>{assessmentContribution != null ? assessmentContribution.toFixed(2) : "—"}</td>
                 <td>{r.examPct != null ? r.examPct : "—"}</td>
-                <td>{exam70 != null ? exam70.toFixed(2) : "—"}</td>
+                <td>{examContribution != null ? examContribution.toFixed(2) : "—"}</td>
                 <td className="fin">{r.final != null ? r.final.toFixed(1) : "—"}</td>
                 <td className="grade">{r.pending ? "—" : r.grade.code}</td>
                 <td className="remark">{remark}</td>
@@ -196,7 +204,7 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
             <b>Grading key:</b> A Distinction (75+) · B Credit (60–74) · C Pass (50–59) · D Fail (below 50)
           </div>
           <div className="formula">
-            Final score = 30% of the average of all recorded assessments (scaled to 100) + 70% of the exam.
+            Final score = {CONFIG.assessmentWeight * 100}% of the average of all recorded assessments (scaled to 100) + {CONFIG.examWeight * 100}% of the exam.
             Semester average = mean of the five subject finals.
           </div>
         </div>
