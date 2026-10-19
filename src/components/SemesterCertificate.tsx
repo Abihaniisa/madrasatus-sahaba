@@ -15,10 +15,7 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
     month: "long",
     year: "numeric",
   });
-
-  const sectionName =
-    SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
-
+  const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const overallGrade = gradeFor(pending ? null : average);
   const passed = results.filter(r => !r.pending && r.final != null && r.final >= 50).length;
   const total = results.length;
@@ -27,71 +24,57 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
     <div className="cert-print-page">
       <style>{`
         .cert-print-page{
-          width:281mm;
-          height:194mm;
-          margin:0 auto;
-          background:#fffdf7;
-          border:1.2mm double #b8923a;
-          padding:4mm 6mm;
-          display:flex;
-          flex-direction:column;
-          gap:2.5mm;
-          overflow:hidden;
-          font-family: Georgia, "Times New Roman", serif;
-          color:#1c2420;
-          -webkit-print-color-adjust:exact;
-          print-color-adjust:exact;
+          width:281mm; height:194mm; margin:0 auto; background:#fffdf7;
+          border:1.2mm double #b8923a; padding:4mm 6mm; display:flex;
+          flex-direction:column; gap:2.5mm; overflow:hidden;
+          font-family: Georgia, "Times New Roman", serif; color:#1c2420;
+          -webkit-print-color-adjust:exact; print-color-adjust:exact;
         }
-        .cert-print-page header{
-          display:flex;align-items:center;justify-content:center;gap:6mm;
-          border-bottom:0.5mm solid #1f5a3a;padding-bottom:2mm;
+        .cert-print-page header{ display:flex; align-items:center; justify-content:center; gap:6mm; border-bottom:0.5mm solid #1f5a3a; padding-bottom:2mm; }
+        .cert-print-page header img{ width:22mm; height:22mm; object-fit:contain; flex:none; }
+        .cert-print-page .titles{ text-align:center; }
+        .cert-print-page .school{ font-size:19pt; font-weight:bold; color:#143d27; letter-spacing:0.3pt; line-height:1.15; }
+        .cert-print-page .doc{ font-size:12.5pt; color:#b8923a; letter-spacing:3pt; text-transform:uppercase; margin-top:1mm; font-weight:bold; }
+        .cert-print-page .sess{ font-size:9pt; color:#555; margin-top:0.8mm; }
+        .cert-print-page .info{ display:grid; grid-template-columns:repeat(4,1fr); gap:1.2mm 5mm; background:#eef3ee; border:0.3mm solid #c9d6c9; padding:2mm 4mm; }
+        .cert-print-page .info div{ font-size:9pt; display:flex; gap:2mm; align-items:baseline; }
+        .cert-print-page .info span{ color:#5a6a5f; text-transform:uppercase; font-size:7pt; letter-spacing:0.6pt; white-space:nowrap; }
+        .cert-print-page .info b{ font-size:10pt; }
+        .cert-print-page table{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; }
+        .cert-print-page th, .cert-print-page td{ border:0.25mm solid #9fb3a5; text-align:center; font-size:11pt; padding:0; overflow:hidden; }
+        .cert-print-page thead th{ background:#1f5a3a; color:#fff; height:9mm; font-weight:bold; line-height:1.15; }
+        .cert-print-page thead th.sub2{ background:#143d27; }
+        .cert-print-page thead tr.top th{ height:7mm; font-size:10pt; letter-spacing:0.5pt; }
+        .cert-print-page thead tr.wk th{ height:7mm; font-size:9pt; }
+        .cert-print-page tbody td{ height:12mm; }
+        .cert-print-page tbody tr:nth-child(even) td{ background:#f6f9f6; }
+        .cert-print-page td.subj{ text-align:left; padding-left:4mm; font-weight:bold; font-size:12.5pt; font-family:Georgia,serif; }
+        .cert-print-page td.fin{ font-weight:bold; font-size:13pt; background:#fbf3df !important; }
+        .cert-print-page td.grade{ font-weight:bold; font-size:15pt; color:#143d27; }
+        .cert-print-page td.remark{ font-size:10.5pt; }
+        .cert-print-page .bottom{ display:grid; grid-template-columns:1.05fr 1fr; gap:4mm; }
+        .cert-print-page .summary{ border:0.4mm solid #1f5a3a; display:grid; grid-template-columns:repeat(3,1fr); }
+        .cert-print-page .summary div{ padding:2mm 3mm; text-align:center; border-right:0.25mm solid #b9c9bd; display:flex; flex-direction:column; justify-content:center; }
+        .cert-print-page .summary div:last-child{ border-right:none; }
+        .cert-print-page .summary small{ font-family:Arial,sans-serif; font-size:7pt; text-transform:uppercase; letter-spacing:0.7pt; color:#5a6a5f; }
+        .cert-print-page .summary strong{ font-size:19pt; color:#143d27; line-height:1.25; }
+        .cert-print-page .summary em{ font-style:normal; font-size:8.5pt; color:#b8923a; font-weight:bold; }
+        .cert-print-page .side{ display:flex; flex-direction:column; gap:2mm; }
+        .cert-print-page .key{ font-family:Arial,sans-serif; font-size:7.5pt; border:0.25mm solid #c9d6c9; padding:1.8mm 3mm; background:#eef3ee; line-height:1.5; }
+        .cert-print-page .key b{ color:#143d27; }
+        .cert-print-page .formula{ font-family:Arial,sans-serif; font-size:7.2pt; color:#555; line-height:1.4; }
+        .cert-print-page .sigs{ display:flex; justify-content:space-around; align-items:flex-end; margin-top:auto; padding:0 12mm; height:15mm; }
+        .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
+        .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
+
+        /* Fix for missing headers in print */
+        @media print {
+          .cert-print-page thead th {
+            background: #fff !important;
+            color: #000 !important;
+            border: 0.25mm solid #000 !important;
+          }
         }
-        .cert-print-page header img{width:22mm;height:22mm;object-fit:contain;flex:none}
-        .cert-print-page .titles{text-align:center}
-        .cert-print-page .school{font-size:19pt;font-weight:bold;color:#143d27;letter-spacing:0.3pt;line-height:1.15}
-        .cert-print-page .doc{font-size:12.5pt;color:#b8923a;letter-spacing:3pt;text-transform:uppercase;margin-top:1mm;font-weight:bold}
-        .cert-print-page .sess{font-size:9pt;color:#555;margin-top:0.8mm}
-        .cert-print-page .info{
-          display:grid;grid-template-columns:repeat(4,1fr);gap:1.2mm 5mm;
-          background:#eef3ee;border:0.3mm solid #c9d6c9;padding:2mm 4mm;
-        }
-        .cert-print-page .info div{font-size:9pt;display:flex;gap:2mm;align-items:baseline}
-        .cert-print-page .info span{color:#5a6a5f;text-transform:uppercase;font-size:7pt;letter-spacing:0.6pt;white-space:nowrap}
-        .cert-print-page .info b{font-size:10pt}
-        .cert-print-page table{width:100%;border-collapse:collapse;table-layout:fixed;font-family:Arial,Helvetica,sans-serif}
-        .cert-print-page th,.cert-print-page td{
-          border:0.25mm solid #9fb3a5;text-align:center;font-size:11pt;padding:0;overflow:hidden;
-        }
-        .cert-print-page thead th{background:#1f5a3a;color:#fff;height:9mm;font-weight:bold;line-height:1.15}
-        .cert-print-page thead th.sub2{background:#143d27}
-        .cert-print-page thead tr.top th{height:7mm;font-size:10pt;letter-spacing:0.5pt}
-        .cert-print-page thead tr.wk th{height:7mm;font-size:9pt}
-        .cert-print-page tbody td{height:12mm}
-        .cert-print-page tbody tr:nth-child(even) td{background:#f6f9f6}
-        .cert-print-page td.subj{text-align:left;padding-left:4mm;font-weight:bold;font-size:12.5pt;font-family:Georgia,serif}
-        .cert-print-page td.fin{font-weight:bold;font-size:13pt;background:#fbf3df !important}
-        .cert-print-page td.grade{font-weight:bold;font-size:15pt;color:#143d27}
-        .cert-print-page td.remark{font-size:10.5pt}
-        .cert-print-page .bottom{display:grid;grid-template-columns:1.05fr 1fr;gap:4mm}
-        .cert-print-page .summary{border:0.4mm solid #1f5a3a;display:grid;grid-template-columns:repeat(3,1fr)}
-        .cert-print-page .summary div{
-          padding:2mm 3mm;text-align:center;border-right:0.25mm solid #b9c9bd;
-          display:flex;flex-direction:column;justify-content:center;
-        }
-        .cert-print-page .summary div:last-child{border-right:none}
-        .cert-print-page .summary small{font-family:Arial,sans-serif;font-size:7pt;text-transform:uppercase;letter-spacing:0.7pt;color:#5a6a5f}
-        .cert-print-page .summary strong{font-size:19pt;color:#143d27;line-height:1.25}
-        .cert-print-page .summary em{font-style:normal;font-size:8.5pt;color:#b8923a;font-weight:bold}
-        .cert-print-page .side{display:flex;flex-direction:column;gap:2mm}
-        .cert-print-page .key{font-family:Arial,sans-serif;font-size:7.5pt;border:0.25mm solid #c9d6c9;padding:1.8mm 3mm;background:#eef3ee;line-height:1.5}
-        .cert-print-page .key b{color:#143d27}
-        .cert-print-page .formula{font-family:Arial,sans-serif;font-size:7.2pt;color:#555;line-height:1.4}
-        .cert-print-page .sigs{
-          display:flex;justify-content:space-around;align-items:flex-end;
-          margin-top:auto;padding:0 12mm;height:15mm;
-        }
-        .cert-print-page .sig{width:75mm;text-align:center;border-top:0.35mm solid #1c2420;padding-top:1.2mm;font-size:9.5pt;font-weight:bold}
-        .cert-print-page .sig span{display:block;font-size:7pt;font-weight:normal;color:#666;font-family:Arial,sans-serif}
       `}</style>
 
       <header>
@@ -99,9 +82,7 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         <div className="titles">
           <div className="school">{CONFIG.name}</div>
           <div className="doc">Semester Report Card</div>
-          <div className="sess">
-            {CONFIG.sessionLabel} · First Semester
-          </div>
+          <div className="sess">{CONFIG.sessionLabel} · First Semester</div>
         </div>
         <img src="/logo.svg" alt="" style={{ visibility: "hidden" }} />
       </header>
@@ -120,9 +101,13 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
       <table>
         <colgroup>
           <col style={{ width: "19%" }} />
-          <col style={{ width: "10.5%" }} /><col style={{ width: "10.5%" }} />
-          <col style={{ width: "10.5%" }} /><col style={{ width: "10.5%" }} />
-          <col style={{ width: "11%" }} /><col style={{ width: "9%" }} /><col style={{ width: "19%" }} />
+          <col style={{ width: "10.5%" }} />
+          <col style={{ width: "10.5%" }} />
+          <col style={{ width: "10.5%" }} />
+          <col style={{ width: "10.5%" }} />
+          <col style={{ width: "11%" }} />
+          <col style={{ width: "9%" }} />
+          <col style={{ width: "19%" }} />
         </colgroup>
         <thead>
           <tr className="top">
@@ -140,15 +125,10 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         </thead>
         <tbody>
           {results.map(r => {
-            const assessmentOutOf10 =
-              r.assessmentPct != null ? r.assessmentPct / 10 : null;
-            const assessment30 =
-              r.assessmentPct != null ? (r.assessmentPct * 0.30) : null;
+            const assessmentOutOf10 = r.assessmentPct != null ? r.assessmentPct / 10 : null;
+            const assessment30 = r.assessmentPct != null ? r.assessmentPct * 0.30 : null;
             const exam70 = r.examPct != null ? r.examPct * 0.70 : null;
-            const remark =
-              r.pending
-                ? "Pending"
-                : r.grade.label;
+            const remark = r.pending ? "Pending" : r.grade.label;
             return (
               <tr key={r.subject}>
                 <td className="subj">{r.subject}</td>

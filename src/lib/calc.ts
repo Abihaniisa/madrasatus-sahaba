@@ -7,9 +7,6 @@ export function gradeFor(p: number | null): Grade {
   return CONFIG.grades[CONFIG.grades.length - 1];
 }
 
-/* Subject result. Pending means: an assessment exists for this subject
-   but the student has no mark recorded. Pending excludes the subject
-   from any calculation and shows "Pending" on the report. */
 export function subjectResult(
   subject: string,
   assessments: Assessment[],
@@ -19,14 +16,16 @@ export function subjectResult(
   const subjAssessments = assessments.filter(a => a.subject === subject);
   let pending = false;
 
-  if (examMissing) pending = true;
+  // 1. Check if any assessment marks are missing (or if no assessments exist at all)
   if (subjAssessments.length) {
     for (const a of subjAssessments) {
       if (marksByAssess[a.id] == null) { pending = true; break; }
     }
+  } else {
+    pending = true;
   }
 
-  let examMissing = exam == null;
+  // 2. Calculate assessment percentage
   let assessmentPct: number | null = null;
   if (subjAssessments.length && !pending) {
     let sum = 0;
@@ -38,12 +37,17 @@ export function subjectResult(
     assessmentPct = Math.round((sum / subjAssessments.length) * 10000) / 100;
   }
 
+  // 3. Check exam
   const examPct = exam != null ? exam : null;
+  if (examPct == null) {
+    pending = true;
+  }
+
+  // 4. Calculate final score ONLY if neither assessments nor exam are missing
   let final: number | null = null;
-  if (!pending && assessmentPct != null && examPct != null)
+  if (!pending && assessmentPct != null && examPct != null) {
     final = Math.round((assessmentPct * CONFIG.assessmentWeight + examPct * CONFIG.examWeight) * 100) / 100;
-  
-  
+  }
 
   return {
     subject,
@@ -65,8 +69,6 @@ export function semesterAvg(results: (SubjectResult & { pending: boolean })[]): 
 export function hasPending(results: (SubjectResult & { pending: boolean })[]): boolean {
   return results.some(r => r.pending);
 }
-
-/* ---------- semester grouping ---------- */
 
 export type SemesterGroup = {
   key: string;
@@ -145,8 +147,6 @@ export function cumulativeBySubject(groups: SemesterGroup[]): Record<string, num
   }
   return out;
 }
-
-/* ---------- helpers ---------- */
 
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
