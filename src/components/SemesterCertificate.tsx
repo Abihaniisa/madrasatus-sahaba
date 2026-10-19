@@ -68,10 +68,12 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* Force the print engine to keep the header tables and green backgrounds intact */
+        /* CRITICAL PRINT FIXES */
         @media print {
           .cert-print-page {
             overflow: visible !important;
+            height: auto !important; /* prevents cutting off the top */
+            min-height: 194mm;
             page-break-inside: avoid !important;
             page-break-after: avoid !important;
             break-inside: avoid !important;
@@ -127,17 +129,22 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
           <col style={{ width: "19%" }} />
         </colgroup>
         <thead>
+          {/* NO rowSpan used here. Empty cells use &nbsp; to force them to render. */}
           <tr className="top">
-            <th rowSpan={2}>Subject</th>
+            <th>Subject</th>
             <th colSpan={2}>Assessments</th>
             <th colSpan={2}>Exam</th>
-            <th rowSpan={2}>Final<br/>/100</th>
-            <th rowSpan={2}>Grade</th>
-            <th rowSpan={2}>Remark</th>
+            <th>Final<br/>/100</th>
+            <th>Grade</th>
+            <th>Remark</th>
           </tr>
           <tr className="wk">
+            <th>&nbsp;</th>
             <th className="sub2">Avg /10</th><th className="sub2">30%</th>
             <th className="sub2">Score /100</th><th className="sub2">70%</th>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
           </tr>
         </thead>
         <tbody>
