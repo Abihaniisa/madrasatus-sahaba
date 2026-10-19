@@ -68,31 +68,38 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* CRITICAL PRINT FIXES */
+        /* CRITICAL PRINT FIX: Remove flexbox so the table doesn't collapse */
         @media print {
           .cert-print-page {
+            display: block !important; /* This stops Chrome from destroying the table headers */
+            height: auto !important;
             overflow: visible !important;
-            height: auto !important; /* prevents cutting off the top */
-            min-height: 194mm;
+            margin: 0 auto !important;
             page-break-inside: avoid !important;
-            page-break-after: avoid !important;
             break-inside: avoid !important;
-            margin: 0 !important;
+            padding: 4mm 6mm !important;
           }
+          .cert-print-page header { margin-bottom: 4mm; }
+          .cert-print-page .info { margin-bottom: 4mm; }
+          .cert-print-page table { margin-bottom: 4mm; }
+          .cert-print-page .bottom { margin-bottom: 10mm; }
+          
           .cert-print-page table { table-layout: fixed !important; width: 100% !important; }
-          .cert-print-page thead { display: table-header-group; }
-          .cert-print-page tbody { display: table-row-group; }
-          .cert-print-page tr { page-break-inside: avoid; }
-          .cert-print-page th, .cert-print-page td { overflow: visible !important; }
-          .cert-print-page thead th {
-            background: #1f5a3a !important;
-            color: #fff !important;
+          .cert-print-page thead { display: table-header-group !important; }
+          .cert-print-page tbody { display: table-row-group !important; }
+          .cert-print-page tr { page-break-inside: avoid !important; }
+          
+          /* Force colors to print */
+          .cert-print-page th, .cert-print-page td {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            overflow: visible !important;
+            background: #fff !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
           }
-          .cert-print-page thead th.sub2 {
-            background: #143d27 !important;
-          }
+          .cert-print-page thead th { background: #1f5a3a !important; color: #fff !important; }
+          .cert-print-page thead th.sub2 { background: #143d27 !important; }
         }
       `}</style>
 
@@ -129,22 +136,17 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
           <col style={{ width: "19%" }} />
         </colgroup>
         <thead>
-          {/* NO rowSpan used here. Empty cells use &nbsp; to force them to render. */}
           <tr className="top">
-            <th>Subject</th>
+            <th rowSpan={2}>Subject</th>
             <th colSpan={2}>Assessments</th>
             <th colSpan={2}>Exam</th>
-            <th>Final<br/>/100</th>
-            <th>Grade</th>
-            <th>Remark</th>
+            <th rowSpan={2}>Final<br/>/100</th>
+            <th rowSpan={2}>Grade</th>
+            <th rowSpan={2}>Remark</th>
           </tr>
           <tr className="wk">
-            <th>&nbsp;</th>
             <th className="sub2">Avg /10</th><th className="sub2">30%</th>
             <th className="sub2">Score /100</th><th className="sub2">70%</th>
-            <th>&nbsp;</th>
-            <th>&nbsp;</th>
-            <th>&nbsp;</th>
           </tr>
         </thead>
         <tbody>
