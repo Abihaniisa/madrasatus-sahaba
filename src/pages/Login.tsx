@@ -18,7 +18,6 @@ export default function Login() {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-
     const sec = secret.trim();
 
     if (cleanId.includes("@")) {
@@ -46,26 +45,8 @@ export default function Login() {
 
   return (
     <div className="login-shell">
+      <Link to="/" className="login-back-float">← Back to public site</Link>
       <div className="login-card" style={{ maxWidth: 420 }}>
-        <Link
-          to="/"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            marginBottom: 20,
-            fontSize: 13,
-            fontWeight: 500,
-            color: "var(--ink-2)",
-            padding: "6px 10px",
-            borderRadius: 8,
-            border: "1px solid var(--line)",
-            transition: "background .15s, color .15s",
-          }}
-        >
-          ← Back to public site
-        </Link>
-
         <img src="/logo.svg" alt="" width={60} height={60} style={{ display: "block", margin: "0 auto 18px" }} />
         <h1>Sign in</h1>
         <p className="sub">{CONFIG.short}</p>
@@ -84,7 +65,6 @@ export default function Login() {
             borderRadius: 10,
             textDecoration: "none",
             color: "var(--ink)",
-            transition: "border-color .15s",
           }}
         >
           <img
@@ -96,9 +76,7 @@ export default function Login() {
             onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>
-              Veritas
-            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>Veritas</div>
             <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>
               Sahaba certificates, verifiable on Veritas.
             </div>

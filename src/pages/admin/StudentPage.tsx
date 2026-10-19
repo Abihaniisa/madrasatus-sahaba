@@ -18,6 +18,7 @@ export default function StudentPage() {
   const [mode, setMode] = useMode();
   const [data, setData] = useState<SchoolData | null>(null);
   const [confirmMode, setConfirmMode] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function reload() { setData(await loadSchool()); }
@@ -97,9 +98,9 @@ export default function StudentPage() {
                 <div className="d3">Semester Report Card</div>
                 <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
               </div>
-              <Link className="btn btn-primary btn-sm" to={`/admin/report/${s.id}`}>{I.print} Print report</Link>
+              <button className="btn btn-primary btn-sm" onClick={() => setShowPrintModal(true)}>{I.print} Print report</button>
             </div>
-            <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
+            <div className="cert-print-wrapper" style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
               <SemesterCertificate
                 student={s}
                 results={report.results}
@@ -131,6 +132,23 @@ export default function StudentPage() {
           </div>
         </div>
       </div>
+
+      <Modal
+        open={showPrintModal}
+        title="Print setup"
+        confirmLabel="Print"
+        onConfirm={() => { setShowPrintModal(false); setTimeout(() => window.print(), 200); }}
+        onCancel={() => setShowPrintModal(false)}
+      >
+        <p className="sub" style={{ fontSize: 13.5, lineHeight: 1.6, marginBottom: 10 }}>
+          Set these in your browser print dialog:
+        </p>
+        <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.9, fontSize: 13.5 }}>
+          <li>Layout — <strong>Landscape</strong></li>
+          <li>Paper — <strong>A4</strong></li>
+          <li>Margins — <strong>Default</strong></li>
+        </ul>
+      </Modal>
 
       <Modal
         open={confirmMode}

@@ -11,9 +11,6 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Strip every whitespace from the identifier. Emails have no valid
-  // internal spaces; NINs are 11 digits; reg_no is normalized in the DB.
-  // Stripping only helps — it can never corrupt a valid value.
   const cleanId = identifier.replace(/\s+/g, "");
   const isStudentId = /^\d{11}$/.test(cleanId);
 
@@ -22,8 +19,6 @@ export default function Login() {
     setBusy(true);
     setErr(null);
 
-    // Password: outer spaces trimmed (keyboard typo), inner spaces kept
-    // exactly — they may be part of the secret.
     const sec = secret.trim();
 
     if (cleanId.includes("@")) {
@@ -52,11 +47,29 @@ export default function Login() {
   return (
     <div className="login-shell">
       <div className="login-card" style={{ maxWidth: 420 }}>
+        <Link
+          to="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            marginBottom: 20,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--ink-2)",
+            padding: "6px 10px",
+            borderRadius: 8,
+            border: "1px solid var(--line)",
+            transition: "background .15s, color .15s",
+          }}
+        >
+          ← Back to public site
+        </Link>
+
         <img src="/logo.svg" alt="" width={60} height={60} style={{ display: "block", margin: "0 auto 18px" }} />
         <h1>Sign in</h1>
         <p className="sub">{CONFIG.short}</p>
 
-        {/* Veritas — verified credentials banner */}
         <a
           href="https://veritas-verify.vercel.app"
           target="_blank"
@@ -125,8 +138,6 @@ export default function Login() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
-
-        <Link to="/" className="login-public" style={{ marginTop: 20 }}>← Back to public site</Link>
       </div>
     </div>
   );

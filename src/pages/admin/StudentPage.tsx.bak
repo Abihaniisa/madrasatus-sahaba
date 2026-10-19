@@ -97,9 +97,7 @@ export default function StudentPage() {
                 <div className="d3">Semester Report Card</div>
                 <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
               </div>
-              <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
-                {I.print} Print report
-              </button>
+              <Link className="btn btn-primary btn-sm" to={`/admin/report/${s.id}`}>{I.print} Print report</Link>
             </div>
             <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
               <SemesterCertificate

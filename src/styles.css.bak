@@ -1719,3 +1719,68 @@ button, a, input, select, textarea, .btn, [role="button"] {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* ============================================================
+   SHEET + PRINT + LOGIN FIXES — 2026-10-20 (round 2)
+   ============================================================ */
+
+/* Sheet: school name wraps instead of overflowing container */
+.sheet-print .rc-head .s {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  text-transform: none;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+/* Sheet: allow full width — no max-width squeeze */
+.sheet-print { max-width: none !important; }
+
+/* Horizontal scroll only when table overflows — never squeeze */
+.sheet-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -18px;
+  padding: 0 18px;
+}
+.sheet-scroll .sheet-table {
+  min-width: 640px;
+  width: 100%;
+}
+
+/* ============================================================
+   PRINT — A4 landscape, one page, complete border, no clipping
+   ============================================================ */
+@media print {
+  @page { size: A4 landscape; margin: 4mm; }
+
+  /* Hide chrome — nav, tabs, buttons, banners */
+  .top, .tabbar, .edit-banner, .crumb, .phead,
+  .no-print, .print-hint,
+  .login-shell, .nav, .foot { display: none !important; }
+
+  /* Flatten page — remove all padding/margins from wrappers */
+  html, body, #root { padding: 0 !important; margin: 0 !important; background: #fff !important; }
+  .body { padding: 0 !important; margin: 0 !important; }
+  .wrap, .wrap-narrow { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .cert-print-wrapper { padding: 0 !important; margin: 0 !important; }
+
+  /* Certificate: box-sizing prevents border from pushing past page width,
+     avoiding the right-side clipping and border truncation */
+  .cert-print-page {
+    box-sizing: border-box !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    transform: none !important;
+    margin: 0 !important;
+  }
+
+  /* Sheet: no scroll wrapper in print */
+  .sheet-scroll { overflow: visible !important; margin: 0 !important; padding: 0 !important; }
+  .sheet-scroll .sheet-table { min-width: 0 !important; }
+}
