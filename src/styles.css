@@ -1853,3 +1853,12 @@ button, a, input, select, textarea, .btn, [role="button"] {
   /* Hide modal if somehow open during print */
   .modal-backdrop, .modal-card { display: none !important; }
 }
+
+/* Fix for missing headers in print */
+@media print {
+  .cert-print-page thead th {
+    background: transparent !important;
+    color: #000 !important;
+    border-bottom: 1px solid #000 !important;
+  }
+}
