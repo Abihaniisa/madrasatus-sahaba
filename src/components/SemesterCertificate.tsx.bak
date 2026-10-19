@@ -40,12 +40,15 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .info div{ font-size:9pt; display:flex; gap:2mm; align-items:baseline; }
         .cert-print-page .info span{ color:#5a6a5f; text-transform:uppercase; font-size:7pt; letter-spacing:0.6pt; white-space:nowrap; }
         .cert-print-page .info b{ font-size:10pt; }
-        .cert-print-page table{ width:100%; border-collapse:collapse; table-layout:fixed; font-family:Arial,Helvetica,sans-serif; }
+        .cert-print-page table{ width:100%; border-collapse:collapse; font-family:Arial,Helvetica,sans-serif; }
         .cert-print-page th, .cert-print-page td{ border:0.25mm solid #9fb3a5; text-align:center; font-size:11pt; padding:0; overflow:hidden; }
         .cert-print-page thead th{ background:#1f5a3a; color:#fff; height:9mm; font-weight:bold; line-height:1.15; }
         .cert-print-page thead th.sub2{ background:#143d27; }
         .cert-print-page thead tr.top th{ height:7mm; font-size:10pt; letter-spacing:0.5pt; }
         .cert-print-page thead tr.wk th{ height:7mm; font-size:9pt; }
+        .cert-print-page thead tr.top th{ border-bottom: none; }
+        .cert-print-page thead tr.wk th{ border-top: none; }
+        .cert-print-page thead tr.wk th:empty { border-top: 0.25mm solid #9fb3a5; }
         .cert-print-page tbody td{ height:12mm; }
         .cert-print-page tbody tr:nth-child(even) td{ background:#f6f9f6; }
         .cert-print-page td.subj{ text-align:left; padding-left:4mm; font-weight:bold; font-size:12.5pt; font-family:Georgia,serif; }
@@ -67,10 +70,21 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
         .cert-print-page .sig{ width:75mm; text-align:center; border-top:0.35mm solid #1c2420; padding-top:1.2mm; font-size:9.5pt; font-weight:bold; }
         .cert-print-page .sig span{ display:block; font-size:7pt; font-weight:normal; color:#666; font-family:Arial,sans-serif; }
 
-        /* Fix for missing headers in print */
         @media print {
+          .cert-print-page {
+            overflow: visible !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-inside: avoid !important;
+            margin: 0 !important;
+          }
+          .cert-print-page table { table-layout: auto !important; }
+          .cert-print-page thead { display: table-header-group; }
+          .cert-print-page tbody { display: table-row-group; }
+          .cert-print-page tr { page-break-inside: avoid; }
+          .cert-print-page th, .cert-print-page td { overflow: visible !important; }
           .cert-print-page thead th {
-            background: #fff !important;
+            background: transparent !important;
             color: #000 !important;
             border: 0.25mm solid #000 !important;
           }
@@ -99,28 +113,24 @@ export function SemesterCertificate({ student, results, average, pending }: Prop
       </section>
 
       <table>
-        <colgroup>
-          <col style={{ width: "19%" }} />
-          <col style={{ width: "10.5%" }} />
-          <col style={{ width: "10.5%" }} />
-          <col style={{ width: "10.5%" }} />
-          <col style={{ width: "10.5%" }} />
-          <col style={{ width: "11%" }} />
-          <col style={{ width: "9%" }} />
-          <col style={{ width: "19%" }} />
-        </colgroup>
         <thead>
           <tr className="top">
-            <th rowSpan={2}>Subject</th>
+            <th style={{ width: "19%" }}>Subject</th>
             <th colSpan={2}>Assessments</th>
             <th colSpan={2}>Exam</th>
-            <th rowSpan={2}>Final<br/>/100</th>
-            <th rowSpan={2}>Grade</th>
-            <th rowSpan={2}>Remark</th>
+            <th style={{ width: "11%" }}>Final<br/>/100</th>
+            <th style={{ width: "9%" }}>Grade</th>
+            <th style={{ width: "19%" }}>Remark</th>
           </tr>
           <tr className="wk">
-            <th className="sub2">Avg /10</th><th className="sub2">30%</th>
-            <th className="sub2">Score /100</th><th className="sub2">70%</th>
+            <th></th>
+            <th className="sub2" style={{ width: "10.5%" }}>Avg /10</th>
+            <th className="sub2" style={{ width: "10.5%" }}>30%</th>
+            <th className="sub2" style={{ width: "10.5%" }}>Score /100</th>
+            <th className="sub2" style={{ width: "10.5%" }}>70%</th>
+            <th></th>
+            <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
