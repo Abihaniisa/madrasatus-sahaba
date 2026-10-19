@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { CONFIG } from "../lib/config";
 import { PublicNav, I } from "../components/Layout";
 import { getStudentSession, clearStudentSession, fetchStudentPortal, type StudentPortalData } from "../lib/student";
 import { buildReport } from "../lib/data";
+import { SemesterCertificate } from "../components/SemesterCertificate";
 import type { Assessment, Exam, Mark, Student } from "../lib/types";
+
+type Classmate = {
+  name: string;
+  class_name: string;
+  section: string;
+  gender: "male" | "female" | null;
+};
 
 export default function StudentPortal() {
   const nav = useNavigate();
@@ -37,6 +45,9 @@ export default function StudentPortal() {
   const assessments = (data.assessments ?? []) as Assessment[];
   const report = buildReport(s, assessments, marks, exams);
 
+  const classmates: Classmate[] = (data as any).classmates ?? [];
+  const otherClassmates = classmates.filter(c => c.name !== s.name);
+
   const payments = data.fee_payments ?? [];
   const amount = CONFIG.registrationFee;
   const paid = payments.reduce((sum: number, p: any) => sum + (p.amount ?? 0), 0);
@@ -45,10 +56,18 @@ export default function StudentPortal() {
 
   return (
     <div>
+      <style>{`
+        .student-cert-screen { overflow-x: auto; overflow-y: hidden; padding-bottom: 16px; }
+        .student-cert-scale { transform: scale(0.6); transform-origin: top left; width: 166.667%; margin: 0 auto; }
+        @media print {
+          .student-cert-screen { overflow: visible; padding-bottom: 0; }
+          .student-cert-scale { transform: none; width: 100%; margin: 0; }
+        }
+      `}</style>
       <PublicNav />
       <section className="section">
-        <div className="wrap-narrow">
-          <div className="ph">
+        <div className="wrap">
+          <div className="ph no-print">
             <div className="pav">{(s.name[0] ?? "") + (s.name.split(/\s+/)[1]?.[0] ?? "")}</div>
             <div className="pinfo">
               <h1>{s.name}</h1>
@@ -68,41 +87,30 @@ export default function StudentPortal() {
             <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>
           </div>
 
-          <div className="card mb4" style={{ overflow: "hidden" }}>
-            <div style={{ padding: "18px 20px 10px" }}>
-              <div className="d3">My report</div>
+          <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+            <div>
+              <div className="d3">Semester Report Card</div>
               <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
             </div>
-            <div style={{ padding: "0 20px 18px" }}>
-              <table className="rt">
-                <thead>
-                  <tr>
-                    <th style={{ width: "34%" }}>Subject</th>
-                    <th style={{ width: "22%", textAlign: "right" }}>Assessments</th>
-                    <th style={{ width: "22%", textAlign: "right" }}>Exam</th>
-                    <th style={{ width: "22%", textAlign: "right" }}>Final</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.results.map(r => (
-                    <tr key={r.subject}>
-                      <td className="s">{r.subject}</td>
-                      <td className="n">{r.pending ? "Pending" : r.assessmentPct != null ? r.assessmentPct.toFixed(1) + "%" : "—"}</td>
-                      <td className="n">{r.examPct != null ? r.examPct + "/100" : "—"}</td>
-                      <td className="n" style={{ fontWeight: 600, color: "var(--primary)" }}>{r.pending ? "—" : r.final != null ? r.final.toFixed(1) + "%" : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="summary">
-                <div className="it"><div className="l">Semester</div><div className="v">{report.avg != null ? report.avg + "%" : "—"}</div></div>
-                <div className="it"><div className="l">Grade</div><div className="v" style={{ fontSize: 15 }}>{report.pending ? "—" : report.results[0]?.grade.code ?? "—"}</div></div>
-                <div className="it"><div className="l">Status</div><div className="v sm">{report.pending ? "Pending" : "Complete"}</div></div>
+            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+              {I.print} Print report
+            </button>
+          </div>
+
+          <div className="cert-print-wrapper" style={{ marginBottom: 24 }}>
+            <div className="student-cert-screen">
+              <div className="student-cert-scale">
+                <SemesterCertificate
+                  student={s}
+                  results={report.results}
+                  average={report.avg}
+                  pending={report.pending}
+                />
               </div>
             </div>
           </div>
 
-          <div className="card">
+          <div className="card mb4 no-print">
             <div style={{ padding: "18px 20px" }}>
               <div className="d3" style={{ marginBottom: 10 }}>Fees</div>
               <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "baseline" }}>
@@ -118,8 +126,54 @@ export default function StudentPortal() {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
-            <Link className="btn btn-ghost btn-sm" to="/">{I.back} Public site</Link>
+          <div className="card mb4 no-print">
+            <div style={{ padding: "18px 20px 10px" }}>
+              <div className="d3">My classmates</div>
+              <div className="sub" style={{ marginTop: 2 }}>
+                {s.class_name} · {otherClassmates.length} other{otherClassmates.length === 1 ? "" : "s"}
+              </div>
+            </div>
+            <div style={{ padding: "0 20px 18px" }}>
+              {otherClassmates.length === 0 ? (
+                <div className="empty" style={{ padding: "12px 0" }}>
+                  <div className="d">No other students in your class yet.</div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {otherClassmates.map((c, i) => (
+                    <div
+                      key={c.name + i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        padding: "10px 0",
+                        borderTop: i === 0 ? "none" : "1px solid var(--line)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32, height: 32, borderRadius: "50%",
+                          background: "var(--muted)", color: "var(--ink)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontFamily: "var(--serif)", fontWeight: 600, fontSize: 13,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {(c.name[0] ?? "") + (c.name.split(/\s+/)[1]?.[0] ?? "")}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 500, fontSize: 14 }}>{c.name}</div>
+                        <div className="sub" style={{ fontSize: 12, marginTop: 1 }}>
+                          {c.section}
+                          {c.gender ? ` · ${c.gender === "male" ? "Male" : "Female"}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

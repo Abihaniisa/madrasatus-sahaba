@@ -1,0 +1,76 @@
+import type { Section } from "./types";
+
+export const CONFIG = {
+  name: "Madrasatus Sahaba Li Tahfizul Qur'an",
+  short: "Madrasatus Sahaba",
+  sub: "Li Tahfizul Qur'an",
+  code: "MS",
+  founded: "2020",
+  founder: "Sheikh Abdullahi Babayo",
+  founderRole: "Founder & Spiritual Guide",
+  whatsapp: "2348000000000",
+  assessmentMax: 10,
+  examMax: 100,
+  assessmentWeight: 0.30,
+  examWeight: 0.70,
+  regYear: "2026",
+  registrationFee: 5000,
+  sessionLabel: "2026/2027",
+  semesterLabel: "Semester 1",
+  studentLoginEnabled: true,
+  builder: {
+    name: "Abihani Isa",
+    fullName: "Isa Yahya Bayero",
+    phone: "2347013927783",
+    email: "abihaniisa@gmail.com",
+    site: "https://abihaniexpress.com.ng",
+    role: "Founder, Abihaniexpress",
+    bio: "A student at Madrasatus Sahaba Li Tahfizul Qur'an and the founder of Abihaniexpress. I build fast, clean web tools for schools and small businesses.",
+    regNo: "2026/MS/001",
+  },
+  grades: [
+    { min: 75, label: "Distinction", tone: "success", code: "A" },
+    { min: 60, label: "Credit",      tone: "primary", code: "B" },
+    { min: 50, label: "Pass",        tone: "info",    code: "C" },
+    { min: 0,  label: "Fail",        tone: "danger",  code: "D" },
+  ],
+  subjects: ["Qur'an", "Hadith", "Fiqh", "Arabic", "Tajweed"],
+  calendar: {
+    /* First session starts on the first Saturday that is day 7 or later after Eid al-Fitr.
+       Eid al-Fitr 1447 AH approx 2026-03-20 (Friday).
+       Next Saturday = 2026-03-21 (day 2) → less than 7 → wait one week.
+       Session 1 start = 2026-03-28 (Saturday, day 9).
+       Change only this date per new session. */
+    sessionStart: "2026-03-28",
+    /* Ramadan floats ~11 days earlier each year.
+       Update this one line per year. */
+    ramadanStart: "2027-02-20",
+    blocks: [
+      { type: "teaching", weeks: 18, label: "First Semester" },
+      { type: "exam",     weeks: 1,  label: "First Semester Exam" },
+      { type: "holiday",  weeks: 1,  label: "First Semester Break" },
+      { type: "teaching", weeks: 18, label: "Second Semester" },
+      { type: "exam",     weeks: 1,  label: "Second Semester Exam" },
+      { type: "holiday",  weeks: 1,  label: "Second Semester Break" },
+      { type: "daura",    weeks: 6,  label: "Daura" },
+      { type: "holiday",  weeks: 1,  label: "Post-Daura Holiday" },
+      { type: "ramadan",  weeks: 5,  label: "Ramadan" },
+    ] as const,
+  },
+};
+
+export const SECTIONS: Section[] = [
+  { id: "foundation", name: "Foundation", classes: ["Tamhid", "I'idad"], desc: "Reading, writing, and Qur'anic foundations." },
+  { id: "secondary",  name: "Secondary",  classes: ["Thanawiyyah 1","Thanawiyyah 2","Thanawiyyah 3","Thanawiyyah 4","Thanawiyyah 5","Thanawiyyah 6"], desc: "Six years of structured study." },
+  { id: "higher",     name: "Higher",     classes: ["Aliyyah 1","Aliyyah 2","Aliyyah 3","Aliyyah 4"], desc: "Advanced study. Opening when the school authorises it.", inactive: true },
+];
+
+export const ALL_CLASSES = SECTIONS.filter(s => !s.inactive).flatMap(s => s.classes);
+
+/* Transcript grouping — every section is grouped into one or more transcripts. */
+export const TRANSCRIPT_GROUPS: Record<string, string[]> = {
+  "Foundation":         ["Tamhid", "I'idad"],
+  "Junior Secondary":   ["Thanawiyyah 1", "Thanawiyyah 2", "Thanawiyyah 3"],
+  "Senior Secondary":   ["Thanawiyyah 4", "Thanawiyyah 5", "Thanawiyyah 6"],
+  "Higher":             ["Aliyyah 1", "Aliyyah 2", "Aliyyah 3", "Aliyyah 4"],
+};

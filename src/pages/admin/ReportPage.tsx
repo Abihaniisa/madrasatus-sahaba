@@ -23,9 +23,7 @@ export default function ReportPage() {
 
   const report = buildReport(s, data.assessments, data.marks, data.exams);
 
-  function print() {
-    window.print();
-  }
+  function print() { window.print(); }
 
   return (
     <div>
@@ -37,10 +35,12 @@ export default function ReportPage() {
           </div>
 
           <div className="print-hint no-print">
-            <span style={{ fontSize: 16, lineHeight: 1 }}>⚠</span>
             <div>
-              <strong>Before you print:</strong> in the print dialog, set <strong>Layout to Landscape</strong> and <strong>Paper to A4</strong>.
-              Otherwise the report will appear shrunken in the middle of a portrait page.
+              <strong>Print setup</strong>
+              <ul style={{ margin: "6px 0 0 0", paddingLeft: 18, lineHeight: 1.6 }}>
+                <li>Layout — <strong>Landscape</strong></li>
+                <li>Paper — <strong>A4</strong></li>
+              </ul>
             </div>
           </div>
 

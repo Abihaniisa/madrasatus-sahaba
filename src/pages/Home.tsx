@@ -64,7 +64,16 @@ export default function Home() {
       <section className="section-tight">
         <div className="wrap-narrow">
           <div className="founder-block">
-            <div className="founder-photo">AB</div>
+            <div className="founder-photo" style={{ overflow: "hidden", padding: 0 }}>
+              <img
+                src={CONFIG.founderImage}
+                alt={CONFIG.founder}
+                loading="lazy"
+                decoding="async"
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
+              />
+            </div>
             <div className="founder-info">
               <h3>{CONFIG.founder}</h3>
               <div className="role">{CONFIG.founderRole}</div>

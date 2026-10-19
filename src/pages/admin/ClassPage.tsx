@@ -22,11 +22,18 @@ export default function ClassPage() {
   const [isSuper, setIsSuper] = useState(false);
   const [confirmNewAssessment, setConfirmNewAssessment] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     loadSchool().then(setData);
     amISuperAdmin().then(setIsSuper);
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const sec = SECTIONS.find(s => s.classes.includes(cls));
   if (!ready) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
@@ -37,7 +44,6 @@ export default function ClassPage() {
 
   async function createAssessment() {
     setBusy(true);
-    // Determine next number
     const existing = (data?.assessments ?? []).filter(
       a => a.class_name === cls && a.semester === 1 && a.session_label === CONFIG.sessionLabel
     );
@@ -48,7 +54,6 @@ export default function ClassPage() {
     let next = 1;
     while (numbers.has(next)) next++;
     const label = `Assessment ${next}`;
-    // Create one row per subject
     const rows = CONFIG.subjects.map(subject => ({
       class_name: cls,
       subject,
@@ -61,6 +66,7 @@ export default function ClassPage() {
     setBusy(false);
     setConfirmNewAssessment(false);
     loadSchool().then(setData);
+    setToast("Assessment created. You can now find it in 'Enter Marks'.");
   }
 
   return (
@@ -71,7 +77,7 @@ export default function ClassPage() {
           <div className="crumb">
             <Link to="/admin">Students</Link>
             <span>/</span>
-            <span>{sec.name}</span>
+            <Link to="/admin">{sec.name}</Link>
             <span>/</span>
             <span className="current">{cls}</span>
           </div>
@@ -138,6 +144,8 @@ export default function ClassPage() {
           )}
         </div>
       </div>
+
+      {toast && <div className="toast">{toast}</div>}
 
       <Modal
         open={confirmNewAssessment}

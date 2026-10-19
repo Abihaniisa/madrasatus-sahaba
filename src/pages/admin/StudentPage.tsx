@@ -8,6 +8,7 @@ import { useMode } from "../../lib/mode";
 import { AdminTop } from "../../components/AdminTop";
 import { I, waLink } from "../../components/Layout";
 import { DelayedSkeleton } from "../../components/Skeleton";
+import { SemesterCertificate } from "../../components/SemesterCertificate";
 import { Modal } from "../../components/Modal";
 import { supabase } from "../../lib/supabase";
 
@@ -22,8 +23,8 @@ export default function StudentPage() {
   async function reload() { setData(await loadSchool()); }
   useEffect(() => { loadSchool().then(setData); }, []);
 
-  if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={5} /></div></div>;
-  if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={5} /></div></div>;
+  if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
+  if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
 
   const s = data.students.find(x => x.id === id);
   if (!s) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
@@ -54,14 +55,14 @@ export default function StudentPage() {
     <div>
       <AdminTop mode={mode} onMode={setMode} />
       <div className="body">
-        <div className="wrap-narrow">
-          <div className="crumb">
+        <div className="wrap">
+          <div className="crumb no-print">
             <Link to="/admin">Students</Link><span>/</span>
             <Link to={`/admin/class/${encodeURIComponent(s.class_name)}`}>{s.class_name}</Link><span>/</span>
             <span className="current">{s.name}</span>
           </div>
 
-          <div className="ph">
+          <div className="ph no-print">
             <div className="pav">{(s.name[0] ?? "") + (s.name.split(/\s+/)[1]?.[0] ?? "")}</div>
             <div className="pinfo">
               <h1>{s.name}</h1>
@@ -86,50 +87,31 @@ export default function StudentPage() {
               {mode === "manage" && (
                 <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/edit`}>{I.plus} Edit</Link>
               )}
-              <Link className="btn btn-secondary btn-sm" to={`/admin/report/${s.id}`}>{I.print} Reports</Link>
             </div>
           </div>
 
-          <div className="card mb4" style={{ overflow: "hidden" }}>
-            <div style={{ padding: "18px 20px 10px" }}>
-              <div className="d3">Semester report</div>
-              <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
-            </div>
-            <div style={{ padding: "0 20px 18px" }}>
-              <table className="rt">
-                <thead>
-                  <tr>
-                    <th style={{ width: "34%" }}>Subject</th>
-                    <th style={{ width: "16.5%", textAlign: "right" }}>Assessments</th>
-                    <th style={{ width: "16.5%", textAlign: "right" }}>Exam</th>
-                    <th style={{ width: "16.5%", textAlign: "right" }}>Final</th>
-                    <th style={{ width: "16.5%", textAlign: "right" }}>Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.results.map(r => (
-                    <tr key={r.subject}>
-                      <td className="s">{r.subject}</td>
-                      <td className="n">{r.pending ? "Pending" : r.assessmentPct != null ? r.assessmentPct.toFixed(1) + "%" : "—"}</td>
-                      <td className="n">{r.examPct != null ? r.examPct + "/100" : "—"}</td>
-                      <td className="n" style={{ fontWeight: 600, color: "var(--primary)" }}>{r.pending ? "—" : r.final != null ? r.final.toFixed(1) + "%" : "—"}</td>
-                      <td className="n" style={{ fontFamily: "var(--sans)", fontSize: 12.5 }}>{r.pending ? "—" : r.grade.code}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="summary">
-                <div className="it"><div className="l">Semester</div><div className="v">{report.avg != null ? report.avg + "%" : "—"}</div></div>
-                <div className="it"><div className="l">Transcript</div><div className="v">{report.cumulative != null ? report.cumulative + "%" : "—"}</div></div>
-                <div className="it"><div className="l">Grade</div><div className="v" style={{ fontSize: 15 }}>{report.pending ? "—" : report.results[0]?.grade.code ?? "—"}</div></div>
+          {/* Full-size premium certificate with inline print */}
+          <div style={{ marginBottom: 24 }}>
+            <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+              <div>
+                <div className="d3">Semester Report Card</div>
+                <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
               </div>
-              {report.pending && (
-                <div className="notice">Some subjects have pending marks. Those subjects are excluded until the marks are entered.</div>
-              )}
+              <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                {I.print} Print report
+              </button>
+            </div>
+            <div style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
+              <SemesterCertificate
+                student={s}
+                results={report.results}
+                average={report.avg}
+                pending={report.pending}
+              />
             </div>
           </div>
 
-          <div className="card">
+          <div className="card no-print">
             <div style={{ padding: "18px 20px" }}>
               <div className="d3" style={{ marginBottom: 10 }}>Fees</div>
               {fee ? (

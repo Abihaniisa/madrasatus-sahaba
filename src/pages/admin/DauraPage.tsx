@@ -52,14 +52,19 @@ export default function DauraPage() {
               <h1>Daura</h1>
               <p className="sub">Independent intensive programmes. Separate from semester and section averages.</p>
             </div>
-            {mode === "manage" && !showCreate && (
-              <button className="btn btn-primary btn-sm" onClick={() => setShowCreate(true)}>
+            {!showCreate && (
+              <button 
+                className="btn btn-primary btn-sm" 
+                onClick={() => setShowCreate(true)}
+                disabled={mode !== "manage"}
+                title={mode !== "manage" ? "Switch to Manage to create a programme" : ""}
+              >
                 {I.plus} New programme
               </button>
             )}
           </div>
 
-          {mode === "manage" && showCreate && (
+          {showCreate && (
             <CreateForm
               onCancel={() => setShowCreate(false)}
               onCreated={(id) => { setShowCreate(false); nav(`/admin/daura/${id}`); }}
@@ -108,10 +113,12 @@ function CreateForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: 
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    if (!name.trim()) return;
+    if (!name.trim()) { setError("Please enter a programme name."); return; }
     setBusy(true);
     setError(null);
     const subjects = subjectsText.split(",").map(s => s.trim()).filter(Boolean);
+    if (subjects.length === 0) { setError("Please enter at least one subject."); setBusy(false); return; }
+    
     const { data, error } = await supabase
       .from("daura_programs")
       .insert({
@@ -120,7 +127,7 @@ function CreateForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: 
         start_date: startDate || null,
         end_date: endDate || null,
         weeks: parseInt(weeks, 10) || 1,
-        subjects: subjects.length ? subjects : CONFIG.subjects,
+        subjects: subjects,
         status: "open",
       })
       .select()
@@ -144,11 +151,11 @@ function CreateForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: 
         </div>
         <div className="row g3" style={{ flexWrap: "wrap" }}>
           <div className="field flex1" style={{ minWidth: 150 }}>
-            <label>Start date</label>
+            <label>Start date <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional)</span></label>
             <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
           </div>
           <div className="field flex1" style={{ minWidth: 150 }}>
-            <label>End date</label>
+            <label>End date <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional)</span></label>
             <input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
           <div className="field" style={{ minWidth: 110, maxWidth: 140 }}>
@@ -163,7 +170,7 @@ function CreateForm({ onCancel, onCreated }: { onCancel: () => void; onCreated: 
         {error && <div className="notice">{error}</div>}
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
-          <button className="btn btn-primary" disabled={busy || !name.trim()} onClick={submit}>
+          <button className="btn btn-primary" disabled={busy} onClick={submit}>
             {busy ? "Creating…" : "Create programme"}
           </button>
         </div>

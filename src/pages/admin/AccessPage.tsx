@@ -38,7 +38,7 @@ export default function AccessPage() {
     })();
   }, [ready, nav]);
 
-  if (!ready || !allowed) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={4} /></div></div>;
+  if (!ready || !allowed) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready && allowed} rows={4} /></div></div>;
 
   async function onAdd() {
     const email = newEmail.toLowerCase().trim();
@@ -110,21 +110,23 @@ export default function AccessPage() {
             <div className="card" style={{ overflow: "hidden" }}>
               {rows.map(r => {
                 const isMe = r.email === me;
+                const isSuperRow = r.role === "super_admin";
                 return (
                   <div key={r.email} className="access-row">
                     <div style={{ minWidth: 0 }}>
                       <div className="email">
                         {r.email}{isMe && <span className="pill pill-info" style={{ marginLeft: 8 }}>you</span>}
+                        {isSuperRow && <span className="pill pill-primary" style={{ marginLeft: 8 }}>super</span>}
                       </div>
                       <div className="meta">
-                        {r.is_super ? "Super admin" : "Admin"} · {r.expires_at ? `Expires ${r.expires_at}` : "No expiry"}
+                        {isSuperRow ? "Super admin" : "Admin"} · {r.expires_at ? `Expires ${r.expires_at}` : "No expiry"}
                       </div>
                     </div>
                     <div>
                       <input className="input" type="date" value={r.expires_at ?? ""} onChange={e => onSetExpiry(r.email, e.target.value)} style={{ padding: "6px 8px", fontSize: 12.5, width: 140 }} />
                     </div>
                     <div>
-                      <button className="btn btn-ghost btn-sm" onClick={() => setPendingRemove(r.email)} disabled={isMe} style={{ opacity: isMe ? .4 : 1 }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => setPendingRemove(r.email)} disabled={isMe || isSuperRow} style={{ opacity: (isMe || isSuperRow) ? .4 : 1 }}>
                         Remove
                       </button>
                     </div>

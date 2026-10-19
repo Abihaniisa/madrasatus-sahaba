@@ -2,8 +2,7 @@ import { supabase } from "./supabase";
 
 export type AccessRow = {
   email: string;
-  role: string;
-  is_super: boolean;
+  role: "super_admin" | "admin";
   expires_at: string | null;
   created_at: string;
 };
@@ -12,7 +11,7 @@ export async function listAccess(): Promise<AccessRow[]> {
   const { data, error } = await supabase
     .from("authorized_users")
     .select("*")
-    .order("is_super", { ascending: false })
+    .order("role", { ascending: true })
     .order("email");
   if (error) return [];
   return (data as AccessRow[]) ?? [];
@@ -22,9 +21,14 @@ export async function addAccess(email: string, isSuper: boolean, expiresAt: stri
   return supabase.from("authorized_users").insert({
     email: email.toLowerCase().trim(),
     role: isSuper ? "super_admin" : "admin",
-    is_super: isSuper,
     expires_at: expiresAt,
   });
+}
+
+export async function updateRole(email: string, isSuper: boolean) {
+  return supabase.from("authorized_users").update({
+    role: isSuper ? "super_admin" : "admin",
+  }).eq("email", email);
 }
 
 export async function updateExpiry(email: string, expiresAt: string | null) {

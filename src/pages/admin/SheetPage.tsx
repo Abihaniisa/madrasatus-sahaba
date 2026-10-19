@@ -20,7 +20,6 @@ export default function SheetPage() {
   if (!ready) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
 
-  const sec = SECTIONS.find(s => s.classes.includes(cls));
   const students = [...data.students.filter(s => s.class_name === cls)].sort((a, b) => a.name.localeCompare(b.name));
   const assessments = data.assessments
     .filter(a => a.class_name === cls && a.subject === subject && a.session_label === CONFIG.sessionLabel && a.semester === 1)
@@ -39,8 +38,7 @@ export default function SheetPage() {
 
   function subjectAvg(studentId: string): number | null {
     if (!assessments.length) return null;
-    let sum = 0;
-    let counted = 0;
+    let sum = 0, counted = 0;
     for (const a of assessments) {
       const v = markFor(studentId, a.id);
       if (v == null) return null;
@@ -76,44 +74,50 @@ export default function SheetPage() {
               </div>
             </div>
 
-            {assessments.length === 0 ? (
-              <div className="empty"><div className="t">No assessments recorded for {subject} yet</div></div>
-            ) : students.length === 0 ? (
+            {students.length === 0 ? (
               <div className="empty"><div className="t">No students in this class</div></div>
             ) : (
-              <table className="rt table-land sheet-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: 34 }}>#</th>
-                    <th style={{ width: "28%" }}>Student</th>
-                    <th style={{ width: 130 }}>Reg. No.</th>
-                    {assessments.map(a => (
-                      <th key={a.id} style={{ textAlign: "right", fontSize: 10.5 }}>
-                        {a.label}<br />
-                        <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>of {a.max_marks}</span>
-                      </th>
-                    ))}
-                    <th style={{ textAlign: "right" }}>Avg %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((s, i) => {
-                    const avg = subjectAvg(s.id);
-                    return (
-                      <tr key={s.id}>
-                        <td className="n" style={{ color: "var(--ink-3)" }}>{i + 1}</td>
-                        <td className="s">{s.name}</td>
-                        <td className="n" style={{ fontSize: 11, fontFamily: "var(--mono)", textAlign: "left" }}>{s.reg_no}</td>
-                        {assessments.map(a => {
-                          const v = markFor(s.id, a.id);
-                          return <td key={a.id} className="n">{v == null ? "—" : v}</td>;
-                        })}
-                        <td className="n" style={{ fontWeight: 600 }}>{avg != null ? avg.toFixed(1) : "—"}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <>
+                {assessments.length === 0 && (
+                  <div className="sub" style={{ textAlign: "center", marginBottom: 12, fontSize: 12 }}>
+                    No assessments recorded for {subject} yet.
+                  </div>
+                )}
+                <table className="rt table-land sheet-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 34 }}>#</th>
+                      <th style={{ width: "30%" }}>Student</th>
+                      <th style={{ width: 130 }}>Reg. No.</th>
+                      {assessments.map(a => (
+                        <th key={a.id} className="assess" style={{ textAlign: "right" }}>
+                          {a.label}
+                          <br />
+                          <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>of {a.max_marks}</span>
+                        </th>
+                      ))}
+                      <th style={{ textAlign: "right" }}>Avg %</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((s, i) => {
+                      const avg = subjectAvg(s.id);
+                      return (
+                        <tr key={s.id}>
+                          <td className="n" style={{ color: "var(--ink-3)" }}>{i + 1}</td>
+                          <td className="s">{s.name}</td>
+                          <td className="n" style={{ fontSize: 11, fontFamily: "var(--mono)", textAlign: "left" }}>{s.reg_no}</td>
+                          {assessments.map(a => {
+                            const v = markFor(s.id, a.id);
+                            return <td key={a.id} className="n">{v == null ? "—" : v}</td>;
+                          })}
+                          <td className="n" style={{ fontWeight: 600 }}>{avg != null ? avg.toFixed(1) : "—"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </>
             )}
 
             <div className="rc-foot">

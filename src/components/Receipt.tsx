@@ -12,8 +12,11 @@ export function Receipt({
   balance: number;
 }) {
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const parts = student.reg_no.split(/[-/]/);
+  const year = parts[0] || CONFIG.regYear;
+  const seq = parts[parts.length - 1] || "000";
   const receiptNo = payments.length
-    ? `R${CONFIG.regYear}-${student.reg_no.split("-").pop()}-${String(payments.length).padStart(2, "0")}`
+    ? `R${year}-${seq}-${String(payments.length).padStart(2, "0")}`
     : "—";
 
   return (
@@ -25,14 +28,12 @@ export function Receipt({
           Receipt No. {receiptNo} · {today}
         </div>
       </div>
-
       <div className="rc-meta">
         <div className="r"><span className="k">Student</span><span className="v">{student.name}</span></div>
         <div className="r"><span className="k">Reg. No.</span><span className="v mono">{student.reg_no}</span></div>
         <div className="r"><span className="k">Class</span><span className="v">{student.class_name}</span></div>
         <div className="r"><span className="k">Session</span><span className="v">{CONFIG.sessionLabel}</span></div>
       </div>
-
       <table className="rt" style={{ fontSize: 13 }}>
         <thead>
           <tr>

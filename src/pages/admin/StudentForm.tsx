@@ -82,27 +82,6 @@ export default function StudentForm() {
     return null;
   }
 
-  async function nextRegNo(): Promise<string> {
-    const { data } = await supabase
-      .from("students")
-      .select("reg_no")
-      .ilike("reg_no", `${CONFIG.regYear}-${CONFIG.code}-%`)
-      .order("reg_no", { ascending: false })
-      .limit(1);
-    const last = (data && data[0]?.reg_no) as string | undefined;
-    const nextSeq = last ? parseInt(last.split("-").pop() || "0", 10) + 1 : 1;
-    return `${CONFIG.regYear}-${CONFIG.code}-${String(nextSeq).padStart(4, "0")}`;
-  }
-
-  async function checkNinUnique(value: string, ignoreId?: string): Promise<Student | null> {
-    const q = supabase.from("students").select("*").eq("nin", value).limit(1);
-    const { data } = await q;
-    const row = (data && data[0]) as Student | undefined;
-    if (!row) return null;
-    if (ignoreId && row.id === ignoreId) return null;
-    return row;
-  }
-
   async function submit() {
     setError(null);
     const v = validate();
@@ -110,13 +89,6 @@ export default function StudentForm() {
 
     setBusy(true);
     try {
-      const clash = await checkNinUnique(nin, original?.id);
-      if (clash) {
-        setError(`This NIN is already on record for ${clash.name} (${clash.reg_no}).`);
-        setBusy(false);
-        return;
-      }
-
       if (formMode === "edit" && original) {
         const { error } = await supabase.from("students").update({
           name: name.trim(),
@@ -136,10 +108,10 @@ export default function StudentForm() {
         return;
       }
 
-      // CREATE
-      const reg_no = await nextRegNo();
+      // CREATE — reg_no is assigned by the database trigger.
+      // NIN uniqueness is enforced by the database index; we translate
+      // its error into a friendly message below.
       const { data, error } = await supabase.from("students").insert({
-        reg_no,
         name: name.trim(),
         dob,
         gender,
@@ -155,7 +127,16 @@ export default function StudentForm() {
         address: address.trim() || null,
       }).select().single();
 
-      if (error || !data) { setError(error?.message ?? "Could not create student."); setBusy(false); return; }
+      if (error || !data) {
+        const msg = error?.message ?? "";
+        if (msg.includes("students_nin_unique") || msg.toLowerCase().includes("duplicate key")) {
+          setError("This NIN is already on record. Contact the school if this is an error.");
+        } else {
+          setError(msg || "Could not create student.");
+        }
+        setBusy(false);
+        return;
+      }
 
       const newStudent = data as Student;
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CONFIG } from "../lib/config";
 import { amISuperAdmin } from "../lib/access";
+import { supabase } from "../lib/supabase";
 import { I } from "./Layout";
 
 export function AdminTop({ mode, onMode }: { mode: "view" | "manage"; onMode: (m: "view" | "manage") => void }) {
@@ -12,12 +13,17 @@ export function AdminTop({ mode, onMode }: { mode: "view" | "manage"; onMode: (m
 
   useEffect(() => { amISuperAdmin().then(setSuperAdmin); }, []);
 
+  async function signOut() {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  }
+
   return (
     <>
       <div className="top">
         <div className="wrap top-inner">
           <Link to="/admin" className="brand">
-            <img src="/logo.svg" alt="" className="brand-logo" />
+            <div className="brand-mark">M</div>
             <div>
               <div className="brand-name">{CONFIG.short}</div>
             </div>
@@ -35,6 +41,7 @@ export function AdminTop({ mode, onMode }: { mode: "view" | "manage"; onMode: (m
               <button className={mode === "view" ? "active" : ""} onClick={() => onMode("view")}>View</button>
               <button className={mode === "manage" ? "active manage" : ""} onClick={() => onMode("manage")}>Manage</button>
             </div>
+            <button className="btn btn-ghost btn-sm" onClick={signOut} title="Sign out">Sign out</button>
           </div>
         </div>
       </div>

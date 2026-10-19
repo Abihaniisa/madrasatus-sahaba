@@ -1,0 +1,94 @@
+import { useState, type FormEvent } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { CONFIG } from "../lib/config";
+import { signIn, supabase, isAuthorized } from "../lib/supabase";
+import { saveStudentSession, fetchStudentPortal } from "../lib/student";
+
+export default function Login() {
+  const nav = useNavigate();
+  const [identifier, setIdentifier] = useState("");
+  const [secret, setSecret] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const isStudentId = identifier.trim().length === 11 && /^\d+$/.test(identifier.trim());
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    const id = identifier.trim();
+    const sec = secret.trim();
+
+    if (id.includes("@")) {
+      const { error } = await signIn(id, sec);
+      if (error) { setErr(error.message); setBusy(false); return; }
+      const ok = await isAuthorized();
+      if (!ok) { await supabase.auth.signOut(); setErr("Not authorized."); setBusy(false); return; }
+      setBusy(false);
+      nav("/admin");
+      return;
+    }
+
+    if (id.length === 11 && /^\d+$/.test(id)) {
+      const res = await fetchStudentPortal(id, sec.toUpperCase());
+      if (!res.ok) { setErr(res.error || "NIN and Reg. No. do not match."); setBusy(false); return; }
+      saveStudentSession(id, sec.toUpperCase());
+      setBusy(false);
+      nav("/me");
+      return;
+    }
+
+    setErr("Enter an email (for staff) or your 11-digit NIN (for students).");
+    setBusy(false);
+  }
+
+  return (
+    <div className="login-shell">
+      <div className="login-card" style={{ maxWidth: 420 }}>
+        <img src="/logo.svg" alt="" width={60} height={60} style={{ display: "block", margin: "0 auto 18px" }} />
+        <h1>Sign in</h1>
+        <p className="sub">{CONFIG.short}</p>
+        
+        <form className="login-form" onSubmit={onSubmit}>
+          <div className="field">
+            <label>{isStudentId ? "NIN (11 digits)" : "Email Address"}</label>
+            <input
+              className="input"
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
+              placeholder="Staff: Email · Student: 11-digit NIN"
+              required
+              autoComplete="username"
+            />
+          </div>
+          <div className="field">
+            <label>{isStudentId ? "Registration Number" : "Password"}</label>
+            <input
+              className="input"
+              type={isStudentId ? "text" : "password"}
+              value={secret}
+              onChange={e => setSecret(e.target.value)}
+              placeholder={isStudentId ? "2026/MS/0001" : "••••••••"}
+              required
+              autoComplete={isStudentId ? "off" : "current-password"}
+            />
+          </div>
+          {err && <div className="notice">{err}</div>}
+          <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>
+            {busy ? "Signing in…" : "Sign in"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: 24, paddingTop: 20, borderTop: "1px solid var(--line)", textAlign: "center" }}>
+          <p className="sub" style={{ marginBottom: 12 }}>Already on Veritas? View your official credentials.</p>
+          <a href="https://veritas-verify.vercel.app" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-block" style={{ justifyContent: "center" }}>
+            Login via Veritas
+          </a>
+        </div>
+
+        <Link to="/" className="login-public" style={{ marginTop: 24 }}>← Back to public site</Link>
+      </div>
+    </div>
+  );
+}

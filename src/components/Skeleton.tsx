@@ -14,7 +14,7 @@ export function Skeleton({ rows = 3 }: { rows?: number }) {
    Fast fetches (<500 ms) show nothing. Slow fetches show the skeleton
    only while the wait is genuinely noticeable. */
 export function DelayedSkeleton({
-  ready, rows = 4, delay = 500,
+  ready, rows = 4, delay = 200,
 }: {
   ready: boolean;
   rows?: number;
