@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { CONFIG, SECTIONS } from "../../lib/config";
+import { CONFIG } from "../../lib/config";
 import { loadSchool, type SchoolData } from "../../lib/data";
 import { useRequireAuth } from "../../lib/auth";
 import { useMode } from "../../lib/mode";
@@ -83,40 +83,38 @@ export default function SheetPage() {
                     No assessments recorded for {subject} yet.
                   </div>
                 )}
-                <table className="rt table-land sheet-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 34 }}>#</th>
-                      <th style={{ width: "30%" }}>Student</th>
-                      <th style={{ width: 130 }}>Reg. No.</th>
-                      {assessments.map(a => (
-                        <th key={a.id} className="assess" style={{ textAlign: "right" }}>
-                          {a.label}
-                          <br />
-                          <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>of {a.max_marks}</span>
-                        </th>
-                      ))}
-                      <th style={{ textAlign: "right" }}>Avg %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((s, i) => {
-                      const avg = subjectAvg(s.id);
-                      return (
-                        <tr key={s.id}>
-                          <td className="n" style={{ color: "var(--ink-3)" }}>{i + 1}</td>
-                          <td className="s">{s.name}</td>
-                          <td className="n" style={{ fontSize: 11, fontFamily: "var(--mono)", textAlign: "left" }}>{s.reg_no}</td>
-                          {assessments.map(a => {
-                            const v = markFor(s.id, a.id);
-                            return <td key={a.id} className="n">{v == null ? "—" : v}</td>;
-                          })}
-                          <td className="n" style={{ fontWeight: 600 }}>{avg != null ? avg.toFixed(1) : "—"}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                <div className="sheet-scroll">
+                  <table className="rt table-land sheet-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 34 }}>#</th>
+                        <th style={{ minWidth: 160, textAlign: "left" }}>Student</th>
+                        {assessments.map((a, i) => (
+                          <th key={a.id} className="assess" style={{ textAlign: "right", minWidth: 48 }}>
+                            A{i + 1}
+                          </th>
+                        ))}
+                        <th style={{ textAlign: "right", minWidth: 60 }}>Avg %</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.map((s, i) => {
+                        const avg = subjectAvg(s.id);
+                        return (
+                          <tr key={s.id}>
+                            <td className="n" style={{ color: "var(--ink-3)" }}>{i + 1}</td>
+                            <td className="s">{s.name}</td>
+                            {assessments.map(a => {
+                              const v = markFor(s.id, a.id);
+                              return <td key={a.id} className="n">{v == null ? "—" : v}</td>;
+                            })}
+                            <td className="n" style={{ fontWeight: 600 }}>{avg != null ? avg.toFixed(1) : "—"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </>
             )}
 

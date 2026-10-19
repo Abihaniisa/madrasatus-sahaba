@@ -1656,3 +1656,66 @@ button, a, input, select, textarea, .btn, [role="button"] {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+
+/* ============================================================
+   FIXES — 2026-10-20
+   ============================================================ */
+
+/* Remove 300ms mobile tap delay on interactive elements */
+button, a, input, select, textarea, .btn, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Sheet print header hierarchy: school name primary, sheet title secondary */
+.sheet-print .rc-head .s {
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 1.2;
+}
+.sheet-print .rc-head h2 {
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 6px 0 0;
+}
+
+/* Sheet table — natural sizing, no header overflow */
+.sheet-table { table-layout: auto !important; }
+.sheet-table thead th.assess {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 8px 10px;
+  vertical-align: bottom;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--r-2);
+  box-shadow: var(--sh-3);
+  z-index: 200;
+  font-size: 13.5px;
+  font-weight: 500;
+  max-width: 90vw;
+  animation: toast-in 0.2s ease-out;
+}
+@media (max-width: 780px) { .toast { bottom: 84px; } }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
