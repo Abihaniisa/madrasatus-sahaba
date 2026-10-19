@@ -19,12 +19,14 @@ export function subjectResult(
   const subjAssessments = assessments.filter(a => a.subject === subject);
   let pending = false;
 
+  if (examMissing) pending = true;
   if (subjAssessments.length) {
     for (const a of subjAssessments) {
       if (marksByAssess[a.id] == null) { pending = true; break; }
     }
   }
 
+  let examMissing = exam == null;
   let assessmentPct: number | null = null;
   if (subjAssessments.length && !pending) {
     let sum = 0;
@@ -40,10 +42,8 @@ export function subjectResult(
   let final: number | null = null;
   if (!pending && assessmentPct != null && examPct != null)
     final = Math.round((assessmentPct * CONFIG.assessmentWeight + examPct * CONFIG.examWeight) * 100) / 100;
-  else if (!pending && assessmentPct != null)
-    final = Math.round(assessmentPct * 100) / 100;
-  else if (!pending && examPct != null)
-    final = Math.round(examPct * 100) / 100;
+  
+  
 
   return {
     subject,
