@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CONFIG, SECTIONS } from "../lib/config";
+import { CONFIG, SECTIONS, ALL_CLASSES } from "../lib/config";
 import { PublicNav, I } from "../components/Layout";
 import { getStudentSession, clearStudentSession, fetchStudentPortal, type StudentPortalData } from "../lib/student";
 import { buildReport } from "../lib/data";
@@ -14,10 +14,13 @@ type Classmate = {
   gender: "male" | "female" | null;
 };
 
+type ViewState = "directory" | "class" | "certificate";
+
 export default function StudentPortal() {
   const nav = useNavigate();
   const [data, setData] = useState<StudentPortalData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<ViewState>("directory");
   const [restrictedMsg, setRestrictedMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function StudentPortal() {
 
   function signOut() {
     clearStudentSession();
-    nav("/"); // Redirects to public site
+    nav("/");
   }
 
   if (loading) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
@@ -47,18 +50,11 @@ export default function StudentPortal() {
   const report = buildReport(s, assessments, marks, exams);
 
   const classmates: Classmate[] = (data as any).classmates ?? [];
-  // Sort to put the current student first
   const sortedClassmates = [...classmates].sort((a, b) => {
     if (a.name === s.name) return -1;
     if (b.name === s.name) return 1;
     return a.name.localeCompare(b.name);
   });
-
-  const payments = data.fee_payments ?? [];
-  const amount = CONFIG.registrationFee;
-  const paid = payments.reduce((sum: number, p: any) => sum + (p.amount ?? 0), 0);
-  const balance = Math.max(0, amount - paid);
-  const status = paid === 0 ? "Unpaid" : paid >= amount ? "Paid" : "Partial";
 
   return (
     <div>
@@ -69,10 +65,14 @@ export default function StudentPortal() {
           .student-cert-screen { overflow: visible; padding-bottom: 0; }
           .student-cert-scale { transform: none; width: 100%; margin: 0; }
         }
+        .greyed { opacity: 0.5; pointer-events: none; }
       `}</style>
       <PublicNav />
-      <section className="section">
+      
+      <section className="section" style={{ minHeight: "80vh" }}>
         <div className="wrap">
+          
+          {/* TOP HEADER */}
           <div className="ph no-print">
             <div className="pav">{(s.name[0] ?? "") + (s.name.split(/\s+/)[1]?.[0] ?? "")}</div>
             <div className="pinfo">
@@ -81,115 +81,151 @@ export default function StudentPortal() {
                 <span>Reg. No. <strong>{s.reg_no}</strong></span>
                 <span>Class <strong>{s.class_name}</strong></span>
               </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {report.pending
-                  ? <span className="pill pill-warning pill-dot">Pending</span>
-                  : report.avg != null
-                    ? <span className="pill pill-success pill-dot">{report.avg}%</span>
-                    : <span className="pill pill-neutral pill-dot">No results yet</span>}
-                <span className="pill pill-info">{s.mode === "online" ? "Online" : "Physical"}</span>
-              </div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+               {view !== "directory" && (
+                 <button className="btn btn-secondary btn-sm" onClick={() => { setView("directory"); setRestrictedMsg(null); }}>← Directory</button>
+               )}
+               <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>
+            </div>
           </div>
 
-          <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+          {/* VIEW 1: DIRECTORY */}
+          {view === "directory" && (
             <div>
-              <div className="d3">Semester Report Card</div>
-              <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
-            </div>
-            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
-              {I.print} Print report
-            </button>
-          </div>
+              <div className="phead" style={{ marginTop: 20 }}>
+                <div>
+                  <h2 className="d2" style={{ fontSize: 24 }}>School Directory</h2>
+                  <p className="sub">You are enrolled in {s.class_name}. Other classes are restricted.</p>
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <div className="search greyed">
+                    <span className="icon">{I.search}</span>
+                    <input placeholder="Search (Admin only)" />
+                  </div>
+                  <button className="btn btn-primary btn-sm greyed">Add student</button>
+                </div>
+              </div>
 
-          <div className="cert-print-wrapper" style={{ marginBottom: 24 }}>
-            <div className="student-cert-screen">
-              <div className="student-cert-scale">
-                <SemesterCertificate student={s} results={report.results} average={report.avg} pending={report.pending} />
+              {restrictedMsg && (
+                <div className="notice mb4" style={{ background: "var(--warning-soft)", color: "var(--warning)", border: "1px solid #E8D4A8" }}>
+                  {restrictedMsg}
+                </div>
+              )}
+
+              <div className="struct-grid">
+                {SECTIONS.map(sec => (
+                  <div key={sec.id} className="struct-card">
+                    <div className="title">{sec.name}</div>
+                    <div className="classes">
+                      {sec.classes.map(c => {
+                        const isMyClass = c === s.class_name;
+                        return (
+                          <button
+                            key={c}
+                            className={"chip " + (isMyClass ? "active" : "greyed")}
+                            style={{ cursor: isMyClass ? "pointer" : "default" }}
+                            onClick={() => {
+                              if (isMyClass) {
+                                setView("class");
+                                setRestrictedMsg(null);
+                              } else {
+                                setRestrictedMsg(`Access Restricted. You are not enrolled in ${c}.`);
+                              }
+                            }}
+                          >
+                            {c} {isMyClass && "✓"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="desc">{sec.desc}</div>
+                  </div>
+                ))}
+              </div>
+              
+              <div style={{ marginTop: 24 }}>
+                <button className="btn btn-primary" onClick={() => setView("certificate")}>
+                  {I.print} View My Certificate
+                </button>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="card mb4 no-print">
-            <div style={{ padding: "18px 20px" }}>
-              <div className="d3" style={{ marginBottom: 10 }}>Fees</div>
-              <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "baseline" }}>
-                <div><div className="sub">Amount</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>₦{amount.toLocaleString("en-NG")}</div></div>
-                <div><div className="sub">Paid</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>₦{paid.toLocaleString("en-NG")}</div></div>
-                <div><div className="sub">Balance</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600, color: "var(--warning)" }}>₦{balance.toLocaleString("en-NG")}</div></div>
-                <div style={{ marginLeft: "auto" }}>
-                  <span className={"pill pill-dot pill-" + (status === "Paid" ? "success" : status === "Partial" ? "warning" : "danger")}>
-                    {status}
-                  </span>
+          {/* VIEW 2: CLASS PAGE */}
+          {view === "class" && (
+            <div>
+              <div className="phead" style={{ marginTop: 20 }}>
+                <div>
+                  <h2 className="d2" style={{ fontSize: 24 }}>{s.class_name}</h2>
+                  <p className="sub">{sortedClassmates.length} students · Class roster</p>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="btn btn-secondary btn-sm greyed">{I.print} Class sheet</button>
+                  <button className="btn btn-secondary btn-sm greyed">{I.plus} New Assessment</button>
+                  <button className="btn btn-secondary btn-sm greyed">Enter marks</button>
+                  <button className="btn btn-primary btn-sm greyed">Enter exam</button>
+                </div>
+              </div>
+
+              <div className="slist">
+                {sortedClassmates.map((c, i) => {
+                  const isMe = c.name === s.name;
+                  return (
+                    <div 
+                      key={c.name + i} 
+                      className="srow" 
+                      style={{ 
+                        display: "grid", 
+                        opacity: isMe ? 1 : 0.4, 
+                        cursor: isMe ? "pointer" : "default",
+                        background: isMe ? "var(--primary-soft)" : "transparent"
+                      }}
+                      onClick={() => { if (isMe) setView("certificate"); }}
+                    >
+                      <div className="avatar" style={{ background: isMe ? "var(--primary)" : "var(--muted)", color: isMe ? "#fff" : "var(--ink)" }}>
+                        {(c.name[0] ?? "") + (c.name.split(/\s+/)[1]?.[0] ?? "")}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div className="name">
+                          {c.name} {isMe && <span className="pill pill-primary" style={{ marginLeft: 6, fontSize: 10 }}>You</span>}
+                        </div>
+                        <div className="id">{c.section}</div>
+                      </div>
+                      <div className="stat-mini">—</div>
+                      <div style={{ color: isMe ? "var(--primary)" : "var(--ink-4)" }}>
+                        {isMe ? I.arrow : ""}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* VIEW 3: CERTIFICATE */}
+          {view === "certificate" && (
+            <div style={{ marginTop: 20 }}>
+              <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+                <div>
+                  <div className="d3">Semester Report Card</div>
+                  <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
+                </div>
+                <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
+                  {I.print} Print report
+                </button>
+              </div>
+
+              <div className="cert-print-wrapper" style={{ marginBottom: 24 }}>
+                <div className="student-cert-screen">
+                  <div className="student-cert-scale">
+                    <SemesterCertificate student={s} results={report.results} average={report.avg} pending={report.pending} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Class Directory & Roster */}
-          <div className="card mb4 no-print">
-             <div style={{ padding: "18px 20px" }}>
-               <div className="d3" style={{ marginBottom: 10 }}>School Directory</div>
-               <div className="struct-grid mb4">
-                 {SECTIONS.map(sec => (
-                   <div key={sec.id} className="struct-card" style={{ padding: 12 }}>
-                     <div className="title" style={{ fontSize: 15, marginBottom: 6 }}>{sec.name}</div>
-                     <div className="classes" style={{ gap: 6 }}>
-                       {sec.classes.map(c => (
-                         <button
-                           key={c}
-                           className={"chip " + (c === s.class_name ? "active" : "")}
-                           style={{ cursor: "pointer", opacity: c === s.class_name ? 1 : 0.6 }}
-                           onClick={() => {
-                             if (c !== s.class_name) {
-                               setRestrictedMsg(`Access Restricted. You are not enrolled in ${c}.`);
-                             } else {
-                               setRestrictedMsg(null);
-                             }
-                           }}
-                         >
-                           {c}
-                         </button>
-                       ))}
-                     </div>
-                   </div>
-                 ))}
-               </div>
-
-               {restrictedMsg && (
-                 <div className="notice mb4" style={{ background: "var(--warning-soft)", color: "var(--warning)", border: "1px solid #E8D4A8" }}>
-                   {restrictedMsg}
-                 </div>
-               )}
-
-               <div className="d3" style={{ marginBottom: 10 }}>My Class ({s.class_name})</div>
-               
-               {/* Admin actions - Greyed out */}
-               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16, opacity: 0.4, pointerEvents: "none" }}>
-                 <button className="btn btn-secondary btn-sm" disabled>{I.print} Class sheet</button>
-                 <button className="btn btn-secondary btn-sm" disabled>Enter marks</button>
-                 <button className="btn btn-primary btn-sm" disabled>Enter exam</button>
-               </div>
-
-               <div className="slist">
-                 {sortedClassmates.map((c, i) => {
-                   const isMe = c.name === s.name;
-                   return (
-                     <div key={c.name + i} className="srow" style={{ display: "grid", opacity: isMe ? 1 : 0.5 }}>
-                       <div className="avatar">{(c.name[0] ?? "") + (c.name.split(/\s+/)[1]?.[0] ?? "")}</div>
-                       <div style={{ minWidth: 0 }}>
-                         <div className="name">{c.name} {isMe && <span className="pill pill-primary" style={{ marginLeft: 6, fontSize: 10 }}>You</span>}</div>
-                         <div className="id">{c.section}</div>
-                       </div>
-                       <div className="stat-mini">—</div>
-                       <div style={{ color: "var(--ink-4)", cursor: isMe ? "pointer" : "default" }}>{I.arrow}</div>
-                     </div>
-                   );
-                 })}
-               </div>
-             </div>
-          </div>
         </div>
       </section>
     </div>

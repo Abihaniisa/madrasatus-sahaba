@@ -23,7 +23,7 @@ export function AdminTop({ mode, onMode }: { mode: "view" | "manage"; onMode: (m
       <div className="top">
         <div className="wrap top-inner">
           <Link to="/admin" className="brand">
-            <div className="brand-mark">M</div>
+            <img src="/logo.svg" className="brand-logo" alt="" />
             <div>
               <div className="brand-name">{CONFIG.short}</div>
             </div>
