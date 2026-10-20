@@ -32,7 +32,7 @@ export default function Login() {
 
     if (isStudentId) {
       const res = await fetchStudentPortal(cleanId, sec.toUpperCase());
-      if (!res.ok) { setErr(res.error || "NIN and Reg. No. do not match."); setBusy(false); return; }
+      if (!res.ok) { setErr(res.error || "Invalid credentials."); setBusy(false); return; }
       saveStudentSession(cleanId, sec.toUpperCase());
       setBusy(false);
       nav("/me");
@@ -55,57 +55,29 @@ export default function Login() {
           href="https://veritas-verify.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            padding: "10px 12px",
-            margin: "16px 0 20px",
-            border: "1px solid var(--line)",
-            borderRadius: 10,
-            textDecoration: "none",
-            color: "var(--ink)",
-          }}
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", margin: "16px 0 20px", border: "1px solid var(--line)", borderRadius: 10, textDecoration: "none", color: "var(--ink)" }}
         >
-          <img
-            src="/veritas-logo.svg"
-            alt=""
-            width={28}
-            height={28}
-            style={{ display: "block", flexShrink: 0 }}
-            onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-          />
+          <img src="/veritas-logo.svg" alt="" width={28} height={28} style={{ display: "block", flexShrink: 0 }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>Veritas</div>
-            <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>
-              Sahaba certificates, verifiable on Veritas.
-            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>Sahaba certificates, verifiable on Veritas.</div>
           </div>
-          <div style={{ color: "var(--primary)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
-            Open →
-          </div>
+          <div style={{ color: "var(--primary)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>Open →</div>
         </a>
 
         <form className="login-form" onSubmit={onSubmit}>
           <div className="field">
             <label>{isStudentId ? "NIN (11 digits)" : "Email address"}</label>
-            <input
-              className="input"
-              value={identifier}
-              onChange={e => setIdentifier(e.target.value)}
-              placeholder="Staff: email · Student: 11-digit NIN"
-              required
-              autoComplete="username"
-            />
+            <input className="input" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="Staff: email · Student: 11-digit NIN" required autoComplete="username" />
           </div>
           <div className="field">
-            <label>{isStudentId ? "Registration number" : "Password"}</label>
+            <label>{isStudentId ? "Reg. No. or Phone" : "Password"}</label>
             <input
               className="input"
               type={isStudentId ? "text" : "password"}
               value={secret}
               onChange={e => setSecret(e.target.value)}
-              placeholder={isStudentId ? "2026/MS/001" : "••••••••"}
+              placeholder={isStudentId ? "2026/MS/001 or 080..." : "••••••••"}
               required
               autoComplete={isStudentId ? "off" : "current-password"}
               autoCapitalize={isStudentId ? "characters" : "none"}

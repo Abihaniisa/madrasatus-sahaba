@@ -15,7 +15,7 @@ export function AdminTop({ mode, onMode }: { mode: "view" | "manage"; onMode: (m
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.href = "/login";
+    window.location.href = "/";
   }
 
   return (
