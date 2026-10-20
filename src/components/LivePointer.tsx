@@ -73,12 +73,37 @@ export function LivePointer() {
           margin: 0 auto; 
         }
         
-        .lp-lead { display: flex; align-items: center; gap: 8px; min-width: 0; }
-        .lp-dot { position: relative; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); }
-        .lp-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid var(--gold); opacity: 0; animation: lp-ring 2.6s ease-out infinite; }
+        .lp-lead { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        
+        /* The Pulsing Wave Signal */
+        .lp-dot-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 12px; height: 12px; }
+        .lp-dot { 
+          position: relative; 
+          width: 8px; 
+          height: 8px; 
+          border-radius: 50%; 
+          background: var(--gold); 
+          z-index: 2;
+        }
         .lp-dot.calm { background: var(--primary); } 
-        .lp-dot.calm::after { display: none; }
-        @keyframes lp-ring { from { transform: scale(.55); opacity: .7; } to { transform: scale(1.5); opacity: 0; } }
+        
+        /* The Wave Rings */
+        .lp-ring { 
+          position: absolute; 
+          inset: 0; 
+          border-radius: 50%; 
+          background: var(--gold); 
+          opacity: 0; 
+          animation: pulse-wave 2s infinite ease-out; 
+          z-index: 1;
+        }
+        .lp-dot.calm + .lp-ring { background: var(--primary); }
+        .lp-ring:nth-child(2) { animation-delay: 1s; } /* Second wave starts halfway */
+
+        @keyframes pulse-wave { 
+          0% { transform: scale(1); opacity: 0.6; } 
+          100% { transform: scale(3.5); opacity: 0; } 
+        }
         
         .lp-headline { 
           font-family: var(--serif); 
@@ -89,10 +114,7 @@ export function LivePointer() {
           overflow: hidden;
           text-overflow: ellipsis;
         }
-        .lp-headline strong { 
-          color: var(--primary); 
-          font-weight: 600; 
-        }
+        .lp-headline strong { color: var(--primary); font-weight: 600; }
         
         .lp-units { display: flex; align-items: center; gap: 10px; background: var(--surface); padding: 6px 12px; border-radius: var(--r-2); border: 1px solid var(--line); box-shadow: var(--sh-1); flex-shrink: 0; }
         .lp-unit { text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 28px; }
@@ -109,7 +131,11 @@ export function LivePointer() {
 
       <div className="lp-panel">
         <div className="lp-lead">
-          <span className={`lp-dot ${status.mode === "session" ? "calm" : ""}`} aria-hidden="true" />
+          <div className="lp-dot-wrapper">
+            <div className={`lp-dot ${status.mode === "session" ? "calm" : ""}`} />
+            <div className="lp-ring" />
+            <div className="lp-ring" />
+          </div>
           <div className="lp-headline">
             {status.context} · <strong>{status.action}</strong>
           </div>

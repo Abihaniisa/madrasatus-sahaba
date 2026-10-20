@@ -8,16 +8,15 @@ export default function Home() {
     <PublicLayout>
       <LivePointer />
       
-      {/* Hero section - Reduced top padding to kill the gap */}
-      <section className="hero" style={{ paddingTop: "16px", paddingBottom: "16px" }}>
+      <section className="home-hero">
         <div className="wrap">
-          <div style={{ maxWidth: 660 }}>
-            <span className="eyebrow" style={{ display: "block", marginBottom: "4px" }}>Established {CONFIG.founded}</span>
-            <h1 className="d1" style={{ margin: "0 0 8px" }}>{CONFIG.name}</h1>
-            <p className="lede" style={{ marginBottom: "16px" }}>
+          <div className="home-hero-inner">
+            <span className="eyebrow">Established {CONFIG.founded}</span>
+            <h1 className="d1">{CONFIG.name}</h1>
+            <p className="lede">
               Preparing students to memorise the Book of Allah with structure, consistency, and an unbroken chain of learning.
             </p>
-            <div className="hero-actions" style={{ marginBottom: "16px" }}>
+            <div className="hero-actions">
               <Link to="/curriculum" className="btn btn-primary">
                 View curriculum {I.arrow}
               </Link>
@@ -30,29 +29,29 @@ export default function Home() {
                 {I.whatsapp} Begin admission
               </a>
             </div>
-            <div className="hero-arabic" style={{ marginTop: "12px", paddingTop: "12px" }}>
+            <div className="hero-arabic">
               وَرَتِّلِ الْقُرْءَانَ تَرْتِيلًا
             </div>
           </div>
         </div>
       </section>
 
-      {/* Programme section - Reduced padding */}
-      <section className="section" style={{ paddingTop: "10px", paddingBottom: "10px" }}>
+      <section className="home-programme">
         <div className="wrap">
-          <div className="section-head" style={{ marginBottom: "16px" }}>
+          <div className="section-head">
             <span className="eyebrow">The programme</span>
-            <h2 className="d2" style={{ margin: "4px 0 6px" }}>Three sections. One path.</h2>
+            <h2 className="d2">Three sections. One path.</h2>
             <p className="lede">Every student follows a documented curriculum from foundation to full memorisation.</p>
           </div>
+          
           <div className="struct-grid">
             {SECTIONS.map((sec) => (
-              <div key={sec.id} className="struct-card" style={{ padding: "16px" }}>
-                <div className="title" style={{ marginBottom: "6px" }}>
+              <div key={sec.id} className="struct-card">
+                <div className="title">
                   <span>{sec.name}</span>
                   {sec.inactive && <span className="pill pill-neutral">Opening soon</span>}
                 </div>
-                <div className="classes" style={{ marginBottom: "8px" }}>
+                <div className="classes">
                   {sec.classes.map((c) => (
                     <span key={c} className="chip">{c}</span>
                   ))}
@@ -64,24 +63,22 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Founder section - Destroyed the gap between Higher and Sheikh picture */}
-      <section className="section" style={{ paddingTop: "10px", paddingBottom: "20px" }}>
+      <section className="home-founder">
         <div className="wrap-narrow">
-          <div className="founder-block" style={{ marginTop: 0 }}>
-            <div className="founder-photo" style={{ overflow: "hidden", padding: 0 }}>
+          <div className="founder-block">
+            <div className="founder-photo">
               <img
                 src={CONFIG.founderImage}
                 alt={CONFIG.founder}
                 loading="lazy"
                 decoding="async"
-                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
               />
             </div>
-            <div className="founder-info" style={{ padding: "20px 16px" }}>
-              <h3 style={{ margin: "0 0 2px" }}>{CONFIG.founder}</h3>
-              <div className="role" style={{ marginBottom: "6px" }}>{CONFIG.founderRole}</div>
-              <p style={{ margin: 0 }}>
+            <div className="founder-info">
+              <h3>{CONFIG.founder}</h3>
+              <div className="role">{CONFIG.founderRole}</div>
+              <p>
                 A devoted scholar and educator who established {CONFIG.name} to provide authentic,
                 structured, and accessible Qur'anic education to students from all backgrounds.
               </p>

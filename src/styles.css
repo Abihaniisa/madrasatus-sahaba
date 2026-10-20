@@ -26,7 +26,7 @@ a{color:inherit;text-decoration:none}
 :focus{outline:none}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}
 ::selection{background:var(--primary-soft);color:var(--primary-2)}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms;animation-duration:.01ms}}
 
 .d1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4.4vw,40px);line-height:1.06;letter-spacing:-.022em}
 .d2{font-family:var(--serif);font-weight:500;font-size:clamp(20px,2.6vw,27px);line-height:1.14;letter-spacing:-.018em}
@@ -312,7 +312,7 @@ a{color:inherit;text-decoration:none}
 .g2{gap:8px}.g3{gap:12px}.g4{gap:16px}
 .mb2{margin-bottom:6px}.mb3{margin-bottom:10px}.mb4{margin-bottom:14px}.mb6{margin-bottom:20px}
 .mt2{margin-top:6px}.mt4{margin-top:14px}.mt6{margin-top:20px}
-.flex1{flex:1}.hidden{display:none!important}.center{text-align:center}.right{text-align:right}
+.flex1{flex:1}.hidden{display:none}.center{text-align:center}.right{text-align:right}
 
 .tabbar{display:none}
 @media(max-width:780px){
@@ -324,7 +324,7 @@ a{color:inherit;text-decoration:none}
 }
 
 @media print{
-  .nav,.top,.edit-banner,.no-print,.btn,.foot,.tabbar,.crumb{display:none!important}
+  .nav,.top,.edit-banner,.no-print,.btn,.foot,.tabbar,.crumb{display:none}
   body{background:#fff;padding:0}
   .body{padding:0}
   .rc{box-shadow:none;border:none;padding:0;max-width:100%}
@@ -348,77 +348,77 @@ a{color:inherit;text-decoration:none}
 }
 
 /* builder credit link */
-.builder-credit{color:var(--primary) !important;font-weight:500}
-.builder-credit:hover{color:var(--primary-2) !important}
+.builder-credit{color:var(--primary) ;font-weight:500}
+.builder-credit:hover{color:var(--primary-2) }
 
 /* ---- overrides: bigger header, tighter gaps, single apply button ---- */
 .wrap .nav .brand-mark,
-.nav .brand-mark{width:48px !important;height:48px !important;border-radius:13px !important;font-size:24px !important}
-.nav .brand-name{font-size:17px !important;letter-spacing:-.015em !important}
-.nav .brand-sub{font-size:11.5px !important}
-.nav-inner{height:72px !important}
+.nav .brand-mark{width:48px ;height:48px ;border-radius:13px ;font-size:24px }
+.nav .brand-name{font-size:17px ;letter-spacing:-.015em }
+.nav .brand-sub{font-size:11.5px }
+.nav-inner{height:72px }
 
-.top .brand-mark{width:38px !important;height:38px !important;border-radius:10px !important;font-size:19px !important}
-.top .brand-name{font-size:15px !important}
-.top-inner{height:64px !important}
+.top .brand-mark{width:38px ;height:38px ;border-radius:10px ;font-size:19px }
+.top .brand-name{font-size:15px }
+.top-inner{height:64px }
 
 /* gaps: reduce globally, and specifically on home */
-.hero{padding:24px 0 16px !important}
-.hero h1{margin:2px 0 6px !important}
-.hero .lede{margin-bottom:14px !important}
-.hero-arabic{margin-top:12px !important;padding-top:10px !important}
+.hero{padding:24px 0 16px }
+.hero h1{margin:2px 0 6px }
+.hero .lede{margin-bottom:14px }
+.hero-arabic{margin-top:12px ;padding-top:10px }
 
-.section{padding:22px 0 !important}
-.section-tight{padding:14px 0 !important}
-.section-head{margin-bottom:14px !important}
+.section{padding:22px 0 }
+.section-tight{padding:14px 0 }
+.section-head{margin-bottom:14px }
 
-.founder-block + * {margin-top:0 !important}
-.foot{margin-top:22px !important;padding:22px 0 80px !important}
+.founder-block + * {margin-top:0 }
+.foot{margin-top:22px ;padding:22px 0 80px }
 
 /* ---- founder block: taller image, tighter bottom ---- */
-.founder-block{grid-template-columns:1fr 1fr !important;gap:0 !important;padding:0 !important;overflow:hidden !important;align-items:stretch !important}
-.founder-photo{min-height:380px !important;aspect-ratio:auto !important;border-radius:0 !important;font-size:72px !important}
-.founder-info{padding:22px 26px !important;display:flex !important;flex-direction:column !important;justify-content:flex-start !important}
-.founder-info h3{margin-top:0 !important;font-size:22px !important}
-.founder-info .role{margin-bottom:10px !important}
-.founder-info p{font-size:14px !important;line-height:1.65 !important}
+.founder-block{grid-template-columns:1fr 1fr ;gap:0 ;padding:0 ;overflow:hidden ;align-items:stretch }
+.founder-photo{min-height:380px ;aspect-ratio:auto ;border-radius:0 ;font-size:72px }
+.founder-info{padding:22px 26px ;display:flex ;flex-direction:column ;justify-content:flex-start }
+.founder-info h3{margin-top:0 ;font-size:22px }
+.founder-info .role{margin-bottom:10px }
+.founder-info p{font-size:14px ;line-height:1.65 }
 
 /* tighter gap between founder block and footer */
-.section-tight:has(.founder-block){padding-bottom:0 !important}
-.section-tight + .foot{margin-top:0 !important}
+.section-tight:has(.founder-block){padding-bottom:0 }
+.section-tight + .foot{margin-top:0 }
 
 /* footer: reduce bottom space on desktop */
-.foot{padding:22px 0 30px !important;margin-top:22px !important}
-@media(max-width:780px){.foot{padding:22px 0 84px !important}}
+.foot{padding:22px 0 30px ;margin-top:22px }
+@media(max-width:780px){.foot{padding:22px 0 84px }}
 
 /* builder avatar bigger without touching container */
-.builder-avatar{width:120px !important;height:120px !important;font-size:42px !important}
+.builder-avatar{width:120px ;height:120px ;font-size:42px }
 
 /* public site link: always show label, better contrast */
-.exit-link{color:var(--ink-2) !important;border:1px solid var(--line-2) !important;padding:6px 12px !important;background:var(--surface) !important;border-radius:var(--r-2) !important}
-.exit-link .lbl{display:inline !important}
-.exit-link:hover{background:var(--muted) !important;color:var(--ink) !important}
+.exit-link{color:var(--ink-2) ;border:1px solid var(--line-2) ;padding:6px 12px ;background:var(--surface) ;border-radius:var(--r-2) }
+.exit-link .lbl{display:inline }
+.exit-link:hover{background:var(--muted) ;color:var(--ink) }
 
 /* print: hide the misleading "weekly breakdown available" text on curriculum list */
 @media print {
-  .class-list .cmeta{display:none !important}
-  .curriculum-download-list .no-print{display:none !important}
+  .class-list .cmeta{display:none }
+  .curriculum-download-list .no-print{display:none }
 }
 
 /* semester label shown only in print */
 .hidden-print{display:none}
-@media print{.hidden-print{display:block !important}}
+@media print{.hidden-print{display:block }}
 
 /* founder block: image on top, text below; taller image */
-.founder-block{grid-template-columns:1fr !important;gap:0 !important;padding:0 !important;overflow:hidden !important;align-items:stretch !important}
-.founder-photo{min-height:420px !important;aspect-ratio:auto !important;border-radius:0 !important;font-size:84px !important}
-.founder-info{padding:22px 26px !important}
-.founder-info h3{margin-top:0 !important;font-size:22px !important}
-.founder-info p{font-size:14px !important;line-height:1.65 !important}
+.founder-block{grid-template-columns:1fr ;gap:0 ;padding:0 ;overflow:hidden ;align-items:stretch }
+.founder-photo{min-height:420px ;aspect-ratio:auto ;border-radius:0 ;font-size:84px }
+.founder-info{padding:22px 26px }
+.founder-info h3{margin-top:0 ;font-size:22px }
+.founder-info p{font-size:14px ;line-height:1.65 }
 
 /* tighten gap between founder block and footer */
-.section-tight:has(.founder-block){padding-bottom:0 !important}
-.section-tight + .foot{margin-top:0 !important}
+.section-tight:has(.founder-block){padding-bottom:0 }
+.section-tight + .foot{margin-top:0 }
 
 /* skeleton shimmer */
 .skel{background:linear-gradient(90deg,var(--muted) 0%,#E6E2D6 50%,var(--muted) 100%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:6px;height:14px;margin-bottom:10px}
@@ -427,12 +427,12 @@ a{color:inherit;text-decoration:none}
 
 /* single-report printing: only show the chosen block */
 @media print {
-  .report-tabs, .report-tabs + * { display: none !important; }
-  .report-block { display: none !important; }
-  body.print-semester .report-block.semester { display: block !important; }
-  body.print-section .report-block.section { display: block !important; }
-  body.print-transcript .report-block.transcript { display: block !important; }
-  body.print-admission .report-block.admission { display: block !important; }
+  .report-tabs, .report-tabs + * { display: none ; }
+  .report-block { display: none ; }
+  body.print-semester .report-block.semester { display: block ; }
+  body.print-section .report-block.section { display: block ; }
+  body.print-transcript .report-block.transcript { display: block ; }
+  body.print-admission .report-block.admission { display: block ; }
   .report-block { page-break-after: always; }
   .report-block:last-of-type { page-break-after: auto; }
 }
@@ -443,72 +443,72 @@ a{color:inherit;text-decoration:none}
 .foot .brand-logo{width:40px;height:40px}
 
 /* founder block — 16:9 rectangle image, text below */
-.founder-block{grid-template-columns:1fr !important;gap:0 !important;padding:0 !important;overflow:hidden !important}
+.founder-block{grid-template-columns:1fr ;gap:0 ;padding:0 ;overflow:hidden }
 .founder-photo{
-  aspect-ratio:16/9 !important;
-  min-height:0 !important;
-  width:100% !important;
-  border-radius:0 !important;
-  font-size:60px !important;
+  aspect-ratio:16/9 ;
+  min-height:0 ;
+  width:100% ;
+  border-radius:0 ;
+  font-size:60px ;
 }
-.founder-info{padding:22px 26px !important}
-.founder-info h3{margin-top:0 !important;font-size:22px !important}
-.founder-info p{font-size:14px !important;line-height:1.65 !important}
+.founder-info{padding:22px 26px }
+.founder-info h3{margin-top:0 ;font-size:22px }
+.founder-info p{font-size:14px ;line-height:1.65 }
 
 /* logo bigger */
-.brand-logo{width:56px !important;height:56px !important}
-.top .brand-logo{width:42px !important;height:42px !important}
-.foot .brand-logo{width:48px !important;height:48px !important}
-.nav .brand-name{font-size:20px !important}
-.nav .brand-sub{font-size:12px !important}
-.nav-inner{height:80px !important}
+.brand-logo{width:56px ;height:56px }
+.top .brand-logo{width:42px ;height:42px }
+.foot .brand-logo{width:48px ;height:48px }
+.nav .brand-name{font-size:20px }
+.nav .brand-sub{font-size:12px }
+.nav-inner{height:80px }
 
 /* founder block — 16:10 image, matched info panel */
-.founder-block{grid-template-columns:1fr !important;grid-template-rows:auto auto !important;gap:0 !important;padding:0 !important;overflow:hidden !important}
+.founder-block{grid-template-columns:1fr ;grid-template-rows:auto auto ;gap:0 ;padding:0 ;overflow:hidden }
 .founder-photo{
-  aspect-ratio:16/10 !important;
-  min-height:0 !important;
-  width:100% !important;
-  border-radius:0 !important;
-  font-size:64px !important;
+  aspect-ratio:16/10 ;
+  min-height:0 ;
+  width:100% ;
+  border-radius:0 ;
+  font-size:64px ;
 }
 .founder-info{
-  padding:26px 28px !important;
-  min-height:280px !important;
-  display:flex !important;
-  flex-direction:column !important;
-  justify-content:center !important;
+  padding:26px 28px ;
+  min-height:280px ;
+  display:flex ;
+  flex-direction:column ;
+  justify-content:center ;
 }
-.founder-info h3{margin-top:0 !important;font-size:22px !important}
-.founder-info p{font-size:14px !important;line-height:1.7 !important;margin-bottom:14px !important}
+.founder-info h3{margin-top:0 ;font-size:22px }
+.founder-info p{font-size:14px ;line-height:1.7 ;margin-bottom:14px }
 
 /* founder block — 16:9 image, tighter info, footer touches it */
-.founder-block{grid-template-columns:1fr !important;grid-template-rows:auto auto !important;gap:0 !important;padding:0 !important;overflow:hidden !important}
+.founder-block{grid-template-columns:1fr ;grid-template-rows:auto auto ;gap:0 ;padding:0 ;overflow:hidden }
 .founder-photo{
-  aspect-ratio:16/9 !important;
-  min-height:0 !important;
-  width:100% !important;
-  border-radius:0 !important;
-  font-size:60px !important;
+  aspect-ratio:16/9 ;
+  min-height:0 ;
+  width:100% ;
+  border-radius:0 ;
+  font-size:60px ;
 }
 .founder-info{
-  padding:20px 24px !important;
-  min-height:0 !important;
-  display:block !important;
+  padding:20px 24px ;
+  min-height:0 ;
+  display:block ;
 }
-.founder-info h3{margin-top:0 !important;font-size:20px !important;margin-bottom:2px !important}
-.founder-info .role{margin-bottom:8px !important}
-.founder-info p{font-size:13.5px !important;line-height:1.6 !important;margin-bottom:0 !important}
+.founder-info h3{margin-top:0 ;font-size:20px ;margin-bottom:2px }
+.founder-info .role{margin-bottom:8px }
+.founder-info p{font-size:13.5px ;line-height:1.6 ;margin-bottom:0 }
 
 /* remove gap between the founder section and the footer */
-.section-tight:has(.founder-block){padding-bottom:0 !important}
+.section-tight:has(.founder-block){padding-bottom:0 }
 .section-tight:has(.founder-block) + .foot,
-.section-tight:has(.founder-block) ~ .foot{margin-top:0 !important}
-.foot{margin-top:0 !important}
+.section-tight:has(.founder-block) ~ .foot{margin-top:0 }
+.foot{margin-top:0 }
 
 /* tighter header bar — less vertical padding, same logo and text */
-.nav .nav-inner{height:64px !important}
-.top .top-inner{height:52px !important}
+.nav .nav-inner{height:64px }
+.top .top-inner{height:52px }
 
 /* modal */
 .modal-backdrop{position:fixed;inset:0;background:rgba(23,28,24,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -520,7 +520,7 @@ a{color:inherit;text-decoration:none}
 .rc-head .s{white-space:nowrap;font-size:11px;letter-spacing:.12em}
 
 /* fee-student row a touch taller */
-.fee-student{padding:14px 16px !important}
+.fee-student{padding:14px 16px }
 
 /* access row — email ellipsis on long addresses */
 .access-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -551,11 +551,11 @@ a{color:inherit;text-decoration:none}
   .table-land{font-size:11px}
   .report-block{page-break-after:always}
   .report-block:last-of-type{page-break-after:auto}
-  .report-tabs{display:none!important}
-  .report-block{display:none!important}
-  body.print-semester .report-block.semester{display:block!important}
-  body.print-transcript .report-block.transcript{display:block!important}
-  body.print-admission .report-block.admission{display:block!important}
+  .report-tabs{display:none}
+  .report-block{display:none}
+  body.print-semester .report-block.semester{display:block}
+  body.print-transcript .report-block.transcript{display:block}
+  body.print-admission .report-block.admission{display:block}
 }
 
 /* sheet table */
@@ -569,7 +569,7 @@ a{color:inherit;text-decoration:none}
 .receipt-print{box-shadow:none;border:1px solid var(--line)}
 
 @media print {
-  body .modal-backdrop{background:#fff !important;position:static !important;padding:0 !important}
+  body .modal-backdrop{background:#fff ;position:static ;padding:0 }
   body .modal-card{box-shadow:none;padding:0;max-width:100%}
   .receipt-print{border:none}
 }
@@ -1041,11 +1041,11 @@ a{color:inherit;text-decoration:none}
   .cert-band .cv{font-size:22px}
   .cert-transcript{font-size:11px}
   .cert-transcript td{font-size:10.5px}
-  .report-tabs,.no-print{display:none!important}
-  .report-block{display:none!important}
-  body.print-semester .report-block.semester{display:block!important}
-  body.print-transcript .report-block.transcript{display:block!important}
-  body.print-admission .report-block.admission{display:block!important}
+  .report-tabs,.no-print{display:none}
+  .report-block{display:none}
+  body.print-semester .report-block.semester{display:block}
+  body.print-transcript .report-block.transcript{display:block}
+  body.print-admission .report-block.admission{display:block}
 }
 
 /* screen-only: minor spacing */
@@ -1064,74 +1064,74 @@ a{color:inherit;text-decoration:none}
    ============================================================ */
 
 /* bigger logo, no shift to title */
-.cert-head-logo{width:78px !important;height:78px !important;margin-bottom:12px !important}
+.cert-head-logo{width:78px ;height:78px ;margin-bottom:12px }
 
 /* header tighter so it fits */
-.cert-head-block{padding-bottom:14px !important;margin-bottom:16px !important}
-.cert-head-title{font-size:26px !important;margin-top:10px !important}
-.cert-head-subtitle{margin-top:5px !important;font-size:11px !important}
+.cert-head-block{padding-bottom:14px ;margin-bottom:16px }
+.cert-head-title{font-size:26px ;margin-top:10px }
+.cert-head-subtitle{margin-top:5px ;font-size:11px }
 
 /* meta fields inline — label on left, value on right, same line */
 .cert-fields{
-  grid-template-columns:repeat(2,1fr) !important;
-  gap:10px 40px !important;
-  padding-bottom:16px !important;
-  margin-bottom:16px !important;
+  grid-template-columns:repeat(2,1fr) ;
+  gap:10px 40px ;
+  padding-bottom:16px ;
+  margin-bottom:16px ;
 }
 .cert-fields > .f{
-  display:flex !important;
-  flex-direction:row !important;
-  justify-content:space-between !important;
-  align-items:baseline !important;
-  gap:14px !important;
-  border-bottom:1px dotted var(--line) !important;
-  padding-bottom:6px !important;
+  display:flex ;
+  flex-direction:row ;
+  justify-content:space-between ;
+  align-items:baseline ;
+  gap:14px ;
+  border-bottom:1px dotted var(--line) ;
+  padding-bottom:6px ;
 }
 .cert-fields .fl{
-  font-size:10px !important;
-  letter-spacing:.12em !important;
-  flex-shrink:0 !important;
+  font-size:10px ;
+  letter-spacing:.12em ;
+  flex-shrink:0 ;
 }
 .cert-fields .fv{
-  font-size:13.5px !important;
-  text-align:right !important;
-  flex:1 !important;
-  overflow-wrap:break-word !important;
+  font-size:13.5px ;
+  text-align:right ;
+  flex:1 ;
+  overflow-wrap:break-word ;
 }
 
 /* data table — every cell has a right border, creating the block grid */
 .cert-data thead th{
-  border-right:1px solid var(--line) !important;
-  border-bottom:1px solid var(--ink-3) !important;
-  padding:8px 10px 10px !important;
+  border-right:1px solid var(--line) ;
+  border-bottom:1px solid var(--ink-3) ;
+  padding:8px 10px 10px ;
 }
-.cert-data thead th:last-child{border-right:none !important}
+.cert-data thead th:last-child{border-right:none }
 .cert-data tbody td{
-  padding:9px 10px !important;
-  border-right:1px solid var(--line) !important;
-  border-bottom:1px solid var(--line) !important;
+  padding:9px 10px ;
+  border-right:1px solid var(--line) ;
+  border-bottom:1px solid var(--line) ;
 }
-.cert-data tbody td:last-child{border-right:none !important}
-.cert-data tbody tr:last-child td{border-bottom:1px solid var(--line) !important}
+.cert-data tbody td:last-child{border-right:none }
+.cert-data tbody tr:last-child td{border-bottom:1px solid var(--line) }
 
 /* summary band tighter */
-.cert-band{margin-top:18px !important}
-.cert-band > .cell{padding:14px 18px !important}
-.cert-band .cv{font-size:22px !important}
+.cert-band{margin-top:18px }
+.cert-band > .cell{padding:14px 18px }
+.cert-band .cv{font-size:22px }
 
 /* signatures tighter */
-.cert-signs{padding-top:26px !important;margin-top:8px !important;gap:50px !important}
+.cert-signs{padding-top:26px ;margin-top:8px ;gap:50px }
 
 /* transcript table grid too */
-.cert-transcript th{border-right:1px solid var(--line) !important;padding:7px 5px !important}
-.cert-transcript td{border-right:1px solid var(--line) !important;padding:8px 5px !important}
-.cert-transcript th:last-child{border-right:none !important}
-.cert-transcript td:last-child{border-right:none !important}
-.cert-transcript th.left,.cert-transcript td.left{border-right:1px solid var(--line) !important}
+.cert-transcript th{border-right:1px solid var(--line) ;padding:7px 5px }
+.cert-transcript td{border-right:1px solid var(--line) ;padding:8px 5px }
+.cert-transcript th:last-child{border-right:none }
+.cert-transcript td:last-child{border-right:none }
+.cert-transcript th.left,.cert-transcript td.left{border-right:1px solid var(--line) }
 
 /* smaller scale line + note if pending */
-.cert-scale{padding:12px 0 0 !important;margin-top:10px !important;font-size:10.5px !important}
-.cert-note{padding:8px 14px !important;font-size:11.5px !important;margin-top:12px !important}
+.cert-scale{padding:12px 0 0 ;margin-top:10px ;font-size:10.5px }
+.cert-note{padding:8px 14px ;font-size:11.5px ;margin-top:12px }
 
 /* ============================================================
    PRINT — squeeze to one A4 landscape page
@@ -1139,42 +1139,42 @@ a{color:inherit;text-decoration:none}
 @media print{
   @page{size:A4 landscape;margin:8mm}
   .cert-doc{
-    width:280mm !important;
-    min-height:194mm !important;
-    max-height:194mm !important;
-    overflow:hidden !important;
+    width:280mm ;
+    min-height:194mm ;
+    max-height:194mm ;
+    overflow:hidden ;
   }
-  .cert-doc-inner{padding:22px 30px 18px !important}
-  .cert-head-logo{width:64px !important;height:64px !important;margin-bottom:8px !important}
-  .cert-head-block{padding-bottom:10px !important;margin-bottom:12px !important}
-  .cert-head-title{font-size:22px !important;margin-top:6px !important}
-  .cert-head-school{font-size:13px !important}
-  .cert-head-subtitle{font-size:10px !important;margin-top:3px !important}
-  .cert-fields{gap:6px 30px !important;padding-bottom:10px !important;margin-bottom:12px !important}
-  .cert-fields .fv{font-size:12px !important}
-  .cert-fields .fl{font-size:9px !important}
-  .cert-data{font-size:11.5px !important}
-  .cert-data thead th{padding:5px 8px 7px !important;font-size:9.5px !important}
-  .cert-data tbody td{padding:6px 8px !important}
-  .cert-data td.subj{font-size:12.5px !important}
-  .cert-data td.num{font-size:11px !important}
-  .cert-grade{width:22px !important;height:22px !important;font-size:11px !important}
-  .cert-band{margin-top:12px !important}
-  .cert-band .cell{padding:10px 12px !important}
-  .cert-band .cv{font-size:18px !important}
-  .cert-band .cl{font-size:9px !important;margin-bottom:4px !important}
-  .cert-signs{padding-top:18px !important;margin-top:6px !important}
-  .cert-signs .s{font-size:10px !important}
-  .cert-scale{padding:8px 0 0 !important;margin-top:6px !important;font-size:10px !important}
-  .cert-transcript{font-size:10px !important}
-  .cert-transcript th{padding:5px 4px !important;font-size:9px !important}
-  .cert-transcript td{padding:5px 4px !important;font-size:10px !important}
-  .cert-transcript td.left{font-size:11px !important}
+  .cert-doc-inner{padding:22px 30px 18px }
+  .cert-head-logo{width:64px ;height:64px ;margin-bottom:8px }
+  .cert-head-block{padding-bottom:10px ;margin-bottom:12px }
+  .cert-head-title{font-size:22px ;margin-top:6px }
+  .cert-head-school{font-size:13px }
+  .cert-head-subtitle{font-size:10px ;margin-top:3px }
+  .cert-fields{gap:6px 30px ;padding-bottom:10px ;margin-bottom:12px }
+  .cert-fields .fv{font-size:12px }
+  .cert-fields .fl{font-size:9px }
+  .cert-data{font-size:11.5px }
+  .cert-data thead th{padding:5px 8px 7px ;font-size:9.5px }
+  .cert-data tbody td{padding:6px 8px }
+  .cert-data td.subj{font-size:12.5px }
+  .cert-data td.num{font-size:11px }
+  .cert-grade{width:22px ;height:22px ;font-size:11px }
+  .cert-band{margin-top:12px }
+  .cert-band .cell{padding:10px 12px }
+  .cert-band .cv{font-size:18px }
+  .cert-band .cl{font-size:9px ;margin-bottom:4px }
+  .cert-signs{padding-top:18px ;margin-top:6px }
+  .cert-signs .s{font-size:10px }
+  .cert-scale{padding:8px 0 0 ;margin-top:6px ;font-size:10px }
+  .cert-transcript{font-size:10px }
+  .cert-transcript th{padding:5px 4px ;font-size:9px }
+  .cert-transcript td{padding:5px 4px ;font-size:10px }
+  .cert-transcript td.left{font-size:11px }
 }
 
 @media(max-width:760px){
-  .cert-fields{grid-template-columns:1fr !important;gap:8px !important}
-  .cert-head-logo{width:64px !important;height:64px !important}
+  .cert-fields{grid-template-columns:1fr ;gap:8px }
+  .cert-head-logo{width:64px ;height:64px }
 }
 
 /* ============================================================
@@ -1545,11 +1545,11 @@ a{color:inherit;text-decoration:none}
   .cert-band .cell{padding:10px 14px}
   .cert-band .cv{font-size:19px}
   .cert-signs{padding-top:26px}
-  .report-tabs,.no-print{display:none!important}
-  .report-block{display:none!important}
-  body.print-semester .report-block.semester{display:block!important}
-  body.print-transcript .report-block.transcript{display:block!important}
-  body.print-admission .report-block.admission{display:block!important}
+  .report-tabs,.no-print{display:none}
+  .report-block{display:none}
+  body.print-semester .report-block.semester{display:block}
+  body.print-transcript .report-block.transcript{display:block}
+  body.print-admission .report-block.admission{display:block}
 }
 
 @media(max-width:760px){
@@ -1586,7 +1586,7 @@ a{color:inherit;text-decoration:none}
   @page { size: A4 landscape; margin: 8mm; }
   html, body { background: #fff; width: 100%; }
   
-  .no-print { display: none !important; }
+  .no-print { display: none ; }
 }
 
 /* Fix: mobile tabbar overlay was intercepting clicks on footer links below it. */
@@ -1624,7 +1624,7 @@ button, a, input, select, textarea, .btn, [role="button"] {
 }
 
 /* Sheet table — natural sizing, no header overflow */
-.sheet-table { table-layout: auto !important; }
+.sheet-table { table-layout: auto ; }
 .sheet-table thead th.assess {
   text-transform: none;
   letter-spacing: 0;
@@ -1687,7 +1687,7 @@ button, a, input, select, textarea, .btn, [role="button"] {
 }
 
 /* Sheet table — natural sizing, no header overflow */
-.sheet-table { table-layout: auto !important; }
+.sheet-table { table-layout: auto ; }
 .sheet-table thead th.assess {
   text-transform: none;
   letter-spacing: 0;
@@ -1726,7 +1726,7 @@ button, a, input, select, textarea, .btn, [role="button"] {
 
 /* Sheet: school name wraps instead of overflowing container */
 .sheet-print .rc-head .s {
-  white-space: normal !important;
+  white-space: normal ;
   overflow-wrap: break-word;
   text-transform: none;
   font-family: var(--serif);
@@ -1738,7 +1738,7 @@ button, a, input, select, textarea, .btn, [role="button"] {
 }
 
 /* Sheet: allow full width — no max-width squeeze */
-.sheet-print { max-width: none !important; }
+.sheet-print { max-width: none ; }
 
 /* Horizontal scroll only when table overflows — never squeeze */
 .sheet-scroll {
@@ -1761,28 +1761,28 @@ button, a, input, select, textarea, .btn, [role="button"] {
   /* Hide chrome — nav, tabs, buttons, banners */
   .top, .tabbar, .edit-banner, .crumb, .phead,
   .no-print, .print-hint,
-  .login-shell, .nav, .foot { display: none !important; }
+  .login-shell, .nav, .foot { display: none ; }
 
   /* Flatten page — remove all padding/margins from wrappers */
-  html, body, #root { padding: 0 !important; margin: 0 !important; background: #fff !important; }
-  .body { padding: 0 !important; margin: 0 !important; }
-  .wrap, .wrap-narrow { padding: 0 !important; margin: 0 !important; max-width: none !important; }
-  .cert-print-wrapper { padding: 0 !important; margin: 0 !important; }
+  html, body, #root { padding: 0 ; margin: 0 ; background: #fff ; }
+  .body { padding: 0 ; margin: 0 ; }
+  .wrap, .wrap-narrow { padding: 0 ; margin: 0 ; max-width: none ; }
+  .cert-print-wrapper { padding: 0 ; margin: 0 ; }
 
   /* Certificate: box-sizing prevents border from pushing past page width,
      avoiding the right-side clipping and border truncation */
   .cert-print-page {
-    box-sizing: border-box !important;
-    page-break-inside: avoid !important;
-    page-break-after: avoid !important;
-    break-inside: avoid !important;
-    transform: none !important;
-    margin: 0 !important;
+    box-sizing: border-box ;
+    page-break-inside: avoid ;
+    page-break-after: avoid ;
+    break-inside: avoid ;
+    transform: none ;
+    margin: 0 ;
   }
 
   /* Sheet: no scroll wrapper in print */
-  .sheet-scroll { overflow: visible !important; margin: 0 !important; padding: 0 !important; }
-  .sheet-scroll .sheet-table { min-width: 0 !important; }
+  .sheet-scroll { overflow: visible ; margin: 0 ; padding: 0 ; }
+  .sheet-scroll .sheet-table { min-width: 0 ; }
 }
 
 /* ============================================================
@@ -1817,25 +1817,25 @@ button, a, input, select, textarea, .btn, [role="button"] {
   transition: background .15s, color .15s;
 }
 .login-back-float:hover { background: var(--muted); color: var(--ink); }
-.login-card { padding: 28px 24px !important; }
+.login-card { padding: 28px 24px ; }
 @media (max-width: 480px) {
   .login-back-float { top: 12px; left: 12px; padding: 6px 10px; font-size: 12px; }
 }
 
 /* --- Sheet: compact columns, no forced width --- */
 .sheet-scroll .sheet-table {
-  width: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  table-layout: auto !important;
+  width: auto ;
+  min-width: 0 ;
+  max-width: none ;
+  table-layout: auto ;
 }
 .sheet-scroll .sheet-table th,
 .sheet-scroll .sheet-table td {
-  white-space: nowrap !important;
+  white-space: nowrap ;
 }
 .sheet-print .rc-head .s {
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
+  white-space: normal ;
+  overflow-wrap: anywhere ;
   max-width: 100%;
   padding: 0 8px;
 }
@@ -1843,22 +1843,125 @@ button, a, input, select, textarea, .btn, [role="button"] {
 /* --- Cert wrapper: strip border/padding when printing --- */
 @media print {
   .cert-print-wrapper {
-    border: none !important;
-    padding: 0 !important;
-    background: transparent !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-    margin: 0 !important;
+    border: none ;
+    padding: 0 ;
+    background: transparent ;
+    border-radius: 0 ;
+    overflow: visible ;
+    margin: 0 ;
   }
   /* Hide modal if somehow open during print */
-  .modal-backdrop, .modal-card { display: none !important; }
+  .modal-backdrop, .modal-card { display: none ; }
 }
 
 /* Fix for missing headers in print */
 @media print {
   .cert-print-page thead th {
-    background: transparent !important;
-    color: #000 !important;
-    border-bottom: 1px solid #000 !important;
+    background: transparent ;
+    color: #000 ;
+    border-bottom: 1px solid #000 ;
   }
 }
+
+/* Footer Gap Reductions */
+.foot {
+  margin-top: 16px ; /* Reduced from 40px */
+  padding: 16px 0 30px ; /* Reduced top padding */
+}
+
+/* ============================================================
+   CENTRALIZED HOMEPAGE GAPS (Edit these to adjust spacing)
+   ============================================================ */
+
+/* 1. Gap above "Established 2020" */
+.home-hero { padding-top: 12px !important; padding-bottom: 0 !important; }
+.home-hero-inner { max-width: 660px; }
+.home-hero .eyebrow { display: block; margin: 0 !important; padding: 0 !important; }
+.home-hero h1 { margin: 4px 0 6px 0 !important; }
+.home-hero .lede { margin-bottom: 12px !important; }
+.home-hero .hero-actions { margin-bottom: 12px !important; }
+
+/* 2. Gap between Arabic text and Programme section */
+.hero-arabic { 
+  margin-top: 8px !important; 
+  padding-top: 8px !important; 
+  margin-bottom: 0 !important; 
+  padding-bottom: 0 !important; 
+}
+.home-programme { padding-top: 8px !important; padding-bottom: 10px !important; }
+
+/* 3. Gap between "The programme" header and the cards */
+.home-programme .section-head { margin-bottom: 10px !important; margin-top: 0 !important; }
+.home-programme .section-head h2 { margin: 0 0 4px 0 !important; }
+.home-programme .section-head .lede { margin: 0 !important; }
+
+/* 4. Internal padding of the Foundation/Secondary cards */
+.home-programme .struct-card { padding: 10px !important; }
+.home-programme .struct-card .title { margin-bottom: 4px !important; }
+.home-programme .struct-card .classes { margin-bottom: 6px !important; }
+
+/* 5. Gap between Higher card and Sheikh picture (0px means touching) */
+.home-founder { padding-top: 0 !important; padding-bottom: 20px !important; }
+.home-founder .founder-block { margin-top: 0 !important; }
+
+/* 6. Internal padding of the Sheikh Info box */
+.home-founder .founder-info { padding: 12px 16px !important; }
+.home-founder .founder-info h3 { margin: 0 0 2px 0 !important; }
+.home-founder .founder-info .role { margin: 0 0 4px 0 !important; }
+.home-founder .founder-info p { margin: 0 !important; }
+
+/* 7. Image styling */
+.home-founder .founder-photo { overflow: hidden !important; padding: 0 !important; }
+.home-founder .founder-photo img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
+
+/* ============================================================
+   CENTRALIZED HOMEPAGE GAPS (Edit these to adjust spacing)
+   ============================================================ */
+
+/* 1. Gap above "Established 2020" */
+.home-hero { padding-top: 12px !important; padding-bottom: 0 !important; }
+.home-hero-inner { max-width: 660px; }
+.home-hero .eyebrow { display: block; margin: 0 !important; padding: 0 !important; }
+.home-hero h1 { margin: 4px 0 6px 0 !important; }
+.home-hero .lede { margin-bottom: 12px !important; }
+.home-hero .hero-actions { margin-bottom: 12px !important; }
+
+/* 2. Gap between Arabic text and Programme section */
+.hero-arabic { 
+  margin-top: 8px !important; 
+  padding-top: 8px !important; 
+  margin-bottom: 0 !important; 
+  padding-bottom: 0 !important; 
+}
+.home-programme { padding-top: 8px !important; padding-bottom: 10px !important; }
+
+/* 3. Gap between "The programme" header and the cards */
+.home-programme .section-head { margin-bottom: 10px !important; margin-top: 0 !important; }
+.home-programme .section-head h2 { margin: 0 0 4px 0 !important; }
+.home-programme .section-head .lede { margin: 0 !important; }
+
+/* 4. Internal padding of the Foundation/Secondary cards */
+.home-programme .struct-card { padding: 10px !important; }
+.home-programme .struct-card .title { margin-bottom: 4px !important; }
+.home-programme .struct-card .classes { margin-bottom: 6px !important; }
+
+/* 5. Gap between Higher card and Sheikh picture (0px means touching) */
+.home-founder { padding-top: 0 !important; padding-bottom: 20px !important; }
+.home-founder .founder-block { margin-top: 0 !important; }
+
+/* 6. Internal padding of the Sheikh Info box */
+.home-founder .founder-info { padding: 12px 16px !important; }
+.home-founder .founder-info h3 { margin: 0 0 2px 0 !important; }
+.home-founder .founder-info .role { margin: 0 0 4px 0 !important; }
+.home-founder .founder-info p { margin: 0 !important; }
+
+/* 7. Image styling */
+.home-founder .founder-photo { overflow: hidden !important; padding: 0 !important; }
+.home-founder .founder-photo img { width: 100% !important; height: 100% !important; object-fit: cover !important; display: block !important; }
+
+/* ============================================================
+   FINAL FOOTER GAP FIX
+   ============================================================ */
+/* Pull the footer up and reduce the Sheikh section's bottom gap */
+.home-founder { padding-bottom: 10px !important; }
+.foot { margin-top: 0 !important; padding-top: 16px !important; }
