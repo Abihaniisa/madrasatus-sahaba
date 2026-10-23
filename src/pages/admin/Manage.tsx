@@ -1,31 +1,32 @@
+// src/pages/admin/Manage.tsx — super-admin hub. Settings, Access, Promotion, Fees.
+// Non-super admins see the page but every action is hidden.
+
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { amISuperAdmin } from "../../lib/access";
-import { useRequireAuth } from "../../lib/auth";
-import { useMode } from "../../lib/mode";
-import { AdminTop } from "../../components/AdminTop";
-import { DelayedSkeleton } from "../../components/Skeleton";
-import { I } from "../../components/Layout";
+import { amISuperAdmin } from "../../lib/supabase";
+import { useRequireAuth } from "../../lib/supabase";
+import { AdminTop } from "../../ui/AdminShell";
+import { DelayedSkeleton } from "../../ui/primitives";
+import { I } from "../../ui/Shell";
 
 const ITEMS = [
-  { to: "/admin/settings", title: "School Settings", desc: "Update session dates, semester, and registration year.", icon: I.folder },
+  { to: "/admin/fees", title: "Fees", desc: "Record payments, print receipts, see balances.", icon: I.money },
   { to: "/admin/access", title: "Access Control", desc: "Choose who can sign in and manage admins.", icon: I.user },
-  { to: "/admin/promotion", title: "End of Session", desc: "Promote, repeat or graduate students at the close of a session.", icon: I.check },
+  { to: "/admin/promotion", title: "End of Session", desc: "Promote, repeat, or graduate students.", icon: I.check },
 ];
 
 export default function Manage() {
   const ready = useRequireAuth();
-  const [mode, setMode] = useMode();
-  const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [isSuper, setIsSuper] = useState<boolean | null>(null);
 
-  useEffect(() => { amISuperAdmin().then(setAllowed).catch(() => setAllowed(false)); }, []);
+  useEffect(() => { amISuperAdmin().then(setIsSuper).catch(() => setIsSuper(false)); }, []);
 
-  if (!ready || allowed === null) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={3} /></div></div>;
-  if (!allowed) return <Navigate to="/admin" replace />;
+  if (!ready || isSuper === null) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={3} /></div></div>;
+  if (!isSuper) return <Navigate to="/admin" replace />;
 
   return (
     <div>
-      <AdminTop mode={mode} onMode={setMode} />
+      <AdminTop />
       <div className="body">
         <div className="wrap">
           <div className="phead">

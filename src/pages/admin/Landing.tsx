@@ -1,16 +1,16 @@
+// src/pages/admin/Landing.tsx — admin dashboard: search + class list + averages.
+
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SECTIONS } from "../../lib/config";
 import { classAverage, loadSchool, type SchoolData } from "../../lib/data";
-import { useRequireAuth } from "../../lib/auth";
-import { useMode } from "../../lib/mode";
-import { AdminTop } from "../../components/AdminTop";
-import { I } from "../../components/Layout";
-import { DelayedSkeleton } from "../../components/Skeleton";
+import { useRequireAuth } from "../../lib/supabase";
+import { AdminTop } from "../../ui/AdminShell";
+import { I } from "../../ui/Shell";
+import { DelayedSkeleton } from "../../ui/primitives";
 
 export default function Landing() {
   const ready = useRequireAuth();
-  const [mode, setMode] = useMode();
   const [data, setData] = useState<SchoolData | null>(null);
   const [q, setQ] = useState("");
 
@@ -33,7 +33,7 @@ export default function Landing() {
 
   return (
     <div>
-      <AdminTop mode={mode} onMode={setMode} />
+      <AdminTop />
       <div className="body">
         <div className="wrap">
           <div className="phead">
@@ -46,11 +46,7 @@ export default function Landing() {
                 <span className="icon">{I.search}</span>
                 <input placeholder="Search by name, NIN, or Reg. No." value={q} onChange={e => setQ(e.target.value)} autoComplete="off" />
               </div>
-              {mode === "manage" && (
-                <Link to="/admin/student/new" className="btn btn-primary btn-sm">
-                  {I.plus} Add student
-                </Link>
-              )}
+              <Link to="/admin/student/new" className="btn btn-primary btn-sm">{I.plus} Add student</Link>
             </div>
           </div>
 
@@ -84,10 +80,7 @@ export default function Landing() {
                 return (
                   <div key={sec.id} className="sec-block">
                     <div className="sec-head">
-                      <h2>
-                        {sec.name}
-                        {sec.inactive && <span className="pill pill-neutral" style={{ marginLeft: 8 }}>Opening soon</span>}
-                      </h2>
+                      <h2>{sec.name}{sec.inactive && <span className="pill pill-neutral" style={{ marginLeft: 8 }}>Opening soon</span>}</h2>
                       <span className="meta">{secStudents.length} {secStudents.length === 1 ? "student" : "students"}</span>
                     </div>
                     <div className="class-list">

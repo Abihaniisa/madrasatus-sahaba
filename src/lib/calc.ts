@@ -1,62 +1,49 @@
-import type { Assessment, Exam, Grade, Mark, Student, SubjectResult } from "./types";
+// src/lib/calc.ts — grades, averages, semester aggregation, fee math.
+// All numeric logic lives here. Do not duplicate arithmetic elsewhere.
+
+import type { Assessment, Exam, Fee, FeePayment, Grade, Mark, Student, SubjectResult } from "../types";
 import { CONFIG } from "./config";
 
 export function gradeFor(p: number | null): Grade {
-  if (p == null) return { min: 0, label: "—", tone: "neutral", code: "—" } as Grade & { code: string };
+  if (p == null) return { min: 0, label: "—", tone: "neutral", code: "—" } as Grade;
   for (const g of CONFIG.grades) if (p >= g.min) return g;
   return CONFIG.grades[CONFIG.grades.length - 1];
 }
 
 export function subjectResult(
-  subject: string,
-  assessments: Assessment[],
-  marksByAssess: Record<string, number | null>,
-  exam: number | null
+  subject: string, assessments: Assessment[],
+  marksByAssess: Record<string, number | null>, exam: number | null
 ): SubjectResult & { pending: boolean } {
   const subjAssessments = assessments.filter(a => a.subject === subject);
   let pending = false;
 
-  // 1. Check if any assessment marks are missing (or if no assessments exist at all)
   if (subjAssessments.length) {
     for (const a of subjAssessments) {
       if (marksByAssess[a.id] == null) { pending = true; break; }
     }
-  } else {
-    pending = true;
-  }
+  } else pending = true;
 
-  // 2. Calculate assessment percentage
   let assessmentPct: number | null = null;
   if (subjAssessments.length && !pending) {
     let sum = 0;
     for (const a of subjAssessments) {
       const val = marksByAssess[a.id] ?? 0;
-      const max = a.max_marks || CONFIG.assessmentMax;
-      sum += val / max;
+      sum += val / (a.max_marks || CONFIG.assessmentMax);
     }
     assessmentPct = Math.round((sum / subjAssessments.length) * 10000) / 100;
   }
 
-  // 3. Check exam
   const examPct = exam != null ? exam : null;
-  if (examPct == null) {
-    pending = true;
-  }
+  if (examPct == null) pending = true;
 
-  // 4. Calculate final score ONLY if neither assessments nor exam are missing
   let final: number | null = null;
   if (!pending && assessmentPct != null && examPct != null) {
     final = Math.round((assessmentPct * CONFIG.assessmentWeight + examPct * CONFIG.examWeight) * 100) / 100;
   }
 
   return {
-    subject,
-    assessmentPct,
-    examPct,
-    final,
-    grade: gradeFor(final),
-    count: subjAssessments.length,
-    pending,
+    subject, assessmentPct, examPct, final,
+    grade: gradeFor(final), count: subjAssessments.length, pending,
   };
 }
 
@@ -71,20 +58,11 @@ export function hasPending(results: (SubjectResult & { pending: boolean })[]): b
 }
 
 export type SemesterGroup = {
-  key: string;
-  class_name: string;
-  session_label: string;
-  semester: number;
-  results: (SubjectResult & { pending: boolean })[];
-  avg: number | null;
+  key: string; class_name: string; session_label: string; semester: number;
+  results: (SubjectResult & { pending: boolean })[]; avg: number | null;
 };
 
-export function buildAllSemesters(
-  student: Student,
-  assessments: Assessment[],
-  marks: Mark[],
-  exams: Exam[]
-): SemesterGroup[] {
+export function buildAllSemesters(student: Student, assessments: Assessment[], marks: Mark[], exams: Exam[]): SemesterGroup[] {
   const groups = new Map<string, Assessment[]>();
   for (const a of assessments) {
     const key = `${a.class_name}|${a.session_label}|${a.semester}`;
@@ -95,10 +73,8 @@ export function buildAllSemesters(
   for (const [key, groupAssessments] of groups) {
     const first = groupAssessments[0];
     const studentExams = exams.filter(e =>
-      e.student_id === student.id &&
-      e.class_name === first.class_name &&
-      e.session_label === first.session_label &&
-      e.semester === first.semester
+      e.student_id === student.id && e.class_name === first.class_name &&
+      e.session_label === first.session_label && e.semester === first.semester
     );
     const results = CONFIG.subjects.map(subject => {
       const marksByAssess: Record<string, number | null> = {};
@@ -109,21 +85,12 @@ export function buildAllSemesters(
       const examRow = studentExams.find(e => e.subject === subject);
       return subjectResult(subject, groupAssessments, marksByAssess, examRow?.value ?? null);
     });
-    const hasAny = results.some(r => r.final != null || r.pending);
-    if (!hasAny) continue;
-    out.push({
-      key,
-      class_name: first.class_name,
-      session_label: first.session_label,
-      semester: first.semester,
-      results,
-      avg: semesterAvg(results),
-    });
+    if (!results.some(r => r.final != null || r.pending)) continue;
+    out.push({ key, class_name: first.class_name, session_label: first.session_label, semester: first.semester, results, avg: semesterAvg(results) });
   }
   return out.sort((a, b) => {
     const s = a.session_label.localeCompare(b.session_label);
-    if (s !== 0) return s;
-    return a.semester - b.semester;
+    return s !== 0 ? s : a.semester - b.semester;
   });
 }
 
@@ -141,22 +108,36 @@ export function cumulativeBySubject(groups: SemesterGroup[]): Record<string, num
       const r = g.results.find(x => x.subject === s);
       if (r && !r.pending && r.final != null) vals.push(r.final);
     }
-    out[s] = vals.length
-      ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100
-      : null;
+    out[s] = vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100 : null;
   }
   return out;
 }
 
-export function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
-}
-
-export function fmtN(n: number): string {
+export function fmtNGN(n: number): string {
   return "\u20A6" + Number(n).toLocaleString("en-NG");
 }
 
-export function waLink(phone: string, text: string): string {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+export type FeeStatus = "unpaid" | "partial" | "paid" | "scholarship";
+
+export function feeFor(student_id: string, fees: Fee[]): Fee | undefined {
+  return fees.find(f => f.student_id === student_id && f.year === CONFIG.regYear);
+}
+export function paymentsFor(student_id: string, payments: FeePayment[]): FeePayment[] {
+  return payments.filter(p => p.student_id === student_id && p.year === CONFIG.regYear)
+    .sort((a, b) => a.paid_on.localeCompare(b.paid_on));
+}
+export function computeFee(student_id: string, fees: Fee[], payments: FeePayment[]) {
+  const fee = feeFor(student_id, fees);
+  const amount = fee?.amount ?? CONFIG.registrationFee;
+  if ((fee?.status ?? "unpaid") === "scholarship") {
+    return { amount, paid: 0, balance: 0, status: "scholarship" as FeeStatus, payments: [] as FeePayment[] };
+  }
+  const list = paymentsFor(student_id, payments);
+  const paid = list.reduce((s, p) => s + p.amount, 0);
+  const balance = Math.max(0, amount - paid);
+  const status: FeeStatus = paid === 0 ? "unpaid" : paid >= amount ? "paid" : "partial";
+  return { amount, paid, balance, status, payments: list };
+}
+export function methodLabel(m: FeePayment["method"]): string {
+  return m === "cash" ? "Cash" : m === "transfer" ? "Bank transfer" : m === "pos" ? "POS" : "Other";
 }

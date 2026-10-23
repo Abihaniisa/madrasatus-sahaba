@@ -1,8 +1,10 @@
+// src/pages/Login.tsx — unified staff + student login.
+// Detects student by 11-digit NIN; staff by email; falls through to error.
+
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { CONFIG } from "../lib/config";
-import { signIn, supabase, isAuthorized } from "../lib/supabase";
-import { saveStudentSession, fetchStudentPortal } from "../lib/student";
+import { signIn, supabase, isAuthorized, saveStudentSession, fetchStudentPortal } from "../lib/supabase";
 
 export default function Login() {
   const nav = useNavigate();
@@ -51,13 +53,10 @@ export default function Login() {
         <h1>Sign in</h1>
         <p className="sub">{CONFIG.short}</p>
 
-        <a
-          href="https://veritas-verify.vercel.app"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", margin: "16px 0 20px", border: "1px solid var(--line)", borderRadius: 10, textDecoration: "none", color: "var(--ink)" }}
-        >
-          <img src="/veritas-logo.svg" alt="" width={28} height={28} style={{ display: "block", flexShrink: 0 }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        <a href="https://veritas-verify.vercel.app" target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", margin: "16px 0 20px", border: "1px solid var(--line)", borderRadius: 10, textDecoration: "none", color: "var(--ink)" }}>
+          <img src="/veritas-logo.svg" alt="" width={28} height={28} style={{ display: "block", flexShrink: 0 }}
+            onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.2 }}>Veritas</div>
             <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2, lineHeight: 1.3 }}>Sahaba certificates, verifiable on Veritas.</div>
@@ -68,20 +67,15 @@ export default function Login() {
         <form className="login-form" onSubmit={onSubmit}>
           <div className="field">
             <label>{isStudentId ? "NIN (11 digits)" : "Email address"}</label>
-            <input className="input" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="Staff: email · Student: 11-digit NIN" required autoComplete="username" />
+            <input className="input" value={identifier} onChange={e => setIdentifier(e.target.value)}
+              placeholder="Staff: email · Student: 11-digit NIN" required autoComplete="username" />
           </div>
           <div className="field">
             <label>{isStudentId ? "Reg. No. or Phone" : "Password"}</label>
-            <input
-              className="input"
-              type={isStudentId ? "text" : "password"}
-              value={secret}
-              onChange={e => setSecret(e.target.value)}
-              placeholder={isStudentId ? "2026/MS/001 or 080..." : "••••••••"}
-              required
+            <input className="input" type={isStudentId ? "text" : "password"} value={secret} onChange={e => setSecret(e.target.value)}
+              placeholder={isStudentId ? "2026/MS/001 or 080..." : "••••••••"} required
               autoComplete={isStudentId ? "off" : "current-password"}
-              autoCapitalize={isStudentId ? "characters" : "none"}
-            />
+              autoCapitalize={isStudentId ? "characters" : "none"} />
           </div>
           {err && <div className="notice">{err}</div>}
           <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>

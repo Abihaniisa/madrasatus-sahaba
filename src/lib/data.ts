@@ -1,5 +1,9 @@
+// src/lib/data.ts — all DB queries + report aggregation.
+// buildReport and classAverage accept an optional sessionLabel so historical
+// reports can be rendered. Existing callers that omit it get current session.
+
 import { supabase } from "./supabase";
-import type { Assessment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "./types";
+import type { Assessment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "../types";
 import { CONFIG } from "./config";
 import {
   subjectResult, semesterAvg, hasPending,
@@ -8,12 +12,8 @@ import {
 } from "./calc";
 
 export type SchoolData = {
-  students: Student[];
-  assessments: Assessment[];
-  marks: Mark[];
-  exams: Exam[];
-  fees: Fee[];
-  feePayments: FeePayment[];
+  students: Student[]; assessments: Assessment[]; marks: Mark[];
+  exams: Exam[]; fees: Fee[]; feePayments: FeePayment[];
 };
 
 export async function loadSchool(): Promise<SchoolData> {
@@ -56,10 +56,20 @@ export function buildReport(
   assessments: Assessment[],
   marks: Mark[],
   exams: Exam[],
-  semester = CONFIG.currentSemester
+  semester = CONFIG.currentSemester,
+  sessionLabel = CONFIG.sessionLabel,
+  className?: string
 ): FullReport {
-  const classAssess = assessments.filter(a => a.class_name === student.class_name && a.semester === semester && a.session_label === CONFIG.sessionLabel);
-  const studentExams = exams.filter(e => e.student_id === student.id && e.semester === semester && e.session_label === CONFIG.sessionLabel);
+  const targetClass = className ?? student.class_name;
+  const classAssess = assessments.filter(a =>
+    a.class_name === targetClass && a.semester === semester && a.session_label === sessionLabel
+  );
+  const studentExams = exams.filter(e =>
+    e.student_id === student.id &&
+    e.semester === semester &&
+    e.session_label === sessionLabel &&
+    e.class_name === targetClass
+  );
   const results = CONFIG.subjects.map(subject => {
     const marksByAssess: Record<string, number | null> = {};
     for (const a of classAssess.filter(x => x.subject === subject)) {
@@ -85,14 +95,15 @@ export function classAverage(
   students: Student[],
   assessments: Assessment[],
   marks: Mark[],
-  exams: Exam[]
+  exams: Exam[],
+  semester = CONFIG.currentSemester,
+  sessionLabel = CONFIG.sessionLabel
 ): number | null {
   const list = students.filter(s => s.class_name === cls);
   const vals: number[] = [];
   for (const s of list) {
-    const r = buildReport(s, assessments, marks, exams);
+    const r = buildReport(s, assessments, marks, exams, semester, sessionLabel, cls);
     if (r.avg != null) vals.push(r.avg);
   }
-  if (!vals.length) return null;
-  return Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100;
+  return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100 : null;
 }

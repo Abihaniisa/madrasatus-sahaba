@@ -1,8 +1,10 @@
+// src/pages/Materials.tsx — public materials list.
+
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import type { Material } from "../lib/types";
-import { PublicLayout, I } from "../components/Layout";
-import { DelayedSkeleton } from "../components/Skeleton";
+import type { Material } from "../types";
+import { PublicLayout, I } from "../ui/Shell";
+import { DelayedSkeleton } from "../ui/primitives";
 
 export default function Materials() {
   const [list, setList] = useState<Material[]>([]);
@@ -11,10 +13,7 @@ export default function Materials() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
-        .from("materials")
-        .select("*")
-        .eq("published", true)
+      const { data, error } = await supabase.from("materials").select("*").eq("published", true)
         .order("order_num", { ascending: true, nullsFirst: false });
       if (error) setError(error.message);
       else setList((data as Material[]) ?? []);
@@ -36,8 +35,7 @@ export default function Materials() {
 
           {error && (
             <div className="card"><div className="empty">
-              <div className="t">Could not load materials</div>
-              <div className="d">{error}</div>
+              <div className="t">Could not load materials</div><div className="d">{error}</div>
             </div></div>
           )}
 

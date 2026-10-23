@@ -1,8 +1,10 @@
+// src/pages/Curriculum.tsx — class list + per-class detail view.
+
 import { useState } from "react";
 import { CONFIG, SECTIONS } from "../lib/config";
 import { CURRICULUM } from "../lib/curriculum";
 import { allWeeks, formatRange, type Week } from "../lib/calendar";
-import { PublicLayout, I } from "../components/Layout";
+import { PublicLayout, I } from "../ui/Shell";
 
 export default function Curriculum() {
   const [openClass, setOpenClass] = useState<string | null>(null);
@@ -31,21 +33,16 @@ export default function Curriculum() {
                   const entry = CURRICULUM[c];
                   const disabled = sec.inactive || !entry;
                   return (
-                    <button
-                      key={c}
-                      className="crow"
-                      disabled={disabled}
+                    <button key={c} className="crow" disabled={disabled}
                       style={{ opacity: disabled ? 0.55 : 1, cursor: disabled ? "default" : "pointer" }}
-                      onClick={() => !disabled && setOpenClass(c)}
-                    >
+                      onClick={() => !disabled && setOpenClass(c)}>
                       <div style={{ minWidth: 0 }}>
                         <div className="cname">{c}</div>
                         <div className="cmeta" style={{ whiteSpace: "normal", lineHeight: 1.4 }}>
                           {entry?.overview || "Coming soon"}
                         </div>
                       </div>
-                      <div />
-                      <div />
+                      <div /><div />
                       <div>{!disabled && I.arrow}</div>
                     </button>
                   );
@@ -75,26 +72,19 @@ function ClassDetail({ cls, onBack }: { cls: string; onBack: () => void }) {
   const data = semester === 1 ? entry.semester1 : entry.semester2;
   const subjects = Object.keys(data);
   const subjectsToShow = subject === "All" ? subjects : [subject];
-
-  const teachingWeeks: Week[] = allWeeks().filter(
-    w => w.blockType === "teaching" && w.semester === semester
-  );
+  const teachingWeeks: Week[] = allWeeks().filter(w => w.blockType === "teaching" && w.semester === semester);
 
   return (
     <PublicLayout>
       <section className="section">
         <div className="wrap">
-          <button className="btn btn-ghost btn-sm mb4 no-print" onClick={onBack}>
-            {I.back} Back to curriculum
-          </button>
+          <button className="btn btn-ghost btn-sm mb4 no-print" onClick={onBack}>{I.back} Back to curriculum</button>
           <div className="section-head">
             <span className="eyebrow">{CONFIG.sessionLabel}</span>
             <h1 className="d1">{cls}</h1>
             <p className="lede">{entry.overview}</p>
             <div style={{ marginTop: 14 }} className="no-print">
-              <button className="btn btn-secondary" onClick={() => window.print()}>
-                {I.print} Download this class as PDF
-              </button>
+              <button className="btn btn-secondary" onClick={() => window.print()}>{I.print} Download this class as PDF</button>
             </div>
           </div>
 
@@ -117,9 +107,7 @@ function ClassDetail({ cls, onBack }: { cls: string; onBack: () => void }) {
           {subjectsToShow.map(subj => (
             <div key={subj} className="card mb3" style={{ overflow: "hidden" }}>
               <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--line)" }}>
-                <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 16, color: "var(--primary)" }}>
-                  {subj}
-                </div>
+                <div style={{ fontFamily: "var(--serif)", fontWeight: 600, fontSize: 16, color: "var(--primary)" }}>{subj}</div>
               </div>
               <div style={{ padding: "4px 18px 14px" }}>
                 {teachingWeeks.map((wk, i) => {
@@ -128,13 +116,9 @@ function ClassDetail({ cls, onBack }: { cls: string; onBack: () => void }) {
                     <div key={wk.num} style={{ display: "grid", gridTemplateColumns: "110px 1fr", gap: 16, padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
                       <div>
                         <div style={{ fontWeight: 600, fontSize: 13, color: "var(--ink)" }}>Week {i + 1}</div>
-                        <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>
-                          {formatRange(wk)}
-                        </div>
+                        <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 1 }}>{formatRange(wk)}</div>
                       </div>
-                      <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
-                        {content}
-                      </div>
+                      <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>{content}</div>
                     </div>
                   );
                 })}

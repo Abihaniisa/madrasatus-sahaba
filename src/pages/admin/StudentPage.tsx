@@ -1,28 +1,32 @@
+// src/pages/admin/StudentPage.tsx — full student profile + report card + fee summary.
+// Adds "Records" button → historical document browser (Records.tsx).
+// Adds "Edit marks" button (visible only if user can edit — historical is super-only, enforced in EditMarks).
+
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { SECTIONS, CONFIG } from "../../lib/config";
+import { CONFIG } from "../../lib/config";
 import { buildReport, loadSchool, type SchoolData } from "../../lib/data";
-import { fmtN } from "../../lib/calc";
-import { useRequireAuth } from "../../lib/auth";
-import { useMode } from "../../lib/mode";
-import { AdminTop } from "../../components/AdminTop";
-import { I, waLink } from "../../components/Layout";
-import { DelayedSkeleton } from "../../components/Skeleton";
-import { SemesterCertificate } from "../../components/SemesterCertificate";
-import { Modal } from "../../components/Modal";
-import { supabase } from "../../lib/supabase";
+import { fmtNGN } from "../../lib/calc";
+import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
+import { AdminTop } from "../../ui/AdminShell";
+import { I, waLink } from "../../ui/Shell";
+import { DelayedSkeleton, Modal } from "../../ui/primitives";
+import { ReportCard } from "../../documents/ReportCard";
 
 export default function StudentPage() {
   const ready = useRequireAuth();
   const { id } = useParams<{ id: string }>();
-  const [mode, setMode] = useMode();
   const [data, setData] = useState<SchoolData | null>(null);
+  const [isSuper, setIsSuper] = useState(false);
   const [confirmMode, setConfirmMode] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function reload() { setData(await loadSchool()); }
-  useEffect(() => { loadSchool().then(setData); }, []);
+  useEffect(() => {
+    loadSchool().then(setData);
+    amISuperAdmin().then(setIsSuper);
+  }, []);
 
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
@@ -35,7 +39,7 @@ export default function StudentPage() {
   const phone = (s.student_phone || s.guardian_phone || "").replace(/[^0-9+]/g, "");
 
   async function toggleMode() {
-    if (mode !== "manage") return;
+    if (!isSuper) return;
     setBusy(true);
     await supabase.from("students").update({ mode: s!.mode === "online" ? "physical" : "online" }).eq("id", s!.id);
     await reload();
@@ -54,7 +58,7 @@ export default function StudentPage() {
 
   return (
     <div>
-      <AdminTop mode={mode} onMode={setMode} />
+      <AdminTop />
       <div className="body">
         <div className="wrap">
           <div className="crumb no-print">
@@ -78,20 +82,21 @@ export default function StudentPage() {
                   : report.avg != null
                     ? <span className="pill pill-success pill-dot">{report.avg}%</span>
                     : <span className="pill pill-neutral pill-dot">No results</span>}
-                <button type="button" onClick={() => mode === "manage" && setConfirmMode(true)} className="pill pill-info" style={{ cursor: mode === "manage" ? "pointer" : "default", border: 0, font: "inherit", fontFamily: "var(--sans)", fontSize: "11.5px", fontWeight: 500, padding: "2px 9px" }}>
+                <button type="button" onClick={() => isSuper && setConfirmMode(true)}
+                  className="pill pill-info"
+                  style={{ cursor: isSuper ? "pointer" : "default", border: 0, font: "inherit", fontFamily: "var(--sans)", fontSize: "11.5px", fontWeight: 500, padding: "2px 9px" }}>
                   {s.mode === "online" ? "Online" : "Physical"}
                 </button>
                 <span className={"pill pill-dot pill-" + feeTone}>{feeLabel}</span>
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {mode === "manage" && (
-                <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/edit`}>{I.plus} Edit</Link>
-              )}
+              <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/records`}>{I.folder} Records</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/marks`}>{I.check} Edit marks</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/edit`}>{I.plus} Edit</Link>
             </div>
           </div>
 
-          {/* Full-size premium certificate with inline print */}
           <div style={{ marginBottom: 24 }}>
             <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
               <div>
@@ -101,12 +106,7 @@ export default function StudentPage() {
               <button className="btn btn-primary btn-sm" onClick={() => setShowPrintModal(true)}>{I.print} Print report</button>
             </div>
             <div className="cert-print-wrapper" style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
-              <SemesterCertificate
-                student={s}
-                results={report.results}
-                average={report.avg}
-                pending={report.pending}
-              />
+              <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} />
             </div>
           </div>
 
@@ -115,9 +115,9 @@ export default function StudentPage() {
               <div className="d3" style={{ marginBottom: 10 }}>Fees</div>
               {fee ? (
                 <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "baseline" }}>
-                  <div><div className="sub">Amount</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtN(fee.amount)}</div></div>
-                  <div><div className="sub">Paid</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtN(fee.paid)}</div></div>
-                  <div><div className="sub">Balance</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600, color: "var(--warning)" }}>{fmtN(fee.amount - fee.paid)}</div></div>
+                  <div><div className="sub">Amount</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtNGN(fee.amount)}</div></div>
+                  <div><div className="sub">Paid</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtNGN(fee.paid)}</div></div>
+                  <div><div className="sub">Balance</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600, color: "var(--warning)" }}>{fmtNGN(fee.amount - fee.paid)}</div></div>
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
                     <span className={"pill pill-dot pill-" + feeTone}>{feeLabel}</span>
                     {fee.status !== "paid" && fee.status !== "scholarship" && phone && (
@@ -133,13 +133,9 @@ export default function StudentPage() {
         </div>
       </div>
 
-      <Modal
-        open={showPrintModal}
-        title="Print setup"
-        confirmLabel="Print"
+      <Modal open={showPrintModal} title="Print setup" confirmLabel="Print"
         onConfirm={() => { setShowPrintModal(false); setTimeout(() => window.print(), 200); }}
-        onCancel={() => setShowPrintModal(false)}
-      >
+        onCancel={() => setShowPrintModal(false)}>
         <p className="sub" style={{ fontSize: 13.5, lineHeight: 1.6, marginBottom: 10 }}>
           Set these in your browser print dialog:
         </p>
@@ -150,14 +146,11 @@ export default function StudentPage() {
         </ul>
       </Modal>
 
-      <Modal
-        open={confirmMode}
-        title="Change mode?"
+      <Modal open={confirmMode} title="Change mode?"
         message={s ? `Switch ${s.name} to ${s.mode === "online" ? "Physical" : "Online"}?` : ""}
-        confirmLabel="Change"
+        confirmLabel={busy ? "Changing…" : "Change"}
         onConfirm={toggleMode}
-        onCancel={() => setConfirmMode(false)}
-      />
+        onCancel={() => setConfirmMode(false)} />
     </div>
   );
 }

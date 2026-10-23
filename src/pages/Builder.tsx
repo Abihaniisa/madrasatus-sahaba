@@ -1,5 +1,7 @@
+// src/pages/Builder.tsx — credit page for the builder (Abihani Isa).
+
 import { CONFIG } from "../lib/config";
-import { PublicLayout, I } from "../components/Layout";
+import { PublicLayout, I } from "../ui/Shell";
 
 export default function Builder() {
   const b = CONFIG.builder;
@@ -16,19 +18,12 @@ export default function Builder() {
           <div className="card pad-lg">
             <div style={{ display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap" }}>
               <div className="pav" style={{ width: 92, height: 92, padding: 0, overflow: "hidden" }}>
-                <img
-                  src={b.image}
-                  alt={b.fullName ?? b.name}
-                  loading="lazy"
-                  decoding="async"
+                <img src={b.image} alt={b.fullName ?? b.name} loading="lazy" decoding="async"
                   style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }}
-                />
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }} />
               </div>
               <div style={{ flex: 1, minWidth: 220 }}>
-                <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.7, marginBottom: 16 }}>
-                  {b.prayer}
-                </p>
+                <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.7, marginBottom: 16 }}>{b.prayer}</p>
                 <p style={{ fontSize: 15, color: "var(--ink-2)", lineHeight: 1.7, marginBottom: 24 }}>
                   Any good that comes from this is from Allah; any mistake is from me.
                 </p>
@@ -48,9 +43,7 @@ export default function Builder() {
               Founder of{" "}
               {b.projects.map((p, i) => (
                 <span key={p.url}>
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", fontWeight: 500 }}>
-                    {p.name}
-                  </a>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", fontWeight: 500 }}>{p.name}</a>
                   {i < b.projects.length - 1 ? " and " : "."}
                 </span>
               ))}

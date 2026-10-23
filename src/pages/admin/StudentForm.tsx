@@ -1,32 +1,25 @@
+// src/pages/admin/StudentForm.tsx — create / edit a student.
+
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
-import { supabase } from "../../lib/supabase";
-import { useRequireAuth } from "../../lib/auth";
-import { useMode } from "../../lib/mode";
-import { AdminTop } from "../../components/AdminTop";
-import { DelayedSkeleton } from "../../components/Skeleton";
-import { I } from "../../components/Layout";
-import type { Student } from "../../lib/types";
-
-type FormMode = "create" | "edit";
+import { supabase, useRequireAuth } from "../../lib/supabase";
+import { AdminTop } from "../../ui/AdminShell";
+import { DelayedSkeleton } from "../../ui/primitives";
+import { I } from "../../ui/Shell";
+import type { Student } from "../../types";
 
 export default function StudentForm() {
   const ready = useRequireAuth();
   const nav = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [mode, setMode] = useMode();
-
   const isEdit = !!id;
-  const formMode: FormMode = isEdit ? "edit" : "create";
-
   const [loading, setLoading] = useState(isEdit);
   const [notFound, setNotFound] = useState(false);
   const [original, setOriginal] = useState<Student | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // form fields
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState<"male" | "female" | "">("");
@@ -41,11 +34,7 @@ export default function StudentForm() {
   useEffect(() => {
     if (!isEdit || !id) return;
     (async () => {
-      const { data, error } = await supabase
-        .from("students")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await supabase.from("students").select("*").eq("id", id).maybeSingle();
       if (error || !data) { setNotFound(true); setLoading(false); return; }
       const s = data as Student;
       setOriginal(s);
@@ -63,9 +52,7 @@ export default function StudentForm() {
     })();
   }, [id, isEdit]);
 
-  const sectionForClass = useMemo(() => {
-    return SECTIONS.find(s => s.classes.includes(cls))?.id ?? "secondary";
-  }, [cls]);
+  const sectionForClass = useMemo(() => SECTIONS.find(s => s.classes.includes(cls))?.id ?? "secondary", [cls]);
 
   function validate(): string | null {
     if (!name.trim()) return "Full name is required.";
@@ -86,118 +73,78 @@ export default function StudentForm() {
     setError(null);
     const v = validate();
     if (v) { setError(v); return; }
-
     setBusy(true);
-    try {
-      if (formMode === "edit" && original) {
-        const { error } = await supabase.from("students").update({
-          name: name.trim(),
-          dob,
-          gender,
-          class_name: cls,
-          section: sectionForClass,
-          mode: studentMode,
-          guardian_name: guardianName.trim() || null,
-          guardian_phone: guardianPhone.trim() || null,
-          student_phone: studentPhone.trim() || null,
-          address: address.trim() || null,
-        }).eq("id", original.id);
-        if (error) { setError(error.message); setBusy(false); return; }
-        setBusy(false);
-        nav(`/admin/student/${original.id}`);
-        return;
-      }
 
-      // CREATE — reg_no is assigned by the database trigger.
-      // NIN uniqueness is enforced by the database index; we translate
-      // its error into a friendly message below.
-      const { data, error } = await supabase.from("students").insert({
-        name: name.trim(),
-        dob,
-        gender,
-        nin,
-        section: sectionForClass,
-        class_name: cls,
+    if (isEdit && original) {
+      const { error } = await supabase.from("students").update({
+        name: name.trim(), dob, gender, class_name: cls, section: sectionForClass,
         mode: studentMode,
-        status: "active",
-        joined: new Date().toISOString().slice(0, 10),
         guardian_name: guardianName.trim() || null,
         guardian_phone: guardianPhone.trim() || null,
         student_phone: studentPhone.trim() || null,
         address: address.trim() || null,
-      }).select().single();
-
-      if (error || !data) {
-        const msg = error?.message ?? "";
-        if (msg.includes("students_nin_unique") || msg.toLowerCase().includes("duplicate key")) {
-          setError("This NIN is already on record. Contact the school if this is an error.");
-        } else {
-          setError(msg || "Could not create student.");
-        }
-        setBusy(false);
-        return;
-      }
-
-      const newStudent = data as Student;
-
-      // enrollment record
-      await supabase.from("enrollments").insert({
-        student_id: newStudent.id,
-        class_name: cls,
-        session_label: CONFIG.sessionLabel,
-        status: "active",
-        started: newStudent.joined,
-      });
-
-      // fee record for this year
-      await supabase.from("fees").insert({
-        student_id: newStudent.id,
-        year: CONFIG.regYear,
-        amount: CONFIG.registrationFee,
-        paid: 0,
-        status: "unpaid",
-      });
-
+      }).eq("id", original.id);
       setBusy(false);
-      nav(`/admin/student/${newStudent.id}`);
-    } catch (e: any) {
-      setError(e?.message ?? "Unexpected error.");
-      setBusy(false);
+      if (error) { setError(error.message); return; }
+      nav(`/admin/student/${original.id}`);
+      return;
     }
+
+    const { data, error } = await supabase.from("students").insert({
+      name: name.trim(), dob, gender, nin,
+      section: sectionForClass, class_name: cls, mode: studentMode,
+      status: "active", joined: new Date().toISOString().slice(0, 10),
+      guardian_name: guardianName.trim() || null,
+      guardian_phone: guardianPhone.trim() || null,
+      student_phone: studentPhone.trim() || null,
+      address: address.trim() || null,
+    }).select().single();
+
+    if (error || !data) {
+      const msg = error?.message ?? "";
+      setError(msg.includes("students_nin_unique") || msg.toLowerCase().includes("duplicate key")
+        ? "This NIN is already on record. Contact the school if this is an error."
+        : msg || "Could not create student.");
+      setBusy(false);
+      return;
+    }
+
+    const newStudent = data as Student;
+    await supabase.from("enrollments").insert({
+      student_id: newStudent.id, class_name: cls, session_label: CONFIG.sessionLabel,
+      status: "active", started: newStudent.joined,
+    });
+    await supabase.from("fees").insert({
+      student_id: newStudent.id, year: CONFIG.regYear,
+      amount: CONFIG.registrationFee, paid: 0, status: "unpaid",
+    });
+    setBusy(false);
+    nav(`/admin/student/${newStudent.id}`);
   }
 
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={4} /></div></div>;
-
   if (loading) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!loading} rows={6} /></div></div>;
-
-  if (notFound) return (
-    <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>
-  );
+  if (notFound) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 
   return (
     <div>
-      <AdminTop mode={mode} onMode={setMode} />
+      <AdminTop />
       <div className="body">
         <div className="wrap-narrow">
           <div className="crumb">
             <Link to="/admin">Students</Link><span>/</span>
-            <span className="current">{formMode === "edit" ? "Edit student" : "Add student"}</span>
+            <span className="current">{isEdit ? "Edit student" : "Add student"}</span>
           </div>
 
           <div className="phead">
             <div>
-              <h1>{formMode === "edit" ? `Edit ${original?.name ?? ""}` : "Add a student"}</h1>
-              <p className="sub">
-                {formMode === "edit"
-                  ? `Registration ${original?.reg_no} · NIN and registration are permanent.`
-                  : "A permanent registration number is assigned on save."}
-              </p>
+              <h1>{isEdit ? `Edit ${original?.name ?? ""}` : "Add a student"}</h1>
+              <p className="sub">{isEdit ? `Registration ${original?.reg_no} · NIN and registration are permanent.` : "A permanent registration number is assigned on save."}</p>
             </div>
           </div>
 
           <div className="card pad">
             <div className="stack g3">
-
               <div className="field">
                 <label>Full name</label>
                 <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Ahmadu Bello" autoComplete="off" />
@@ -219,19 +166,10 @@ export default function StudentForm() {
 
               <div className="field">
                 <label>NIN (11 digits)</label>
-                <input
-                  className="input"
-                  inputMode="numeric"
-                  maxLength={11}
-                  value={nin}
+                <input className="input" inputMode="numeric" maxLength={11} value={nin}
                   onChange={e => setNin(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
-                  placeholder="12345678901"
-                  disabled={formMode === "edit"}
-                  autoComplete="off"
-                />
-                {formMode === "edit" && (
-                  <div className="hint">NIN is permanent. Contact the school to change it in the database.</div>
-                )}
+                  placeholder="12345678901" disabled={isEdit} autoComplete="off" />
+                {isEdit && <div className="hint">NIN is permanent. Contact the school to change it in the database.</div>}
               </div>
 
               <div className="field">
@@ -282,10 +220,9 @@ export default function StudentForm() {
               <div className="row g2" style={{ justifyContent: "flex-end" }}>
                 <button className="btn btn-ghost" onClick={() => nav(-1 as any)} disabled={busy}>Cancel</button>
                 <button className="btn btn-primary" onClick={submit} disabled={busy}>
-                  {busy ? "Saving…" : <>{I.check} {formMode === "edit" ? "Save changes" : "Add student"}</>}
+                  {busy ? "Saving…" : <>{I.check} {isEdit ? "Save changes" : "Add student"}</>}
                 </button>
               </div>
-
             </div>
           </div>
 

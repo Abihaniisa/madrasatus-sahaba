@@ -1,20 +1,12 @@
+// src/lib/curriculum.ts — static curriculum data (7 classes × 2 semesters × 5 subjects × 18 weeks).
+// Pure data. If a page has a curriculum bug, this file is NOT the suspect.
+// If curriculum CONTENT changes, this is the ONLY file that changes.
+
 export type CurriculumEntry = {
   overview: string;
   semester1: Record<string, string[]>;
   semester2: Record<string, string[]>;
 };
-
-function blank(subjects: string[]): Record<string, string[]> {
-  const out: Record<string, string[]> = {};
-  for (const s of subjects) {
-    out[s] = Array.from({ length: 18 }, (_, i) => `Topics to be treated in Week ${i + 1}`);
-  }
-  return out;
-}
-
-/* ============================================================
-   TAMHID
-   ============================================================ */
 
 const TAMHID_QURAN_S1 = [
   "Surah An-Nas, Al-Falaq, Al-Ikhlas, Al-Masad, An-Nasr. Learn with the teacher.",
@@ -61,58 +53,26 @@ const TAMHID_HADITH_S2 = Array(18).fill("Hisnul Muslim (selected).");
 const TAMHID_ARABIC_S1 = Array(18).fill("Gateway to Arabic 1.");
 const TAMHID_ARABIC_S2 = Array(18).fill("Gateway to Arabic 1.");
 
-/* ============================================================
-   I'IDAD
-   ============================================================ */
-
 const IIDAD_QURAN_S1 = [
-  "Surah Nuh. Learn with the teacher.",
-  "Surah Nuh. Repeat and correct mistakes.",
-  "Surah Nuh. Consolidate and recite independently.",
-  "Surah Al-Ma'arij. Learn with the teacher.",
-  "Surah Al-Ma'arij. Repeat and correct mistakes.",
-  "Surah Al-Ma'arij. Consolidate and recite independently.",
-  "Surah Al-Haqqah. Learn with the teacher.",
-  "Surah Al-Haqqah. Repeat and correct mistakes.",
-  "Surah Al-Haqqah. Consolidate and recite independently.",
-  "Surah Al-Qalam. Learn with the teacher.",
-  "Surah Al-Qalam. Repeat and correct mistakes.",
-  "Surah Al-Qalam. Consolidate and recite independently.",
-  "Surah Al-Mulk. Learn with the teacher.",
-  "Surah Al-Mulk. Repeat and correct mistakes.",
-  "Surah Al-Mulk. Consolidate and recite independently.",
-  "Surah At-Tahrim. Learn with the teacher.",
-  "Surah At-Tahrim. Repeat and correct mistakes.",
-  "Surah At-Tahrim. Consolidate and recite independently."
+  "Surah Nuh. Learn with the teacher.", "Surah Nuh. Repeat and correct mistakes.", "Surah Nuh. Consolidate and recite independently.",
+  "Surah Al-Ma'arij. Learn with the teacher.", "Surah Al-Ma'arij. Repeat and correct mistakes.", "Surah Al-Ma'arij. Consolidate and recite independently.",
+  "Surah Al-Haqqah. Learn with the teacher.", "Surah Al-Haqqah. Repeat and correct mistakes.", "Surah Al-Haqqah. Consolidate and recite independently.",
+  "Surah Al-Qalam. Learn with the teacher.", "Surah Al-Qalam. Repeat and correct mistakes.", "Surah Al-Qalam. Consolidate and recite independently.",
+  "Surah Al-Mulk. Learn with the teacher.", "Surah Al-Mulk. Repeat and correct mistakes.", "Surah Al-Mulk. Consolidate and recite independently.",
+  "Surah At-Tahrim. Learn with the teacher.", "Surah At-Tahrim. Repeat and correct mistakes.", "Surah At-Tahrim. Consolidate and recite independently."
 ];
 const IIDAD_QURAN_S2 = [
-  "Surah At-Talaq. Learn with the teacher.",
-  "Surah At-Talaq. Repeat and correct mistakes.",
-  "Surah At-Talaq. Consolidate and recite independently.",
-  "Surah At-Taghabun. Learn with the teacher.",
-  "Surah At-Taghabun. Repeat and correct mistakes.",
-  "Surah At-Taghabun. Consolidate and recite independently.",
-  "Surah Al-Munafiqun. Learn with the teacher.",
-  "Surah Al-Munafiqun. Repeat and correct mistakes.",
-  "Surah Al-Munafiqun. Consolidate and recite independently.",
-  "Surah Al-Jumu'ah and As-Saff. Learn with the teacher.",
-  "Surah Al-Jumu'ah and As-Saff. Repeat and correct mistakes.",
-  "Surah Al-Jumu'ah and As-Saff. Consolidate and recite independently.",
-  "Surah Al-Mumtahanah and Al-Hashr. Learn with the teacher.",
-  "Surah Al-Mumtahanah and Al-Hashr. Repeat and correct mistakes.",
-  "Surah Al-Mumtahanah and Al-Hashr. Consolidate and recite independently.",
-  "Surah Al-Mujadilah. Learn with the teacher.",
-  "Surah Al-Mujadilah. Repeat and correct mistakes.",
-  "Surah Al-Mujadilah. Consolidate and recite independently."
+  "Surah At-Talaq. Learn with the teacher.", "Surah At-Talaq. Repeat and correct mistakes.", "Surah At-Talaq. Consolidate and recite independently.",
+  "Surah At-Taghabun. Learn with the teacher.", "Surah At-Taghabun. Repeat and correct mistakes.", "Surah At-Taghabun. Consolidate and recite independently.",
+  "Surah Al-Munafiqun. Learn with the teacher.", "Surah Al-Munafiqun. Repeat and correct mistakes.", "Surah Al-Munafiqun. Consolidate and recite independently.",
+  "Surah Al-Jumu'ah and As-Saff. Learn with the teacher.", "Surah Al-Jumu'ah and As-Saff. Repeat and correct mistakes.", "Surah Al-Jumu'ah and As-Saff. Consolidate and recite independently.",
+  "Surah Al-Mumtahanah and Al-Hashr. Learn with the teacher.", "Surah Al-Mumtahanah and Al-Hashr. Repeat and correct mistakes.", "Surah Al-Mumtahanah and Al-Hashr. Consolidate and recite independently.",
+  "Surah Al-Mujadilah. Learn with the teacher.", "Surah Al-Mujadilah. Repeat and correct mistakes.", "Surah Al-Mujadilah. Consolidate and recite independently."
 ];
 const IIDAD_HADITH_S1 = Array(18).fill("Khamsun Hadith.");
 const IIDAD_HADITH_S2 = Array(18).fill("Khamsun Hadith.");
 const IIDAD_ARABIC_S1 = Array(18).fill("Gateway to Arabic Book 2.");
 const IIDAD_ARABIC_S2 = Array(18).fill("Gateway to Arabic Book 2.");
-
-/* ============================================================
-   THANAWIYYAH 1
-   ============================================================ */
 
 const T1_QURAN_S1 = [
   "Rub 181. As-Saffat, Ayah 145.", "Rub 182. Sad, Ayah 21.", "Rub 183. Sad, Ayah 52.",
@@ -139,10 +99,6 @@ const T1_FIQH_S2 = Array(18).fill("Mukhtasar al-Akhdari.");
 const T1_TAJWEED_S1 = Array(18).fill("Kitabut Tajweed Lil marhalat Rabia wal khamisa.");
 const T1_TAJWEED_S2 = Array(18).fill("Kitabut Tajweed Lil marhalat Rabia wal khamisa.");
 
-/* ============================================================
-   THANAWIYYAH 2
-   ============================================================ */
-
 const T2_QURAN_S1 = [
   "Rub 145. Al-Furqan, Ayah 21.", "Rub 146. Al-Furqan, Ayah 53.", "Rub 147. Ash-Shu'ara, Ayah 1.",
   "Rub 148. Ash-Shu'ara, Ayah 52.", "Rub 149. Ash-Shu'ara, Ayah 111.", "Rub 150. Ash-Shu'ara, Ayah 181.",
@@ -167,10 +123,6 @@ const T2_FIQH_S1 = Array(18).fill("First half of Hallul Masail.");
 const T2_FIQH_S2 = Array(18).fill("First half of Hallul Masail.");
 const T2_TAJWEED_S1 = Array(18).fill("Bidayat al-Talib.");
 const T2_TAJWEED_S2 = Array(18).fill("Bidayat al-Talib.");
-
-/* ============================================================
-   THANAWIYYAH 3
-   ============================================================ */
 
 const T3_QURAN_S1 = [
   "Rub 109. An-Nahl, Ayah 51.", "Rub 110. An-Nahl, Ayah 75.", "Rub 111. An-Nahl, Ayah 90.",
@@ -197,10 +149,6 @@ const T3_FIQH_S2 = Array(18).fill("First half of Risala.");
 const T3_TAJWEED_S1 = Array(18).fill("Second half of Bidayat al-Talib.");
 const T3_TAJWEED_S2 = Array(18).fill("Second half of Bidayat al-Talib.");
 
-/* ============================================================
-   THANAWIYYAH 4
-   ============================================================ */
-
 const T4_QURAN_S1 = [
   "Rub 73. Al-Anfal, Ayah 41.", "Rub 74. Al-Anfal, Ayah 61.", "Rub 75. At-Tawbah, Ayah 1.",
   "Rub 76. At-Tawbah, Ayah 19.", "Rub 77. At-Tawbah, Ayah 34.", "Rub 78. At-Tawbah, Ayah 46.",
@@ -225,10 +173,6 @@ const T4_FIQH_S1 = Array(18).fill("Second half of Risala.");
 const T4_FIQH_S2 = Array(18).fill("Second half of Risala.");
 const T4_TAJWEED_S1 = Array(18).fill("First half of Bidayat al-Talib.");
 const T4_TAJWEED_S2 = Array(18).fill("First half of Bidayat al-Talib.");
-
-/* ============================================================
-   THANAWIYYAH 5
-   ============================================================ */
 
 const T5_QURAN_S1 = [
   "Rub 37. An-Nisa, Ayah 88.", "Rub 38. An-Nisa, Ayah 100.", "Rub 39. An-Nisa, Ayah 114.",
@@ -255,10 +199,6 @@ const T5_FIQH_S2 = Array(18).fill("Third Half of Risala.");
 const T5_TAJWEED_S1 = Array(18).fill("Repetition of Second Half of Bidayat al-Talib.");
 const T5_TAJWEED_S2 = Array(18).fill("Repetition of Second Half of Bidayat al-Talib.");
 
-/* ============================================================
-   THANAWIYYAH 6
-   ============================================================ */
-
 const T6_QURAN_S1 = [
   "Rub 1. Al-Fatihah, Ayah 1.", "Rub 2. Al-Baqarah, Ayah 26.", "Rub 3. Al-Baqarah, Ayah 44.",
   "Rub 4. Al-Baqarah, Ayah 60.", "Rub 5. Al-Baqarah, Ayah 75.", "Rub 6. Al-Baqarah, Ayah 92.",
@@ -284,10 +224,6 @@ const T6_FIQH_S2 = Array(18).fill("Revision of Risala.");
 const T6_TAJWEED_S1 = Array(18).fill("Complete Revision of Bidayat al-Talib.");
 const T6_TAJWEED_S2 = Array(18).fill("Complete Revision of Bidayat al-Talib.");
 
-/* ============================================================
-   EXPORT
-   ============================================================ */
-
 export const CURRICULUM: Record<string, CurriculumEntry> = {
   "Tamhid": {
     overview: "3 Hizb Qur'an · Hisnul Muslim · Gateway to Arabic 1",
@@ -300,7 +236,7 @@ export const CURRICULUM: Record<string, CurriculumEntry> = {
     semester2: { "Qur'an": IIDAD_QURAN_S2, "Hadith": IIDAD_HADITH_S2, "Arabic": IIDAD_ARABIC_S2 },
   },
   "Thanawiyyah 1": {
-    overview: "9 Hizb Qur'an · Miatu Hadith · Nahwul Wadih Primary 1 · Mukhtasar al-Akhdari · Kitabut Tajweed Lil marhalat Rabia wal khamisa",
+    overview: "9 Hizb Qur'an · Miatu Hadith · Nahwul Wadih Primary 1 · Mukhtasar al-Akhdari · Kitabut Tajweed",
     semester1: { "Qur'an": T1_QURAN_S1, "Hadith": T1_HADITH_S1, "Fiqh": T1_FIQH_S1, "Arabic": T1_ARABIC_S1, "Tajweed": T1_TAJWEED_S1 },
     semester2: { "Qur'an": T1_QURAN_S2, "Hadith": T1_HADITH_S2, "Fiqh": T1_FIQH_S2, "Arabic": T1_ARABIC_S2, "Tajweed": T1_TAJWEED_S2 },
   },
