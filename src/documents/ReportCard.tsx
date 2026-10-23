@@ -39,10 +39,11 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
         />
       </div>
       <div className="report-card-page-2">
+        <div className="doc-stage">
         <style>{`
-          @page { size: A4 landscape; margin: 5mm; }
+          @page { size: A4 landscape; margin: 6mm; }
           .report-card {
-            width: 100%; max-width: 287mm; margin: 0 auto; background: #fffdf7;
+            width: var(--doc-w, 283mm); height: var(--doc-h, 195mm); overflow: hidden; margin: 0 auto; background: #fffdf7;
             border: 1.2mm double #b8923a; padding: 5mm 6mm; box-sizing: border-box;
             font-family: Georgia, "Times New Roman", serif; color: #1c2420;
             display: flex; flex-direction: column; gap: 3mm;
@@ -58,13 +59,13 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           .report-card .info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
           .report-card .info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
           .report-card .info b { font-size: 10pt; }
-          .report-card table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; }
+          .report-card table { width: 100%; flex: 1 1 auto; min-height: 0; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; }
           .report-card th, .report-card td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 11pt; padding: 0; overflow: hidden; }
           .report-card thead th { background: #1f5a3a; color: #fff; height: 9mm; font-weight: bold; line-height: 1.15; }
           .report-card thead th.sub2 { background: #eef3ee; color: #143d27; }
           .report-card thead tr.top th { height: 7mm; font-size: 10pt; letter-spacing: 0.5pt; }
           .report-card thead tr.wk th { height: 7mm; font-size: 9pt; }
-          .report-card tbody td { height: 12mm; }
+          .report-card tbody td { height: min(12mm, calc(78mm / var(--n, 5))); }
           .report-card tbody tr:nth-child(even) td { background: #f6f9f6; }
           .report-card td.subj { text-align: left; padding-left: 4mm; font-weight: bold; font-size: 12.5pt; font-family: Georgia, serif; }
           .report-card td.fin { font-weight: bold; font-size: 13pt; background: #fbf3df; }
@@ -84,14 +85,13 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           .report-card .sigs { display: flex; justify-content: space-around; align-items: flex-end; margin-top: auto; padding: 0 12mm; height: 15mm; }
           .report-card .sig { width: 75mm; text-align: center; border-top: 0.35mm solid #1c2420; padding-top: 1.2mm; font-size: 9.5pt; font-weight: bold; }
           .report-card .sig span { display: block; font-size: 7pt; font-weight: normal; color: #666; font-family: Arial, sans-serif; }
-          .report-card-page-1, .report-card-page-2 { margin-bottom: 8mm; }
           @media print {
-            .report-card { page-break-inside: avoid; break-inside: avoid; width: 287mm; }
+            .report-card { page-break-inside: avoid; break-inside: avoid; }
             .report-card thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .report-card-page-1 { page-break-after: always; break-after: page; }
           }
         `}</style>
-        <div className="report-card">
+        <div className="report-card" style={{ "--n": Math.max(1, results.length) } as React.CSSProperties}>
           <header>
             <img src="/logo.svg" alt="" />
             <div className="titles">
@@ -154,17 +154,18 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
             <div className="summary">
               <div><small>Semester Average</small><strong>{average != null && !pending ? average.toFixed(1) : "—"}</strong><em>out of 100</em></div>
               <div><small>Overall Grade</small><strong>{pending ? "—" : overallGrade.code}</strong><em>{pending ? "Provisional" : overallGrade.label}</em></div>
-              <div><small>Subjects Passed</small><strong>{passed} / {total}</strong><em>{pending ? "Pending marks" : "No failures"}</em></div>
+              <div><small>Subjects Passed</small><strong>{passed} / {total}</strong><em>{pending ? "Pending marks" : passed === total ? "No failures" : `${total - passed} below pass mark`}</em></div>
             </div>
             <div className="side">
               <div className="key"><b>Grading key:</b> A Distinction (75+) · B Credit (60–74) · C Pass (50–59) · D Fail (below 50)</div>
-              <div className="formula">Final score = {CONFIG.assessmentWeight * 100}% of the average of all recorded assessments (scaled to 100) + {CONFIG.examWeight * 100}% of the exam. Semester average = mean of the five subject finals.</div>
+              <div className="formula">Final score = {CONFIG.assessmentWeight * 100}% of the average of all recorded assessments (scaled to 100) + {CONFIG.examWeight * 100}% of the exam. Semester average = mean of the {total} subject finals.</div>
             </div>
           </section>
           <section className="sigs">
             <div className="sig">Class Teacher<span>Signature &amp; Date</span></div>
             <div className="sig">Head of School<span>Signature, Stamp &amp; Date</span></div>
           </section>
+        </div>
         </div>
       </div>
     </>

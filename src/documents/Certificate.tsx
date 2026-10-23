@@ -23,12 +23,13 @@ export function Certificate({ student, average, pending, semester, sessionLabel 
   const semesterText = sem === 1 ? "First" : "Second";
 
   return (
+    <div className="doc-stage">
     <div className="cert-page">
       <style>{`
         .cert-page {
           position: relative;
-          width: 287mm;
-          min-height: 194mm;
+          width: var(--doc-w, 283mm);
+          height: var(--doc-h, 195mm);
           margin: 0 auto;
           background: #fffdf7;
           border: 2mm double #b8923a;
@@ -82,7 +83,7 @@ export function Certificate({ student, average, pending, semester, sessionLabel 
         .cert-page .sig { width: 75mm; border-top: 0.35mm solid #1c2420; padding-top: 1.2mm; font-family: Georgia, serif; font-size: 10.5pt; font-weight: bold; color: #1c2420; }
         .cert-page .sig span { display: block; font-weight: normal; font-size: 8pt; color: #666; font-family: Arial, sans-serif; }
 
-        @page { size: A4 landscape; margin: 8mm; }
+        @page { size: A4 landscape; margin: 6mm; }
         @media print {
           html, body { background: none; }
           .cert-page { margin: 0; page-break-inside: avoid; break-inside: avoid; }
@@ -121,6 +122,7 @@ export function Certificate({ student, average, pending, semester, sessionLabel 
           <div className="sig">Head of School<span>Signature, Stamp &amp; Date</span></div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

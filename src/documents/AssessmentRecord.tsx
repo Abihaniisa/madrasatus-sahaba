@@ -76,6 +76,11 @@ export function AssessmentRecord({
   const maxAssessments = Math.max(0, ...rows.map(r => r.assessments.length));
   const needsTwoPages = maxAssessments > PER_PAGE;
 
+  const subjW = needsTwoPages ? 20 : 14;
+  const summaryCols = needsTwoPages ? Math.max(1, maxAssessments - PER_PAGE) : maxAssessments;
+  const markW = (100 - 48 - subjW) / Math.max(1, summaryCols);
+  const startIdx = needsTwoPages ? PER_PAGE : 0;
+
   function renderHeader(part: "marks" | "summary" | "only") {
     return (
       <header className="ar-head">
@@ -108,14 +113,12 @@ export function AssessmentRecord({
   const styles = (
     <style>{`
       .ar-doc {
-        width: 287mm; min-height: 194mm; margin: 0 auto 8mm;
+        width: var(--doc-w, 283mm); height: var(--doc-h, 195mm); overflow: hidden; margin: 0 auto;
         background: #fffdf7; border: 1.2mm double #b8923a; padding: 5mm 6mm;
         display: flex; flex-direction: column; gap: 3mm; box-sizing: border-box;
         font-family: Georgia, "Times New Roman", serif; color: #1c2420;
         -webkit-print-color-adjust: exact; print-color-adjust: exact;
-        page-break-after: always; break-after: page;
       }
-      .ar-doc:last-of-type { page-break-after: auto; break-after: auto; }
       .ar-head { display: flex; align-items: center; justify-content: center; gap: 6mm; border-bottom: 0.5mm solid #1f5a3a; padding-bottom: 2mm; }
       .ar-head img { width: 20mm; height: 20mm; object-fit: contain; flex: none; }
       .ar-head .titles { text-align: center; }
@@ -126,7 +129,7 @@ export function AssessmentRecord({
       .ar-doc .info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
       .ar-doc .info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
       .ar-doc .info b { font-size: 10pt; }
-      .ar-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1; }
+      .ar-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
       .ar-table th, .ar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1mm; overflow: hidden; }
       .ar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; }
       .ar-table thead th.subject { text-align: left; padding-left: 4mm; }
@@ -142,26 +145,26 @@ export function AssessmentRecord({
       .ar-foot > div { flex: 1; }
       .ar-foot em { font-style: italic; color: #143d27; }
       .ar-empty { padding: 30mm 0; text-align: center; font-size: 11pt; color: #7b827c; font-style: italic; }
-      @page { size: A4 landscape; margin: 8mm; }
+      @page { size: A4 landscape; margin: 6mm; }
       @media print { html, body { background: none; } .ar-doc { margin: 0; page-break-inside: avoid; break-inside: avoid; } }
     `}</style>
   );
 
   if (maxAssessments === 0) {
     return (
-      <div className="ar-doc">
+      <div className="doc-stage"><div className="ar-doc">
         {styles}
         {renderHeader("only")}
         {renderInfo()}
         <div className="ar-empty">No assessments recorded for this semester yet.</div>
-      </div>
+      </div></div>
     );
   }
 
   return (
     <>
       {needsTwoPages && (
-        <div className="ar-doc">
+        <div className="doc-stage"><div className="ar-doc">
           {styles}
           {renderHeader("marks")}
           {renderInfo()}
@@ -192,17 +195,17 @@ export function AssessmentRecord({
           <footer className="ar-foot">
             <div><strong>Raw marks only.</strong> Summary, averages, and final scores are on the next page.</div>
           </footer>
-        </div>
+        </div></div>
       )}
-      <div className="ar-doc">
+      <div className="doc-stage"><div className="ar-doc">
         {styles}
         {renderHeader(needsTwoPages ? "summary" : "only")}
         {renderInfo()}
         <table className="ar-table">
           <colgroup>
-            <col style={{ width: needsTwoPages ? "20%" : "14%" }} />
-            {Array.from({ length: needsTwoPages ? Math.max(1, maxAssessments - PER_PAGE) : maxAssessments }).map((_, i) => (
-              <col key={i} style={{ width: needsTwoPages ? "6%" : "5%" }} />
+            <col style={{ width: `${subjW}%` }} />
+            {Array.from({ length: summaryCols }).map((_, i) => (
+              <col key={i} style={{ width: `${markW}%` }} />
             ))}
             <col style={{ width: "9%" }} />
             <col style={{ width: "7%" }} />
@@ -214,10 +217,7 @@ export function AssessmentRecord({
           <thead>
             <tr>
               <th className="subject">Subject</th>
-              {needsTwoPages
-                ? Array.from({ length: Math.max(1, maxAssessments - PER_PAGE) }).map((_, i) => <th key={i}>A{PER_PAGE + i + 1}</th>)
-                : Array.from({ length: maxAssessments }).map((_, i) => <th key={i}>A{i + 1}</th>)
-              }
+              {Array.from({ length: summaryCols }).map((_, i) => <th key={i}>A{startIdx + i + 1}</th>)}
               <th>Avg</th>
               <th>{CONFIG.assessmentWeight * 100}%</th>
               <th>Exam</th>
@@ -229,12 +229,10 @@ export function AssessmentRecord({
           </thead>
           <tbody>
             {rows.map(row => {
-              const startIdx = needsTwoPages ? PER_PAGE : 0;
-              const cells = needsTwoPages ? Math.max(1, row.assessments.length - PER_PAGE) : row.assessments.length;
               return (
                 <tr key={row.subject}>
                   <td className="subject">{row.subject}</td>
-                  {Array.from({ length: cells }).map((_, i) => {
+                  {Array.from({ length: summaryCols }).map((_, i) => {
                     const a = row.assessments[startIdx + i];
                     if (!a) return <td key={i} className="cell-empty">—</td>;
                     return <td key={i} className={"cell-mark " + (a.value != null ? "" : "cell-missing")}>{a.value != null ? a.value : "—"}</td>;
@@ -252,10 +250,10 @@ export function AssessmentRecord({
           </tbody>
         </table>
         <footer className="ar-foot">
-          <div><strong>Assessment Avg</strong> = mean of A1..AN (out of {CONFIG.assessmentMax}, scaled to 100). <strong>30%</strong> = Avg × 0.3.</div>
-          <div><strong>Exam</strong> = raw score (out of {CONFIG.examMax}). <strong>70%</strong> = Exam × 0.7. <strong>Final</strong> = 30% + 70%.</div>
+          <div><strong>Assessment Avg</strong> = mean of A1..AN (out of {CONFIG.assessmentMax}, scaled to 100). <strong>{CONFIG.assessmentWeight * 100}%</strong> = Avg × {CONFIG.assessmentWeight}.</div>
+          <div><strong>Exam</strong> = raw score (out of {CONFIG.examMax}). <strong>{CONFIG.examWeight * 100}%</strong> = Exam × {CONFIG.examWeight}. <strong>Final</strong> = {CONFIG.assessmentWeight * 100}% + {CONFIG.examWeight * 100}%.</div>
         </footer>
-      </div>
+      </div></div>
     </>
   );
 }
