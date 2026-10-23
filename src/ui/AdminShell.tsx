@@ -1,6 +1,6 @@
-// src/ui/AdminShell.tsx — admin top bar + mobile tab bar. Super-admin nav links gated.
-// Bottom nav for everyone: Students · Daura · Content · Manage.
-// Manage is where Fees / Access / Promotion live for super admins.
+// src/ui/AdminShell.tsx — admin top bar + mobile tab bar.
+// Bottom nav: Students · Daura · Content · Manage (gear icon).
+// Top nav: Students · Daura · Content · Manage (super admin nav links inside Manage).
 
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -45,7 +45,7 @@ export function AdminTop() {
           <Link to="/admin" className={p === "/admin" ? "active" : ""}>{I.user}Students</Link>
           <Link to="/admin/daura" className={on("/admin/daura")}>{I.book}Daura</Link>
           <Link to="/admin/content" className={on("/admin/content")}>{I.folder}Content</Link>
-          <Link to="/admin/manage" className={on("/admin/manage") || on("/admin/fees") || on("/admin/access") || on("/admin/promotion")}>{I.money}Manage</Link>
+          <Link to="/admin/manage" className={on("/admin/manage") || on("/admin/fees") || on("/admin/access") || on("/admin/promotion")}>{I.gear}Manage</Link>
         </div>
       </div>
     </>

@@ -1,6 +1,6 @@
 // src/pages/admin/Records.tsx — Historical record browser for ONE student.
-// Two-step filter: (1) class (only classes the student attended), (2) document type.
-// Renders ALL semester report cards for that class, stacked in semester order.
+// Class chips = attended classes only. Document chips = Report Card / Assessment Record / Transcript / Admission Letter.
+// Report Card renders cover + data per semester. Transcript renders all sections. Admission is one document.
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -15,14 +15,9 @@ import { ReportCard } from "../../documents/ReportCard";
 import { AssessmentRecord } from "../../documents/AssessmentRecord";
 import { Transcript } from "../../documents/Transcript";
 import { AdmissionLetter } from "../../documents/AdmissionLetter";
-import { Certificate } from "../../documents/Certificate";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission" | "certificate";
-
-type ClassPeriod = {
-  className: string;
-  semesters: { session: string; semester: 1 | 2 }[];
-};
+type DocKey = "report" | "assessment" | "transcript" | "admission";
+type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function Records() {
   const ready = useRequireAuth();
@@ -41,12 +36,8 @@ export default function Records() {
     const byClass = new Map<string, { session: string; semester: 1 | 2 }[]>();
     for (const g of semesters) {
       if (!byClass.has(g.class_name)) byClass.set(g.class_name, []);
-      byClass.get(g.class_name)!.push({
-        session: g.session_label,
-        semester: (g.semester === 2 ? 2 : 1) as 1 | 2,
-      });
+      byClass.get(g.class_name)!.push({ session: g.session_label, semester: (g.semester === 2 ? 2 : 1) as 1 | 2 });
     }
-    // Order semesters within each class by session, then semester
     for (const arr of byClass.values()) {
       arr.sort((a, b) => {
         const s = a.session.localeCompare(b.session);
@@ -57,9 +48,7 @@ export default function Records() {
   }, [student, data]);
 
   useEffect(() => {
-    if (!activeClass && classPeriods.length > 0) {
-      setActiveClass(classPeriods[classPeriods.length - 1].className);
-    }
+    if (!activeClass && classPeriods.length > 0) setActiveClass(classPeriods[classPeriods.length - 1].className);
   }, [classPeriods, activeClass]);
 
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
@@ -69,6 +58,7 @@ export default function Records() {
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
   const semesters = buildAllSemesters(student, data.assessments, data.marks, data.exams);
+  const isSectionLevelDoc = doc === "transcript" || doc === "admission";
 
   return (
     <div>
@@ -85,116 +75,77 @@ export default function Records() {
           <div className="phead no-print">
             <div>
               <h1>{student.name}</h1>
-              <p className="sub">
-                {student.reg_no} · {sectionName} · Every record, all classes
-              </p>
+              <p className="sub">{student.reg_no} · {sectionName} · Every record, all classes</p>
             </div>
             <Link to={`/admin/student/${student.id}`} className="btn btn-ghost btn-sm">{I.back} Back to profile</Link>
           </div>
 
-          <div className="no-print" style={{ marginBottom: 10 }}>
+          <div className="no-print" style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-              Step 1 — pick a class
+              Document type
             </div>
-            {classPeriods.length === 0 ? (
-              <div className="card pad">
-                <p className="sub">No records yet. This student has no assessments or exams in any session.</p>
-              </div>
-            ) : (
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                {classPeriods.map(p => (
-                  <button
-                    key={p.className}
-                    className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")}
-                    onClick={() => setActiveClass(p.className)}
-                  >
-                    {p.className}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="chip-line" style={{ marginBottom: 0 }}>
+              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
+              <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
+              <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
+              <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
+            </div>
           </div>
 
-          {activePeriod && (
+          {!isSectionLevelDoc && (
             <div className="no-print" style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-                Step 2 — pick a document
+                Class
               </div>
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
-                <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
-                <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
-                <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
-                <button className={"chip-f " + (doc === "certificate" ? "active" : "")} onClick={() => setDoc("certificate")}>Certificate</button>
-              </div>
+              {classPeriods.length === 0 ? (
+                <div className="card pad"><p className="sub">No records yet. This student has no assessments or exams in any session.</p></div>
+              ) : (
+                <div className="chip-line" style={{ marginBottom: 0 }}>
+                  {classPeriods.map(p => (
+                    <button key={p.className} className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")} onClick={() => setActiveClass(p.className)}>
+                      {p.className}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14 }}>
-            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>
-              {I.print} Print this document set
-            </button>
+            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this document set</button>
           </div>
 
           <div className="print-hint no-print">
-            <div>
-              <strong>Print setup:</strong> Landscape · A4 · Default margins.
-            </div>
+            <div><strong>Print setup:</strong> Landscape · A4 · Default margins. Report cards print as 2 pages each (cover + data).</div>
           </div>
 
           <div className="cert-print-wrapper">
-            {!activePeriod ? (
-              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
-            ) : doc === "admission" ? (
+            {doc === "admission" ? (
               <AdmissionLetter student={student} />
             ) : doc === "transcript" ? (
-              <Transcript student={student} semesters={semesters} sectionId={student.section} />
+              <Transcript student={student} semesters={semesters} />
+            ) : !activePeriod ? (
+              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : (
               activePeriod.semesters.map(({ session, semester }) => {
                 const report = buildReport(student, data.assessments, data.marks, data.exams, semester, session, activePeriod.className);
                 const periodAssessments = data.assessments.filter(a =>
-                  a.class_name === activePeriod.className &&
-                  a.session_label === session &&
-                  a.semester === semester
+                  a.class_name === activePeriod.className && a.session_label === session && a.semester === semester
+                );
+                const periodExams = data.exams.filter(e =>
+                  e.class_name === activePeriod.className && e.session_label === session && e.semester === semester
                 );
                 if (doc === "report") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <ReportCard
-                        student={{ ...student, class_name: activePeriod.className }}
-                        results={report.results}
-                        average={report.avg}
-                        pending={report.pending}
-                        sessionLabel={session}
-                        semester={semester}
-                      />
+                      <ReportCard student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={session} semester={semester} />
                     </div>
                   );
                 }
                 if (doc === "assessment") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <AssessmentRecord
-                        student={{ ...student, class_name: activePeriod.className }}
-                        assessments={periodAssessments}
-                        marks={data.marks}
-                        sessionLabel={session}
-                        semester={semester}
-                      />
-                    </div>
-                  );
-                }
-                if (doc === "certificate") {
-                  return (
-                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <Certificate
-                        student={{ ...student, class_name: activePeriod.className }}
-                        results={report.results}
-                        average={report.avg}
-                        pending={report.pending}
-                        semester={semester}
-                        sessionLabel={session}
-                      />
+                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={session} semester={semester} />
                     </div>
                   );
                 }

@@ -3,6 +3,7 @@
 // or ONE class-level document. Print button prints the whole thing as one PDF.
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
@@ -28,7 +29,9 @@ type SessionOption = { session: string; semester: 1 | 2; key: string };
 export default function BulkPrint() {
   const ready = useRequireAuth();
   const [data, setData] = useState<SchoolData | null>(null);
-  const [cls, setCls] = useState<string>(ALL_CLASSES[0] ?? "");
+  const [searchParams] = useSearchParams();
+  const initialClass = searchParams.get("class");
+  const [cls, setCls] = useState<string>((initialClass && ALL_CLASSES.includes(initialClass)) ? initialClass : (ALL_CLASSES[0] ?? ""));
   const [sessionKey, setSessionKey] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocKey>("report");
   const [subject, setSubject] = useState<string>(CONFIG.subjects[0]);

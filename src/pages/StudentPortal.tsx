@@ -1,6 +1,4 @@
-// src/pages/StudentPortal.tsx — Student view.
-// Same document set as admin Records, no editing. Class chips = attended classes only.
-// No S1/S2 — class + document type only. Report/assessment/certificate = all semesters stacked.
+// src/pages/StudentPortal.tsx — Student view. Same documents as admin Records, no editing.
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,10 +11,9 @@ import { ReportCard } from "../documents/ReportCard";
 import { AssessmentRecord } from "../documents/AssessmentRecord";
 import { Transcript } from "../documents/Transcript";
 import { AdmissionLetter } from "../documents/AdmissionLetter";
-import { Certificate } from "../documents/Certificate";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission" | "certificate";
+type DocKey = "report" | "assessment" | "transcript" | "admission";
 type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function StudentPortal() {
@@ -66,9 +63,7 @@ export default function StudentPortal() {
   }, [semesters]);
 
   useEffect(() => {
-    if (!activeClass && classPeriods.length > 0) {
-      setActiveClass(classPeriods[classPeriods.length - 1].className);
-    }
+    if (!activeClass && classPeriods.length > 0) setActiveClass(classPeriods[classPeriods.length - 1].className);
   }, [classPeriods, activeClass]);
 
   if (loading) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
@@ -76,6 +71,7 @@ export default function StudentPortal() {
 
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
+  const isSectionLevelDoc = doc === "transcript" || doc === "admission";
 
   return (
     <div>
@@ -97,35 +93,34 @@ export default function StudentPortal() {
             </div>
           </div>
 
-          <div className="no-print" style={{ marginBottom: 10 }}>
+          <div className="no-print" style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-              Step 1 — pick a class
+              Document type
             </div>
-            {classPeriods.length === 0 ? (
-              <div className="card pad"><p className="sub">No records yet. Your marks will appear here as teachers enter them.</p></div>
-            ) : (
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                {classPeriods.map(p => (
-                  <button key={p.className} className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")} onClick={() => setActiveClass(p.className)}>
-                    {p.className}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="chip-line" style={{ marginBottom: 0 }}>
+              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
+              <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
+              <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
+              <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
+            </div>
           </div>
 
-          {activePeriod && (
+          {!isSectionLevelDoc && (
             <div className="no-print" style={{ marginBottom: 16 }}>
               <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-                Step 2 — pick a document
+                Class
               </div>
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
-                <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
-                <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
-                <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
-                <button className={"chip-f " + (doc === "certificate" ? "active" : "")} onClick={() => setDoc("certificate")}>Certificate</button>
-              </div>
+              {classPeriods.length === 0 ? (
+                <div className="card pad"><p className="sub">No records yet. Your marks will appear here as teachers enter them.</p></div>
+              ) : (
+                <div className="chip-line" style={{ marginBottom: 0 }}>
+                  {classPeriods.map(p => (
+                    <button key={p.className} className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")} onClick={() => setActiveClass(p.className)}>
+                      {p.className}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -134,23 +129,24 @@ export default function StudentPortal() {
           </div>
 
           <div className="print-hint no-print">
-            <div><strong>Print setup:</strong> Landscape · A4 · Default margins.</div>
+            <div><strong>Print setup:</strong> Landscape · A4 · Default margins. Report cards print as 2 pages each (cover + data).</div>
           </div>
 
           <div className="cert-print-wrapper">
-            {!activePeriod ? (
-              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
-            ) : doc === "admission" ? (
+            {doc === "admission" ? (
               <AdmissionLetter student={student} />
             ) : doc === "transcript" ? (
-              <Transcript student={student} semesters={semesters} sectionId={student.section} />
+              <Transcript student={student} semesters={semesters} />
+            ) : !activePeriod ? (
+              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : (
               activePeriod.semesters.map(({ session, semester }) => {
                 const report = buildReport(student, assessments, marks, exams, semester, session, activePeriod.className);
                 const periodAssessments = assessments.filter(a =>
-                  a.class_name === activePeriod.className &&
-                  a.session_label === session &&
-                  a.semester === semester
+                  a.class_name === activePeriod.className && a.session_label === session && a.semester === semester
+                );
+                const periodExams = exams.filter(e =>
+                  e.class_name === activePeriod.className && e.session_label === session && e.semester === semester
                 );
                 if (doc === "report") {
                   return (
@@ -162,14 +158,7 @@ export default function StudentPortal() {
                 if (doc === "assessment") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} sessionLabel={session} semester={semester} />
-                    </div>
-                  );
-                }
-                if (doc === "certificate") {
-                  return (
-                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <Certificate student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} semester={semester} sessionLabel={session} />
+                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={session} semester={semester} />
                     </div>
                   );
                 }

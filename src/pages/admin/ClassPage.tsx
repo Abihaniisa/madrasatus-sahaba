@@ -1,5 +1,4 @@
-// src/pages/admin/ClassPage.tsx — students in a class + enter marks + new assessment.
-// Super admins only: "New Assessment". All admins: "Enter marks" / "Enter exam".
+// src/pages/admin/ClassPage.tsx — students in a class + enter marks + new assessment + bulk print.
 
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -83,6 +82,7 @@ export default function ClassPage() {
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Link className="btn btn-secondary btn-sm" to={`/admin/sheet/${encodeURIComponent(cls)}`}>{I.print} Class sheet</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}`}>{I.file} Bulk print</Link>
               {sheet === "none" && (
                 <>
                   {isSuper && (
