@@ -221,8 +221,9 @@ export default function ClassPage() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Link className="btn btn-secondary btn-sm" to={`/admin/sheet/${encodeURIComponent(cls)}`}>{I.print} Class sheet</Link>
-              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}`}>{I.file} Bulk print</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-sheet`}>{I.print} Assessment Sheet</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-result`}>{I.file} Result Sheet</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}`}>{I.print} Bulk print</Link>
               {sheet === "none" && (
                 <>
                   {isSuper && (

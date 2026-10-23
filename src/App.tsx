@@ -10,7 +10,7 @@ import Landing from "./pages/admin/Landing";
 import ClassPage from "./pages/admin/ClassPage";
 import StudentPage from "./pages/admin/StudentPage";
 import StudentForm from "./pages/admin/StudentForm";
-import { ReportPage, SheetPage } from "./pages/admin/Reports";
+import { ReportPage } from "./pages/admin/Reports";
 import Fees from "./pages/admin/Fees";
 import Content from "./pages/admin/Content";
 import Access from "./pages/admin/Access";
@@ -43,7 +43,6 @@ export default function App() {
         <Route path="/admin/student/:id/marks" element={<EditMarks />} />
         <Route path="/admin/bulk" element={<BulkPrint />} />
         <Route path="/admin/report/:id" element={<ReportPage />} />
-        <Route path="/admin/sheet/:cls" element={<SheetPage />} />
         <Route path="/admin/fees" element={<Fees />} />
         <Route path="/admin/content" element={<Content />} />
         <Route path="/admin/access" element={<Access />} />

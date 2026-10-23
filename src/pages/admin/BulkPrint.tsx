@@ -1,13 +1,11 @@
 // src/pages/admin/BulkPrint.tsx — whole-class bulk print.
-// Pick class + session + semester + document type. Renders N copies (one per student),
-// or ONE class-level document. Print button prints the whole thing as one PDF.
+// Pick class + session + semester + document type.
+// URL params: ?class=<class>&doc=<report|assessment|admission|class-sheet|class-result>
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
-import { buildAllSemesters } from "../../lib/calc";
 import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -15,25 +13,29 @@ import { DelayedSkeleton } from "../../ui/primitives";
 import { ReportCard } from "../../documents/ReportCard";
 import { AssessmentRecord } from "../../documents/AssessmentRecord";
 import { AdmissionLetter } from "../../documents/AdmissionLetter";
-import { Certificate } from "../../documents/Certificate";
 import { ClassSheet } from "../../documents/ClassSheet";
 import { ClassResultSheet } from "../../documents/ClassResultSheet";
 import type { Student } from "../../types";
 
 type DocKey =
-  | "report" | "assessment" | "admission" | "certificate"
+  | "report" | "assessment" | "admission"
   | "class-sheet" | "class-result";
 
 type SessionOption = { session: string; semester: 1 | 2; key: string };
+
+const VALID_DOCS: DocKey[] = ["report", "assessment", "admission", "class-sheet", "class-result"];
+const PER_STUDENT_DOCS: DocKey[] = ["report", "assessment", "admission"];
+const CLASS_LEVEL_DOCS: DocKey[] = ["class-sheet", "class-result"];
 
 export default function BulkPrint() {
   const ready = useRequireAuth();
   const [data, setData] = useState<SchoolData | null>(null);
   const [searchParams] = useSearchParams();
   const initialClass = searchParams.get("class");
+  const initialDoc = searchParams.get("doc") as DocKey | null;
   const [cls, setCls] = useState<string>((initialClass && ALL_CLASSES.includes(initialClass)) ? initialClass : (ALL_CLASSES[0] ?? ""));
   const [sessionKey, setSessionKey] = useState<string | null>(null);
-  const [doc, setDoc] = useState<DocKey>("report");
+  const [doc, setDoc] = useState<DocKey>((initialDoc && VALID_DOCS.includes(initialDoc)) ? initialDoc : "report");
   const [subject, setSubject] = useState<string>(CONFIG.subjects[0]);
 
   useEffect(() => { loadSchool().then(setData); }, []);
@@ -53,6 +55,17 @@ export default function BulkPrint() {
         set.set(key, {
           session: a.session_label,
           semester: (a.semester === 2 ? 2 : 1) as 1 | 2,
+          key,
+        });
+      }
+    }
+    for (const e of data.exams) {
+      if (e.class_name !== cls) continue;
+      const key = `${e.session_label}|${e.semester}`;
+      if (!set.has(key)) {
+        set.set(key, {
+          session: e.session_label,
+          semester: (e.semester === 2 ? 2 : 1) as 1 | 2,
           key,
         });
       }
@@ -81,9 +94,6 @@ export default function BulkPrint() {
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
 
-  const classLevelDocs: DocKey[] = ["class-sheet", "class-result"];
-  const perStudentDocs: DocKey[] = ["report", "assessment", "admission", "certificate"];
-
   return (
     <div>
       <AdminTop />
@@ -96,7 +106,7 @@ export default function BulkPrint() {
           <div className="phead no-print">
             <div>
               <h1>Bulk print</h1>
-              <p className="sub">One browser print → one PDF, N pages. No zip. No server.</p>
+              <p className="sub">Print all students in a class in one go.</p>
             </div>
           </div>
 
@@ -133,14 +143,14 @@ export default function BulkPrint() {
               Step 3 — pick a document
             </div>
             <div className="chip-line" style={{ marginBottom: 0 }}>
-              {perStudentDocs.map(k => (
+              {PER_STUDENT_DOCS.map(k => (
                 <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                  {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : k === "admission" ? "Admission Letters" : "Certificates"}
+                  {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : "Admission Letters"}
                 </button>
               ))}
-              {classLevelDocs.map(k => (
+              {CLASS_LEVEL_DOCS.map(k => (
                 <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                  {k === "class-sheet" ? "Class Sheet (one subject)" : "Class Result Sheet"}
+                  {k === "class-sheet" ? "Assessment Sheet" : "Result Sheet"}
                 </button>
               ))}
             </div>
@@ -171,7 +181,7 @@ export default function BulkPrint() {
 
           <div className="print-hint no-print">
             <div>
-              <strong>Print setup:</strong> {classLevelDocs.includes(doc) ? "Portrait" : "Landscape"} · A4 · Default margins.
+              <strong>Print setup:</strong> {CLASS_LEVEL_DOCS.includes(doc) ? "Portrait" : "Landscape"} · A4 · Default margins.
             </div>
           </div>
 
@@ -209,46 +219,20 @@ export default function BulkPrint() {
               if (doc === "report") {
                 return (
                   <div key={student.id} style={{ marginBottom: 8 }}>
-                    <ReportCard
-                      student={{ ...student, class_name: cls }}
-                      results={report.results}
-                      average={report.avg}
-                      pending={report.pending}
-                      sessionLabel={activeSession.session}
-                      semester={activeSession.semester}
-                    />
+                    <ReportCard student={{ ...student, class_name: cls }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={activeSession.session} semester={activeSession.semester} />
                   </div>
                 );
               }
               if (doc === "assessment") {
                 const periodAssessments = data.assessments.filter(a =>
-                  a.class_name === cls &&
-                  a.session_label === activeSession.session &&
-                  a.semester === activeSession.semester
+                  a.class_name === cls && a.session_label === activeSession.session && a.semester === activeSession.semester
+                );
+                const periodExams = data.exams.filter(e =>
+                  e.class_name === cls && e.session_label === activeSession.session && e.semester === activeSession.semester
                 );
                 return (
                   <div key={student.id} style={{ marginBottom: 8 }}>
-                    <AssessmentRecord
-                      student={{ ...student, class_name: cls }}
-                      assessments={periodAssessments}
-                      marks={data.marks}
-                      sessionLabel={activeSession.session}
-                      semester={activeSession.semester}
-                    />
-                  </div>
-                );
-              }
-              if (doc === "certificate") {
-                return (
-                  <div key={student.id} style={{ marginBottom: 8 }}>
-                    <Certificate
-                      student={{ ...student, class_name: cls }}
-                      results={report.results}
-                      average={report.avg}
-                      pending={report.pending}
-                      semester={activeSession.semester}
-                      sessionLabel={activeSession.session}
-                    />
+                    <AssessmentRecord student={{ ...student, class_name: cls }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={activeSession.session} semester={activeSession.semester} />
                   </div>
                 );
               }
