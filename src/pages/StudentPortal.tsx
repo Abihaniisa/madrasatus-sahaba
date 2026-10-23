@@ -1,5 +1,6 @@
-// src/pages/StudentPortal.tsx — student view. Same document set as admin Records, without
-// the editing buttons. Two-step filter: pick period, pick document. Print button.
+// src/pages/StudentPortal.tsx — Student view.
+// Same document set as admin Records, no editing. Class chips = attended classes only.
+// No S1/S2 — class + document type only. Report/assessment/certificate = all semesters stacked.
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,12 +17,13 @@ import { Certificate } from "../documents/Certificate";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
 type DocKey = "report" | "assessment" | "transcript" | "admission" | "certificate";
+type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function StudentPortal() {
   const nav = useNavigate();
   const [data, setData] = useState<StudentPortalData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [periodKey, setPeriodKey] = useState<string | null>(null);
+  const [activeClass, setActiveClass] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocKey>("report");
 
   useEffect(() => {
@@ -48,31 +50,32 @@ export default function StudentPortal() {
     return buildAllSemesters(student, assessments, marks, exams);
   }, [student, assessments, marks, exams]);
 
-  const periods = useMemo(() =>
-    semesters.map(g => ({
-      session: g.session_label,
-      className: g.class_name,
-      semester: (g.semester === 2 ? 2 : 1) as 1 | 2,
-      key: `${g.session_label}|${g.class_name}|${g.semester}`,
-    })),
-  [semesters]);
-
-  const activePeriod = periods.find(p => p.key === periodKey) ?? periods[periods.length - 1] ?? null;
+  const classPeriods: ClassPeriod[] = useMemo(() => {
+    const byClass = new Map<string, { session: string; semester: 1 | 2 }[]>();
+    for (const g of semesters) {
+      if (!byClass.has(g.class_name)) byClass.set(g.class_name, []);
+      byClass.get(g.class_name)!.push({ session: g.session_label, semester: (g.semester === 2 ? 2 : 1) as 1 | 2 });
+    }
+    for (const arr of byClass.values()) {
+      arr.sort((a, b) => {
+        const s = a.session.localeCompare(b.session);
+        return s !== 0 ? s : a.semester - b.semester;
+      });
+    }
+    return Array.from(byClass.entries()).map(([className, semesters]) => ({ className, semesters }));
+  }, [semesters]);
 
   useEffect(() => {
-    if (!periodKey && periods.length > 0) setPeriodKey(periods[periods.length - 1].key);
-  }, [periods, periodKey]);
+    if (!activeClass && classPeriods.length > 0) {
+      setActiveClass(classPeriods[classPeriods.length - 1].className);
+    }
+  }, [classPeriods, activeClass]);
 
   if (loading) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
   if (!data || !student) return null;
 
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
-  const activeReport = activePeriod
-    ? buildReport(student, assessments, marks, exams, activePeriod.semester, activePeriod.session, activePeriod.className)
-    : null;
-  const activeAssessments = activePeriod
-    ? assessments.filter(a => a.class_name === activePeriod.className && a.session_label === activePeriod.session && a.semester === activePeriod.semester)
-    : [];
+  const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
 
   return (
     <div>
@@ -96,15 +99,15 @@ export default function StudentPortal() {
 
           <div className="no-print" style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-              Step 1 — pick a period
+              Step 1 — pick a class
             </div>
-            {periods.length === 0 ? (
+            {classPeriods.length === 0 ? (
               <div className="card pad"><p className="sub">No records yet. Your marks will appear here as teachers enter them.</p></div>
             ) : (
               <div className="chip-line" style={{ marginBottom: 0 }}>
-                {periods.map(p => (
-                  <button key={p.key} className={"chip-f " + (p.key === activePeriod?.key ? "active" : "")} onClick={() => setPeriodKey(p.key)}>
-                    {p.session} · {p.className} · S{p.semester}
+                {classPeriods.map(p => (
+                  <button key={p.className} className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")} onClick={() => setActiveClass(p.className)}>
+                    {p.className}
                   </button>
                 ))}
               </div>
@@ -127,7 +130,7 @@ export default function StudentPortal() {
           )}
 
           <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14 }}>
-            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this document</button>
+            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this document set</button>
           </div>
 
           <div className="print-hint no-print">
@@ -136,18 +139,43 @@ export default function StudentPortal() {
 
           <div className="cert-print-wrapper">
             {!activePeriod ? (
-              <div className="card pad"><div className="empty"><div className="t">No period selected</div></div></div>
-            ) : doc === "report" && activeReport ? (
-              <ReportCard student={student} results={activeReport.results} average={activeReport.avg} pending={activeReport.pending} sessionLabel={activePeriod.session} semester={activePeriod.semester} />
-            ) : doc === "assessment" ? (
-              <AssessmentRecord student={student} assessments={activeAssessments} marks={marks} sessionLabel={activePeriod.session} semester={activePeriod.semester} />
-            ) : doc === "transcript" ? (
-              <Transcript student={student} semesters={semesters} sectionId={student.section} />
+              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : doc === "admission" ? (
               <AdmissionLetter student={student} />
-            ) : doc === "certificate" && activeReport ? (
-              <Certificate student={student} results={activeReport.results} average={activeReport.avg} pending={activeReport.pending} semester={activePeriod.semester} sessionLabel={activePeriod.session} />
-            ) : null}
+            ) : doc === "transcript" ? (
+              <Transcript student={student} semesters={semesters} sectionId={student.section} />
+            ) : (
+              activePeriod.semesters.map(({ session, semester }) => {
+                const report = buildReport(student, assessments, marks, exams, semester, session, activePeriod.className);
+                const periodAssessments = assessments.filter(a =>
+                  a.class_name === activePeriod.className &&
+                  a.session_label === session &&
+                  a.semester === semester
+                );
+                if (doc === "report") {
+                  return (
+                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
+                      <ReportCard student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={session} semester={semester} />
+                    </div>
+                  );
+                }
+                if (doc === "assessment") {
+                  return (
+                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
+                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} sessionLabel={session} semester={semester} />
+                    </div>
+                  );
+                }
+                if (doc === "certificate") {
+                  return (
+                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
+                      <Certificate student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} semester={semester} sessionLabel={session} />
+                    </div>
+                  );
+                }
+                return null;
+              })
+            )}
           </div>
         </div>
       </section>

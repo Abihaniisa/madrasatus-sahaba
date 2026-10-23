@@ -436,3 +436,54 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 
 .hidden-print { display: none; }
 @media print { .hidden-print { display: block; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   A4 PREVIEW SCALING — make documents look like A4 on mobile
+   The document components render at their true width (287mm/190mm).
+   This wrapper scales them down for the screen. In print, the scale
+   is reset to 1 and the @page rules take over.
+   ═══════════════════════════════════════════════════════════════ */
+
+.cert-print-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media screen and (max-width: 900px) {
+  .cert-print-wrapper {
+    padding: 0;
+    border: none !important;
+    background: transparent !important;
+  }
+  .cert-print-wrapper > * {
+    transform: scale(0.55);
+    transform-origin: top left;
+    width: 287mm;
+    margin-bottom: -40%;
+  }
+  .cert-print-wrapper > .cs-doc,
+  .cert-print-wrapper > .crs-doc {
+    width: 190mm;
+    transform: scale(0.55);
+    margin-bottom: -40%;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .cert-print-wrapper > *,
+  .cert-print-wrapper > .cs-doc,
+  .cert-print-wrapper > .crs-doc {
+    transform: scale(0.35);
+    margin-bottom: -65%;
+  }
+}
+
+@media print {
+  .cert-print-wrapper > *,
+  .cert-print-wrapper > .cs-doc,
+  .cert-print-wrapper > .crs-doc {
+    transform: none !important;
+    margin-bottom: 0 !important;
+    width: auto !important;
+  }
+}

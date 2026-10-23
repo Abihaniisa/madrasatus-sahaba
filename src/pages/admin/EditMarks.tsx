@@ -1,6 +1,6 @@
 // src/pages/admin/EditMarks.tsx — historical mark editing.
 // Current session: any admin. Past session: super admin only.
-// Picks class + session + semester + subject + (assessment | exam). Autosaves on blur.
+// Class chips = only classes that have at least one enrollment (attended classes).
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -8,9 +8,8 @@ import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
-import { I } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
-import type { Assessment, Exam, Student } from "../../types";
+import type { Assessment } from "../../types";
 
 type SessionOption = { session: string; semester: 1 | 2; key: string };
 type Mode = "assessment" | "exam";
@@ -19,7 +18,7 @@ export default function EditMarks() {
   const ready = useRequireAuth();
   const [data, setData] = useState<SchoolData | null>(null);
   const [isSuper, setIsSuper] = useState(false);
-  const [cls, setCls] = useState<string>(ALL_CLASSES[0] ?? "");
+  const [cls, setCls] = useState<string>("");
   const [sessionKey, setSessionKey] = useState<string | null>(null);
   const [subject, setSubject] = useState<string>(CONFIG.subjects[0]);
   const [mode, setMode] = useState<Mode>("assessment");
@@ -31,8 +30,21 @@ export default function EditMarks() {
     amISuperAdmin().then(setIsSuper);
   }, []);
 
-  const sessionOptions: SessionOption[] = useMemo(() => {
+  const attendedClasses = useMemo<string[]>(() => {
     if (!data) return [];
+    const seen = new Set<string>();
+    for (const s of data.students) if (s.class_name) seen.add(s.class_name);
+    for (const a of data.assessments) if (a.class_name) seen.add(a.class_name);
+    for (const e of data.exams) if (e.class_name) seen.add(e.class_name);
+    return ALL_CLASSES.filter(c => seen.has(c));
+  }, [data]);
+
+  useEffect(() => {
+    if (!cls && attendedClasses.length > 0) setCls(attendedClasses[0]);
+  }, [attendedClasses, cls]);
+
+  const sessionOptions: SessionOption[] = useMemo(() => {
+    if (!data || !cls) return [];
     const set = new Map<string, SessionOption>();
     for (const a of data.assessments) {
       if (a.class_name !== cls) continue;
@@ -44,7 +56,7 @@ export default function EditMarks() {
       const key = `${e.session_label}|${e.semester}`;
       if (!set.has(key)) set.set(key, { session: e.session_label, semester: (e.semester === 2 ? 2 : 1) as 1 | 2, key });
     }
-    if (set.size === 0) {
+    if (set.size === 0 && cls) {
       set.set(`${CONFIG.sessionLabel}|${CONFIG.currentSemester}`, { session: CONFIG.sessionLabel, semester: CONFIG.currentSemester as 1 | 2, key: `${CONFIG.sessionLabel}|${CONFIG.currentSemester}` });
     }
     return Array.from(set.values()).sort((a, b) => {
@@ -67,7 +79,7 @@ export default function EditMarks() {
   const canEdit = isSuper || !isHistorical;
 
   const classAssessments: Assessment[] = useMemo(() => {
-    if (!data || !activeSession) return [];
+    if (!data || !activeSession || !cls) return [];
     return data.assessments
       .filter(a => a.class_name === cls && a.session_label === activeSession.session && a.semester === activeSession.semester && a.subject === subject)
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
@@ -81,13 +93,29 @@ export default function EditMarks() {
     }
   }, [classAssessments, assessmentId, mode]);
 
-  const studentsInClass: Student[] = useMemo(() => {
-    if (!data) return [];
+  const studentsInClass = useMemo(() => {
+    if (!data || !cls) return [];
     return data.students.filter(s => s.class_name === cls).sort((a, b) => a.name.localeCompare(b.name));
   }, [data, cls]);
 
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
+
+  if (attendedClasses.length === 0) {
+    return (
+      <div>
+        <AdminTop />
+        <div className="body">
+          <div className="wrap">
+            <div className="card"><div className="empty">
+              <div className="t">No classes with records yet</div>
+              <div className="d">Once students are enrolled in any class, it will appear here.</div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const activeAssessment = classAssessments.find(a => a.id === assessmentId) ?? null;
 
@@ -119,7 +147,7 @@ export default function EditMarks() {
     setSaving(studentId);
     try {
       if (mode === "assessment" && activeAssessment) {
-        const old = data!.marks.find(x => x.assessment_id === activeAssessment.id && x.student_id === studentId);
+        const old = data.marks.find(x => x.assessment_id === activeAssessment.id && x.student_id === studentId);
         await supabase.from("marks").upsert(
           { assessment_id: activeAssessment.id, student_id: studentId, value: num },
           { onConflict: "assessment_id,student_id" }
@@ -132,7 +160,7 @@ export default function EditMarks() {
           new_value: { value: num },
         });
       } else if (mode === "exam") {
-        const old = data!.exams.find(x =>
+        const old = data.exams.find(x =>
           x.student_id === studentId &&
           x.subject === subject &&
           x.class_name === cls &&
@@ -180,15 +208,13 @@ export default function EditMarks() {
                   : "Current session — any admin can edit."}
               </p>
             </div>
-            {isHistorical && !isSuper && (
-              <span className="pill pill-warning">Read-only for your role</span>
-            )}
+            {isHistorical && !isSuper && <span className="pill pill-warning">Read-only for your role</span>}
           </div>
 
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>Class</div>
             <div className="chip-line" style={{ marginBottom: 0 }}>
-              {ALL_CLASSES.map(c => (
+              {attendedClasses.map(c => (
                 <button key={c} className={"chip-f " + (cls === c ? "active" : "")} onClick={() => { setCls(c); setSessionKey(null); }}>
                   {c}
                 </button>
@@ -198,7 +224,7 @@ export default function EditMarks() {
 
           {activeSession && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>Session · Semester</div>
+              <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>Session</div>
               <div className="chip-line" style={{ marginBottom: 0 }}>
                 {sessionOptions.map(s => (
                   <button key={s.key} className={"chip-f " + (sessionKey === s.key ? "active" : "")} onClick={() => setSessionKey(s.key)}>
