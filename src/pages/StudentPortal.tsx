@@ -1,4 +1,5 @@
 // src/pages/StudentPortal.tsx — Student view. Same documents as admin Records, no editing.
+// Sign out is a top-right absolute button. Print uses class-based hiding (no DOM paths).
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -74,9 +75,44 @@ export default function StudentPortal() {
   const isSectionLevelDoc = doc === "transcript" || doc === "admission";
 
   return (
-    <div>
-      <PublicNav />
-      <section className="section" style={{ minHeight: "80vh" }}>
+    <>
+      <style>{`
+        @media print {
+          @page { size: A4 landscape; margin: 6mm; }
+          html, body, #root { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          .no-print, .nav, .tabbar, .foot { display: none !important; }
+          .student-portal-page { min-height: 0 !important; padding: 0 !important; }
+          .student-portal-page .wrap { padding: 0 !important; max-width: none !important; }
+          .student-portal-page .ph { display: none !important; }
+          .student-portal-page .chip-line { display: none !important; }
+          .student-portal-page .print-hint { display: none !important; }
+          .student-portal-page .cert-print-wrapper { padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; }
+        }
+        .student-signout {
+          position: fixed;
+          top: 12px;
+          right: 12px;
+          z-index: 100;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 12px;
+          border-radius: 10px;
+          background: var(--surface);
+          border: 1px solid var(--line-2);
+          font-size: 12.5px;
+          font-weight: 500;
+          color: var(--ink-2);
+          box-shadow: var(--sh-1);
+          cursor: pointer;
+        }
+        .student-signout:hover { background: var(--muted); color: var(--ink); }
+      `}</style>
+      <button className="student-signout no-print" onClick={signOut} title="Sign out" aria-label="Sign out">
+        {I.exit} Sign out
+      </button>
+      <div className="no-print"><PublicNav /></div>
+      <section className="section student-portal-page" style={{ minHeight: "80vh" }}>
         <div className="wrap" style={{ maxWidth: 1160 }}>
           <div className="ph no-print">
             <div className="pav">{(student.name[0] ?? "") + (student.name.split(/\s+/)[1]?.[0] ?? "")}</div>
@@ -87,9 +123,6 @@ export default function StudentPortal() {
                 <span>Class <strong>{student.class_name}</strong></span>
                 <span>Section <strong>{sectionName}</strong></span>
               </div>
-            </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-              <button className="btn btn-ghost btn-sm" onClick={signOut}>Sign out</button>
             </div>
           </div>
 
@@ -168,6 +201,6 @@ export default function StudentPortal() {
           </div>
         </div>
       </section>
-    </div>
+    </>
   );
 }

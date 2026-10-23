@@ -428,7 +428,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 @supports (width: 1cqw) {
   .doc-stage > .cert-page,
   .doc-stage > .report-card,
-  .doc-stage > .ar-doc {
+  .doc-stage > .ar-doc,
+  .doc-stage > .tr-doc,
+  .doc-stage > .al-doc {
     zoom: min(1, calc(100cqw / 283mm));
   }
 }
@@ -436,7 +438,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 @supports not (width: 1cqw) {
   .doc-stage > .cert-page,
   .doc-stage > .report-card,
-  .doc-stage > .ar-doc {
+  .doc-stage > .ar-doc,
+  .doc-stage > .tr-doc,
+  .doc-stage > .al-doc {
     zoom: 0.45;
   }
 }
@@ -467,7 +471,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage:last-of-type { break-after: auto; page-break-after: auto; }
   .doc-stage > .cert-page,
   .doc-stage > .report-card,
-  .doc-stage > .ar-doc { zoom: 1 !important; }
+  .doc-stage > .ar-doc,
+  .doc-stage > .tr-doc,
+  .doc-stage > .al-doc { zoom: 1 !important; }
 
   .report-card { page-break-inside: avoid; break-inside: avoid; box-shadow: none; margin: 0; }
   .sheet-scroll { overflow: visible; margin: 0; padding: 0; }
