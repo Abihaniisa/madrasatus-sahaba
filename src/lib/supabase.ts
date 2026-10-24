@@ -118,3 +118,40 @@ export async function amISuperAdmin(): Promise<boolean> {
   const { data } = await supabase.rpc("is_super_admin");
   return data === true;
 }
+
+// ─── Full student deletion (super admin, test mode) ──────────────
+// Deletes: marks → exams → fee_payments → fees → enrollments → students
+// Returns { error } on first failure; no partial rollback possible via client.
+export async function deleteStudentCompletely(studentId: string): Promise<{ error: string | null }> {
+  // 1. marks (child of assessments)
+  {
+    const { error } = await supabase.from("marks").delete().eq("student_id", studentId);
+    if (error) return { error: `marks: ${error.message}` };
+  }
+  // 2. exams
+  {
+    const { error } = await supabase.from("exams").delete().eq("student_id", studentId);
+    if (error) return { error: `exams: ${error.message}` };
+  }
+  // 3. fee_payments
+  {
+    const { error } = await supabase.from("fee_payments").delete().eq("student_id", studentId);
+    if (error) return { error: `fee_payments: ${error.message}` };
+  }
+  // 4. fees
+  {
+    const { error } = await supabase.from("fees").delete().eq("student_id", studentId);
+    if (error) return { error: `fees: ${error.message}` };
+  }
+  // 5. enrollments
+  {
+    const { error } = await supabase.from("enrollments").delete().eq("student_id", studentId);
+    if (error) return { error: `enrollments: ${error.message}` };
+  }
+  // 6. students (parent)
+  {
+    const { error } = await supabase.from("students").delete().eq("id", studentId);
+    if (error) return { error: `students: ${error.message}` };
+  }
+  return { error: null };
+}

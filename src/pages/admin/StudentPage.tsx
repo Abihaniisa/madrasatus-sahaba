@@ -1,13 +1,12 @@
 // src/pages/admin/StudentPage.tsx — full student profile + report card + fee summary.
-// Adds "Records" button → historical document browser (Records.tsx).
-// Adds "Edit marks" button (visible only if user can edit — historical is super-only, enforced in EditMarks).
+// Buttons: Records / Edit marks / Edit / Delete (delete is super-admin only).
 
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
 import { buildReport, loadSchool, type SchoolData } from "../../lib/data";
 import { fmtNGN } from "../../lib/calc";
-import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase, deleteStudentCompletely } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I, waLink } from "../../ui/Shell";
 import { DelayedSkeleton, Modal } from "../../ui/primitives";
@@ -16,10 +15,13 @@ import { ReportCard } from "../../documents/ReportCard";
 export default function StudentPage() {
   const ready = useRequireAuth();
   const { id } = useParams<{ id: string }>();
+  const nav = useNavigate();
   const [data, setData] = useState<SchoolData | null>(null);
   const [isSuper, setIsSuper] = useState(false);
   const [confirmMode, setConfirmMode] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function reload() { setData(await loadSchool()); }
@@ -45,6 +47,19 @@ export default function StudentPage() {
     await reload();
     setBusy(false);
     setConfirmMode(false);
+  }
+
+  async function handleDelete() {
+    if (!isSuper || !s) return;
+    setDeleting(true);
+    const res = await deleteStudentCompletely(s.id);
+    setDeleting(false);
+    setConfirmDelete(false);
+    if (res.error) {
+      window.alert("Delete failed: " + res.error);
+      return;
+    }
+    nav("/admin");
   }
 
   const feeTone = !fee ? "neutral" :
@@ -94,6 +109,11 @@ export default function StudentPage() {
               <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/records`}>{I.folder} Records</Link>
               <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/marks`}>{I.check} Edit marks</Link>
               <Link className="btn btn-secondary btn-sm" to={`/admin/student/${s.id}/edit`}>{I.plus} Edit</Link>
+              {isSuper && (
+                <button className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }} onClick={() => setConfirmDelete(true)}>
+                  Delete
+                </button>
+              )}
             </div>
           </div>
 
@@ -151,6 +171,16 @@ export default function StudentPage() {
         confirmLabel={busy ? "Changing…" : "Change"}
         onConfirm={toggleMode}
         onCancel={() => setConfirmMode(false)} />
+
+      <Modal
+        open={confirmDelete}
+        title="Delete this student?"
+        message={s ? `Delete ${s.name} (${s.reg_no})? This removes their marks, exams, fees, payments, and enrollments. This cannot be undone.` : ""}
+        confirmLabel={deleting ? "Deleting…" : "Delete"}
+        tone="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
