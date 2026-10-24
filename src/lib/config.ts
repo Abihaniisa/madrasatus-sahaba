@@ -57,7 +57,6 @@ export const CONFIG = {
       { type: "holiday",  weeks: 1,  label: "Second Semester Break" },
       { type: "daura",    weeks: 6,  label: "Daura" },
       { type: "holiday",  weeks: 1,  label: "Post-Daura Holiday" },
-      { type: "ramadan",  weeks: 5,  label: "Ramadan" },
     ] as const,
   },
 };
@@ -96,21 +95,6 @@ function deriveSettings(): SchoolSettings {
   const end = new Date(start);
   end.setUTCDate(start.getUTCDate() + totalWeeks * 7 - 1);
 
-  let ramadanStart: string | null = null;
-  let ramadanEnd: string | null = null;
-  let cursor = 0;
-  for (const b of CONFIG.calendar.blocks) {
-    if (b.type === "ramadan") {
-      const rs = new Date(start);
-      rs.setUTCDate(start.getUTCDate() + cursor * 7);
-      ramadanStart = rs.toISOString().slice(0, 10);
-      const re = new Date(rs);
-      re.setUTCDate(rs.getUTCDate() + b.weeks * 7 - 1);
-      ramadanEnd = re.toISOString().slice(0, 10);
-      break;
-    }
-    cursor += b.weeks;
-  }
 
   return {
     session_label: CONFIG.sessionLabel,
@@ -118,8 +102,8 @@ function deriveSettings(): SchoolSettings {
     reg_year: CONFIG.regYear,
     session_start_date: CONFIG.calendar.sessionStart,
     session_end_date: end.toISOString().slice(0, 10),
-    ramadan_start_date: ramadanStart,
-    ramadan_end_date: ramadanEnd,
+    ramadan_start_date: null,
+    ramadan_end_date: null,
   };
 }
 

@@ -18,6 +18,7 @@ import Promotion from "./pages/admin/Promotion";
 import Daura from "./pages/admin/Daura";
 import DauraProgrammePage from "./pages/admin/DauraProgramme";
 import Manage from "./pages/admin/Manage";
+import Settings from "./pages/admin/Settings";
 import Records from "./pages/admin/Records";
 import BulkPrint from "./pages/admin/BulkPrint";
 import EditMarks from "./pages/admin/EditMarks";
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/admin/access" element={<Access />} />
         <Route path="/admin/promotion" element={<Promotion />} />
         <Route path="/admin/manage" element={<Manage />} />
+        <Route path="/admin/settings" element={<Settings />} />
         <Route path="/admin/daura" element={<Daura />} />
         <Route path="/admin/daura/:id" element={<DauraProgrammePage />} />
 

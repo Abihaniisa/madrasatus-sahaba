@@ -27,19 +27,23 @@ function LivePointer() {
             {status.context} · <strong>{status.action}</strong>
           </div>
         </div>
-        <div className="lp-units" role="timer">
-          <div className="lp-unit"><b>{d}</b><span>Days</span></div>
-          <div className="lp-sep" />
-          <div className="lp-unit"><b>{pad(h)}</b><span>Hrs</span></div>
-          <div className="lp-sep" />
-          <div className="lp-unit"><b>{pad(m)}</b><span>Mins</span></div>
-          <div className="lp-sep" />
-          <div className="lp-unit"><b>{pad(s)}</b><span>Secs</span></div>
+        <div className="lp-right">
+          <div className="lp-units" role="timer">
+            <div className="lp-unit"><b>{d}</b><span>Days</span></div>
+            <div className="lp-sep" />
+            <div className="lp-unit"><b>{pad(h)}</b><span>Hrs</span></div>
+            <div className="lp-sep" />
+            <div className="lp-unit"><b>{pad(m)}</b><span>Mins</span></div>
+            <div className="lp-sep" />
+            <div className="lp-unit"><b>{pad(s)}</b><span>Secs</span></div>
+          </div>
+          {status.dateLabel && <div className="lp-date">{status.dateLabel}</div>}
         </div>
       </div>
     </section>
   );
 }
+
 
 export default function Home() {
   return (

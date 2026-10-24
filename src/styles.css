@@ -484,3 +484,24 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 
 .hidden-print { display: none; }
 @media print { .hidden-print { display: block; } }
+
+/* ═══ Live pointer — right column (timer + date) ═══ */
+.lp-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.lp-date {
+  font-family: var(--sans);
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: .02em;
+  text-align: right;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .lp-right { width: 100%; align-items: stretch; }
+  .lp-date { text-align: left; font-size: 10.5px; }
+}

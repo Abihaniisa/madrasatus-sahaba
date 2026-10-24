@@ -1,15 +1,14 @@
 // src/pages/admin/Manage.tsx — super-admin hub. Settings, Access, Promotion, Fees.
-// Non-super admins see the page but every action is hidden.
 
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { amISuperAdmin } from "../../lib/supabase";
-import { useRequireAuth } from "../../lib/supabase";
+import { amISuperAdmin, useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
 
 const ITEMS = [
+  { to: "/admin/settings", title: "Settings", desc: "Session start date and Ramadan window.", icon: I.gear },
   { to: "/admin/fees", title: "Fees", desc: "Record payments, print receipts, see balances.", icon: I.money },
   { to: "/admin/access", title: "Access Control", desc: "Choose who can sign in and manage admins.", icon: I.user },
   { to: "/admin/promotion", title: "End of Session", desc: "Promote, repeat, or graduate students.", icon: I.check },
