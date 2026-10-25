@@ -41,7 +41,7 @@ export default function ScrollToTop() {
   return null;
 }
 
-export function PublicNav() {
+export function PublicNav({ onSignOut }: { onSignOut?: () => void } = {}) {
   const loc = useLocation();
   const p = loc.pathname;
   const on = (k: string) => (p === k ? "active" : "");
@@ -61,7 +61,11 @@ export function PublicNav() {
           <Link to="/materials" className={on("/materials")}>Materials</Link>
           <Link to="/login">Portal</Link>
         </div>
-        <Link to="/login" className="btn btn-primary btn-sm">Enter portal</Link>
+        {onSignOut ? (
+          <button className="btn btn-ghost btn-sm" onClick={onSignOut} title="Sign out">Sign out</button>
+        ) : (
+          <Link to="/login" className="btn btn-primary btn-sm">Enter portal</Link>
+        )}
       </div>
     </nav>
   );

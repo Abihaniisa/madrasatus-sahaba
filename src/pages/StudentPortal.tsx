@@ -88,30 +88,8 @@ export default function StudentPortal() {
           .student-portal-page .print-hint { display: none !important; }
           .student-portal-page .cert-print-wrapper { padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; }
         }
-        .student-signout {
-          position: fixed;
-          top: 12px;
-          right: 12px;
-          z-index: 100;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 12px;
-          border-radius: 10px;
-          background: var(--surface);
-          border: 1px solid var(--line-2);
-          font-size: 12.5px;
-          font-weight: 500;
-          color: var(--ink-2);
-          box-shadow: var(--sh-1);
-          cursor: pointer;
-        }
-        .student-signout:hover { background: var(--muted); color: var(--ink); }
       `}</style>
-      <button className="student-signout no-print" onClick={signOut} title="Sign out" aria-label="Sign out">
-        {I.exit} Sign out
-      </button>
-      <div className="no-print"><PublicNav /></div>
+      <PublicNav onSignOut={signOut} />
       <section className="section student-portal-page" style={{ minHeight: "80vh" }}>
         <div className="wrap" style={{ maxWidth: 1160 }}>
           <div className="ph no-print">

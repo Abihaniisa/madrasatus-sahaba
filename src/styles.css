@@ -145,7 +145,7 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 .nav-links a { padding: 6px 10px; border-radius: var(--r-1); font-size: 13px; color: var(--ink-2); }
 .nav-links a:hover { background: var(--muted); color: var(--ink); }
 .nav-links a.active { color: var(--primary); font-weight: 500; }
-@media (max-width: 780px) { .nav-links { display: none; } .nav-inner .btn { display: none; } }
+@media (max-width: 780px) { .nav-links { display: none; } .nav-inner .btn-primary { display: none; } }
 .brand-logo { width: 44px; height: 44px; flex-shrink: 0; display: block; object-fit: contain; aspect-ratio: 1/1; }
 
 /* ═══ SHELL — Admin Top ═══ */
