@@ -122,37 +122,63 @@ export async function amISuperAdmin(): Promise<boolean> {
 // ─── Full student deletion (super admin, test mode) ──────────────
 // Deletes: marks → exams → fee_payments → fees → enrollments → students
 // Returns { error } on first failure; no partial rollback possible via client.
+// ─── Full student deletion (super admin) ────────────────
+// Postgres FKs:
+//   marks/exams/fees/fee_payments/enrollments → students : CASCADE (auto-delete)
+//   daura_participants → students : SET NULL  (would orphan — must delete manually)
+//   daura_marks → daura_participants : CASCADE (auto-delete when participant goes)
+// Strategy: manually remove Daura participation, delete student, verify everything.
 export async function deleteStudentCompletely(studentId: string): Promise<{ error: string | null }> {
-  // 1. marks (child of assessments)
-  {
-    const { error } = await supabase.from("marks").delete().eq("student_id", studentId);
-    if (error) return { error: `marks: ${error.message}` };
+  // 1. Fetch this student's Daura participations
+  const { data: participations, error: pErr } = await supabase
+    .from("daura_participants")
+    .select("id")
+    .eq("student_id", studentId);
+  if (pErr) return { error: "daura_participants fetch: " + pErr.message };
+  const partIds = ((participations as { id: string }[]) ?? []).map(r => r.id);
+
+  // 2. Delete daura_marks for those participations (belt-and-suspenders; CASCADE would handle)
+  if (partIds.length > 0) {
+    const { error } = await supabase.from("daura_marks").delete().in("participant_id", partIds);
+    if (error) return { error: "daura_marks: " + error.message };
   }
-  // 2. exams
-  {
-    const { error } = await supabase.from("exams").delete().eq("student_id", studentId);
-    if (error) return { error: `exams: ${error.message}` };
+
+  // 3. Delete daura_participants rows (SET NULL would orphan them — must go now)
+  if (partIds.length > 0) {
+    const { error } = await supabase.from("daura_participants").delete().eq("student_id", studentId);
+    if (error) return { error: "daura_participants: " + error.message };
   }
-  // 3. fee_payments
-  {
-    const { error } = await supabase.from("fee_payments").delete().eq("student_id", studentId);
-    if (error) return { error: `fee_payments: ${error.message}` };
-  }
-  // 4. fees
-  {
-    const { error } = await supabase.from("fees").delete().eq("student_id", studentId);
-    if (error) return { error: `fees: ${error.message}` };
-  }
-  // 5. enrollments
-  {
-    const { error } = await supabase.from("enrollments").delete().eq("student_id", studentId);
-    if (error) return { error: `enrollments: ${error.message}` };
-  }
-  // 6. students (parent)
+
+  // 4. Delete the student — Postgres cascades marks, exams, fees, fee_payments, enrollments
   {
     const { error } = await supabase.from("students").delete().eq("id", studentId);
-    if (error) return { error: `students: ${error.message}` };
+    if (error) return { error: "students: " + error.message };
   }
+
+  // 5. Verify: everything must be gone. Any non-zero count → fail with table name.
+  const checks: { table: string; count: number }[] = [];
+  const verifyTables: [string, string][] = [
+    ["students", "id"],
+    ["marks", "student_id"],
+    ["exams", "student_id"],
+    ["fees", "student_id"],
+    ["fee_payments", "student_id"],
+    ["enrollments", "student_id"],
+    ["daura_participants", "student_id"],
+  ];
+  for (const [table, col] of verifyTables) {
+    const { count, error } = await supabase
+      .from(table)
+      .select("*", { count: "exact", head: true })
+      .eq(col, studentId);
+    if (error) return { error: `verify ${table}: ${error.message}` };
+    checks.push({ table, count: count ?? 0 });
+  }
+  const leftovers = checks.filter(c => c.count > 0);
+  if (leftovers.length > 0) {
+    return { error: "Delete incomplete: " + leftovers.map(c => `${c.table}=${c.count}`).join(", ") };
+  }
+
   return { error: null };
 }
 
