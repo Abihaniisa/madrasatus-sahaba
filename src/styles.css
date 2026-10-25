@@ -23,7 +23,7 @@
   --sh-2: 0 2px 4px rgba(20,30,22,.04), 0 4px 12px rgba(20,30,22,.05);
   --sh-3: 0 8px 24px rgba(20,30,22,.06), 0 16px 40px rgba(20,30,22,.05);
   /* A4 document system */
-  --doc-w: 283mm; --doc-h: 195mm; --doc-gap: 20px;
+  --doc-w: 283mm; --doc-h: 193mm; --doc-gap: 20px;
 }
 
 /* ═══ BASE ═══ */
@@ -430,7 +430,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .report-card,
   .doc-stage > .ar-doc,
   .doc-stage > .tr-doc,
-  .doc-stage > .al-doc {
+  .doc-stage > .al-doc,
+  .doc-stage > .cs-doc,
+  .doc-stage > .crs-doc {
     zoom: min(1, calc(100cqw / 283mm));
   }
 }
@@ -440,7 +442,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .report-card,
   .doc-stage > .ar-doc,
   .doc-stage > .tr-doc,
-  .doc-stage > .al-doc {
+  .doc-stage > .al-doc,
+  .doc-stage > .cs-doc,
+  .doc-stage > .crs-doc {
     zoom: 0.45;
   }
 }
@@ -450,7 +454,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 @media print {
   @page { size: A4 landscape; margin: 6mm; }
 
-  html, body, #root { background: #fff; width: 100%; padding: 0; margin: 0; }
+  html, body, #root { background: #fff; width: 100%; padding: 0; margin: 0; height: auto !important; min-height: 0 !important; overflow: visible !important; }
+  #root > * { min-height: 0 !important; height: auto !important; }
   .body { padding: 0; margin: 0; }
   .wrap, .wrap-narrow { padding: 0; margin: 0; max-width: none; }
 
@@ -465,17 +470,18 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage {
     container-type: normal;
     margin: 0;
-    break-after: page;
-    page-break-after: always;
   }
   .doc-stage:last-of-type { break-after: auto; page-break-after: auto; }
   .doc-stage > .cert-page,
   .doc-stage > .report-card,
   .doc-stage > .ar-doc,
   .doc-stage > .tr-doc,
-  .doc-stage > .al-doc { zoom: 1 !important; }
+  .doc-stage > .al-doc,
+  .doc-stage > .cs-doc,
+  .doc-stage > .crs-doc { zoom: 1 !important; }
 
   .report-card { page-break-inside: avoid; break-inside: avoid; box-shadow: none; margin: 0; }
+  .report-card-page-2 .doc-stage { margin: 0; break-after: auto; page-break-after: auto; }
   .sheet-scroll { overflow: visible; margin: 0; padding: 0; }
   .sheet-scroll .sheet-table { min-width: 0; }
 
@@ -505,3 +511,4 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .lp-right { width: 100%; align-items: stretch; }
   .lp-date { text-align: left; font-size: 10.5px; }
 }
+

@@ -25,9 +25,12 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
   const sem = semester ?? CONFIG.currentSemester;
   const session = sessionLabel ?? CONFIG.sessionLabel;
   const semesterText = sem === 1 ? "First" : "Second";
+  const overallCode = gradeFor(pending ? null : average).code;
+  const showCert = overallCode === "A" || overallCode === "B";
 
   return (
     <>
+      {showCert && (
       <div className="report-card-page-1">
         <Certificate
           student={student}
@@ -38,6 +41,7 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           sessionLabel={session}
         />
       </div>
+      )}
       <div className="report-card-page-2">
         <div className="doc-stage">
         <style>{`
@@ -59,12 +63,12 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           .report-card .info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
           .report-card .info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
           .report-card .info b { font-size: 10pt; }
-          .report-card table { width: 100%; flex: 1 1 auto; min-height: 0; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; }
+          .report-card table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; }
           .report-card th, .report-card td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 11pt; padding: 0; overflow: hidden; }
-          .report-card thead th { background: #1f5a3a; color: #fff; height: 9mm; font-weight: bold; line-height: 1.15; }
-          .report-card thead th.sub2 { background: #eef3ee; color: #143d27; }
-          .report-card thead tr.top th { height: 7mm; font-size: 10pt; letter-spacing: 0.5pt; }
-          .report-card thead tr.wk th { height: 7mm; font-size: 9pt; }
+          .report-card thead th { background: #1f5a3a; color: #fff; padding: 2mm 1mm; font-weight: bold; line-height: 1.15; }
+          .report-card thead th.sub2 { background: #143d27; color: #fff; }
+          .report-card thead tr.rcard-hd1 th { font-size: 10pt; letter-spacing: 0.5pt; }
+          .report-card thead tr.rcard-hd2 th { font-size: 9pt; }
           .report-card tbody td { height: min(12mm, calc(78mm / var(--n, 5))); }
           .report-card tbody tr:nth-child(even) td { background: #f6f9f6; }
           .report-card td.subj { text-align: left; padding-left: 4mm; font-weight: bold; font-size: 12.5pt; font-family: Georgia, serif; }
@@ -86,7 +90,8 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           .report-card .sig { width: 75mm; text-align: center; border-top: 0.35mm solid #1c2420; padding-top: 1.2mm; font-size: 9.5pt; font-weight: bold; }
           .report-card .sig span { display: block; font-size: 7pt; font-weight: normal; color: #666; font-family: Arial, sans-serif; }
           @media print {
-            .report-card { page-break-inside: avoid; break-inside: avoid; }
+            html, body { background: none; }
+            .report-card { margin: 0; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; }
             .report-card thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .report-card-page-1 { page-break-after: always; break-after: page; }
           }
@@ -118,11 +123,11 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
               <col style={{ width: "9%" }} /><col style={{ width: "19%" }} />
             </colgroup>
             <thead>
-              <tr className="top">
+              <tr className="rcard-hd1">
                 <th rowSpan={2}>Subject</th><th colSpan={2}>Assessments</th><th colSpan={2}>Exam</th>
                 <th rowSpan={2}>Final<br/>/100</th><th rowSpan={2}>Grade</th><th rowSpan={2}>Remark</th>
               </tr>
-              <tr className="wk">
+              <tr className="rcard-hd2">
                 <th className="sub2">Avg /{CONFIG.assessmentMax}</th>
                 <th className="sub2">{CONFIG.assessmentWeight * 100}%</th>
                 <th className="sub2">Score /{CONFIG.examMax}</th>
