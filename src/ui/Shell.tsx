@@ -71,13 +71,17 @@ export function PublicTabBar() {
   const loc = useLocation();
   const p = loc.pathname;
   const on = (k: string) => (p === k ? "active" : "");
+  const portalHref = (() => {
+    try { return sessionStorage.getItem("madrasah.student") ? "/me" : "/login"; }
+    catch { return "/login"; }
+  })();
   return (
     <div className="tabbar">
       <div className="tabbar-inner">
         <Link to="/" className={on("/")}>{I.home}Home</Link>
         <Link to="/curriculum" className={on("/curriculum")}>{I.book}Curriculum</Link>
         <Link to="/materials" className={on("/materials")}>{I.folder}Materials</Link>
-        <Link to="/login">{I.login}Portal</Link>
+        <Link to={portalHref} className={on("/me") || on("/login")}>{I.login}Portal</Link>
       </div>
     </div>
   );

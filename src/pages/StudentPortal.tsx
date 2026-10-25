@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS } from "../lib/config";
-import { PublicNav, I } from "../ui/Shell";
+import { PublicNav, PublicTabBar, I } from "../ui/Shell";
 import { getStudentSession, clearStudentSession, fetchStudentPortal, type StudentPortalData } from "../lib/supabase";
 import { buildReport } from "../lib/data";
 import { buildAllSemesters } from "../lib/calc";
@@ -200,6 +200,7 @@ export default function StudentPortal() {
             )}
           </div>
         </div>
+        <PublicTabBar />
       </section>
     </>
   );

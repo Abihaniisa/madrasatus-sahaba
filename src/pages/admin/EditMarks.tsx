@@ -3,7 +3,7 @@
 // Class chips = only classes that have at least one enrollment (attended classes).
 
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
@@ -15,6 +15,7 @@ type SessionOption = { session: string; semester: 1 | 2; key: string };
 type Mode = "assessment" | "exam";
 
 export default function EditMarks() {
+  const { id: studentIdParam } = useParams<{ id?: string }>();
   const ready = useRequireAuth();
   const [data, setData] = useState<SchoolData | null>(null);
   const [isSuper, setIsSuper] = useState(false);
@@ -95,8 +96,10 @@ export default function EditMarks() {
 
   const studentsInClass = useMemo(() => {
     if (!data || !cls) return [];
-    return data.students.filter(s => s.class_name === cls).sort((a, b) => a.name.localeCompare(b.name));
-  }, [data, cls]);
+    const list = data.students.filter(s => s.class_name === cls);
+    const filtered = studentIdParam ? list.filter(s => s.id === studentIdParam) : list;
+    return filtered.sort((a, b) => a.name.localeCompare(b.name));
+  }, [data, cls, studentIdParam]);
 
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
@@ -292,6 +295,7 @@ export default function EditMarks() {
                         <div className="sid">{s.reg_no}</div>
                       </div>
                       <input
+                        key={`${subject}|${mode}|${assessmentId ?? "none"}|${s.id}|${v ?? "null"}`}
                         className="mark"
                         type="text"
                         inputMode="numeric"
