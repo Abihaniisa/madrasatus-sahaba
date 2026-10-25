@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
+import { buildAllSemesters } from "../../lib/calc";
 import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -15,16 +16,17 @@ import { AssessmentRecord } from "../../documents/AssessmentRecord";
 import { AdmissionLetter } from "../../documents/AdmissionLetter";
 import { ClassSheet } from "../../documents/ClassSheet";
 import { ClassResultSheet } from "../../documents/ClassResultSheet";
+import { Transcript } from "../../documents/Transcript";
 import type { Student } from "../../types";
 
 type DocKey =
-  | "report" | "assessment" | "admission"
+  | "report" | "assessment" | "admission" | "transcript"
   | "class-sheet" | "class-result";
 
 type SessionOption = { session: string; semester: 1 | 2; key: string };
 
-const VALID_DOCS: DocKey[] = ["report", "assessment", "admission", "class-sheet", "class-result"];
-const PER_STUDENT_DOCS: DocKey[] = ["report", "assessment", "admission"];
+const VALID_DOCS: DocKey[] = ["report", "assessment", "admission", "transcript", "class-sheet", "class-result"];
+const PER_STUDENT_DOCS: DocKey[] = ["report", "assessment", "admission", "transcript"];
 const CLASS_LEVEL_DOCS: DocKey[] = ["class-sheet", "class-result"];
 
 export default function BulkPrint() {
@@ -145,7 +147,7 @@ export default function BulkPrint() {
             <div className="chip-line" style={{ marginBottom: 0 }}>
               {PER_STUDENT_DOCS.map(k => (
                 <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                  {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : "Admission Letters"}
+                  {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : k === "transcript" ? "Transcripts" : "Admission Letters"}
                 </button>
               ))}
               {CLASS_LEVEL_DOCS.map(k => (
@@ -214,6 +216,10 @@ export default function BulkPrint() {
             ) : studentsInClass.map(student => {
               if (doc === "admission") {
                 return <div key={student.id} style={{ marginBottom: 8 }}><AdmissionLetter student={student} /></div>;
+              }
+              if (doc === "transcript") {
+                const semGroups = buildAllSemesters(student, data.assessments, data.marks, data.exams);
+                return <div key={student.id} style={{ marginBottom: 8 }}><Transcript student={{ ...student, class_name: cls }} semesters={semGroups} /></div>;
               }
               const report = buildReport(student, data.assessments, data.marks, data.exams, activeSession.semester, activeSession.session, cls);
               if (doc === "report") {
