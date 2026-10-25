@@ -40,7 +40,7 @@ export function ReportPage() {
             <button className="btn btn-primary" onClick={() => window.print()}>{I.print} Print {CONFIG.currentSemester === 1 ? "First" : "Second"} Semester Report</button>
           </div>
           <div className="cert-print-wrapper">
-            <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} />
+            <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} assessments={data.assessments} marks={data.marks} exams={data.exams} />
           </div>
         </div>
       </div>

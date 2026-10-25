@@ -162,7 +162,7 @@ export default function StudentPortal() {
                 if (doc === "report") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <ReportCard student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={session} semester={semester} />
+                      <ReportCard student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={session} semester={semester} assessments={assessments} marks={marks} exams={exams} />
                     </div>
                   );
                 }

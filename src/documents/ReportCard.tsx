@@ -5,6 +5,7 @@
 import { CONFIG, SECTIONS } from "../lib/config";
 import { gradeFor } from "../lib/calc";
 import { Certificate } from "./Certificate";
+import { AssessmentRecord } from "./AssessmentRecord";
 import type { Student, SubjectResult } from "../types";
 
 type Props = {
@@ -14,9 +15,12 @@ type Props = {
   pending: boolean;
   sessionLabel?: string;
   semester?: number;
+  assessments?: import("../types").Assessment[];
+  marks?: import("../types").Mark[];
+  exams?: import("../types").Exam[];
 };
 
-export function ReportCard({ student, results, average, pending, sessionLabel, semester }: Props) {
+export function ReportCard({ student, results, average, pending, sessionLabel, semester, assessments, marks, exams }: Props) {
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const overallGrade = gradeFor(pending ? null : average);
@@ -41,6 +45,18 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
           sessionLabel={session}
         />
       </div>
+      )}
+      {assessments && marks && exams && (
+        <div className="report-card-page-3">
+          <AssessmentRecord
+            student={student}
+            assessments={assessments}
+            marks={marks}
+            exams={exams}
+            sessionLabel={session}
+            semester={sem}
+          />
+        </div>
       )}
       <div className="report-card-page-2">
         <div className="doc-stage">
@@ -94,6 +110,7 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
             .report-card { margin: 0; page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; }
             .report-card thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .report-card-page-1 { page-break-after: always; break-after: page; }
+            .report-card-page-3 { page-break-after: always; break-after: page; }
           }
         `}</style>
         <div className="report-card" style={{ "--n": Math.max(1, results.length) } as React.CSSProperties}>

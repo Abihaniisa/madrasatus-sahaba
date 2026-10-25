@@ -150,11 +150,6 @@ export default function BulkPrint() {
                   {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : k === "transcript" ? "Transcripts" : "Admission Letters"}
                 </button>
               ))}
-              {CLASS_LEVEL_DOCS.map(k => (
-                <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                  {k === "class-sheet" ? "Assessment Sheet" : "Result Sheet"}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -225,7 +220,7 @@ export default function BulkPrint() {
               if (doc === "report") {
                 return (
                   <div key={student.id} style={{ marginBottom: 8 }}>
-                    <ReportCard student={{ ...student, class_name: cls }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={activeSession.session} semester={activeSession.semester} />
+                    <ReportCard student={{ ...student, class_name: cls }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={activeSession.session} semester={activeSession.semester} assessments={data.assessments} marks={data.marks} exams={data.exams} />
                   </div>
                 );
               }

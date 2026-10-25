@@ -80,7 +80,7 @@ export function ClassSheet({
               <table className="cs-table">
                 <colgroup>
                   <col style={{ width: "6%" }} />
-                  <col style={{ width: "30%" }} />
+                  <col style={{ minWidth: "120px" }} />
                   {subjAssessments.map((_, i) => (
                     <col key={i} style={{ width: `${Math.max(3.5, 38 / Math.max(subjAssessments.length + 2, 1))}%` }} />
                   ))}
@@ -145,7 +145,7 @@ const STYLES = `
   .cs-head .doc { font-size: 13pt; color: #b8923a; letter-spacing: 2.5pt; text-transform: uppercase; margin-top: 1mm; font-weight: bold; }
   .cs-head .sess { font-size: 9pt; color: #555; margin-top: 0.8mm; }
   .cs-table {
-    width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, sans-serif;
+    width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, sans-serif;
     flex: 1;
   }
   .cs-table th, .cs-table td {

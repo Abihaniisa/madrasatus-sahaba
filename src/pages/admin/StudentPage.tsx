@@ -126,7 +126,7 @@ export default function StudentPage() {
               <button className="btn btn-primary btn-sm" onClick={() => setShowPrintModal(true)}>{I.print} Print report</button>
             </div>
             <div className="cert-print-wrapper" style={{ overflowX: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-3)", background: "var(--surface)", padding: 12 }}>
-              <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} />
+              <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} assessments={data.assessments} marks={data.marks} exams={data.exams} />
             </div>
           </div>
 

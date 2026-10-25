@@ -7,7 +7,6 @@ import { CONFIG } from "../lib/config";
 import { gradeFor } from "../lib/calc";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
-const PER_PAGE = 10;
 
 type Row = {
   subject: string;
@@ -74,12 +73,10 @@ export function AssessmentRecord({
   });
 
   const maxAssessments = Math.max(0, ...rows.map(r => r.assessments.length));
-  const needsTwoPages = maxAssessments > PER_PAGE;
-
-  const subjW = needsTwoPages ? 20 : 14;
-  const summaryCols = needsTwoPages ? Math.max(1, maxAssessments - PER_PAGE) : maxAssessments;
+  const subjW = 14;
+  const summaryCols = maxAssessments;
   const markW = (100 - 48 - subjW) / Math.max(1, summaryCols);
-  const startIdx = needsTwoPages ? PER_PAGE : 0;
+  const startIdx = 0;
 
   function renderHeader(part: "marks" | "summary" | "only") {
     return (
@@ -163,43 +160,10 @@ export function AssessmentRecord({
 
   return (
     <>
-      {needsTwoPages && (
-        <div className="doc-stage"><div className="ar-doc">
-          {styles}
-          {renderHeader("marks")}
-          {renderInfo()}
-          <table className="ar-table">
-            <colgroup>
-              <col style={{ width: "20%" }} />
-              {Array.from({ length: PER_PAGE }).map((_, i) => <col key={i} style={{ width: "8%" }} />)}
-            </colgroup>
-            <thead>
-              <tr>
-                <th className="subject">Subject</th>
-                {Array.from({ length: PER_PAGE }).map((_, i) => <th key={i}>A{i + 1}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(row => (
-                <tr key={row.subject}>
-                  <td className="subject">{row.subject}</td>
-                  {Array.from({ length: PER_PAGE }).map((_, i) => {
-                    const a = row.assessments[i];
-                    if (!a) return <td key={i} className="cell-empty">—</td>;
-                    return <td key={i} className={"cell-mark " + (a.value != null ? "" : "cell-missing")}>{a.value != null ? a.value : "—"}</td>;
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <footer className="ar-foot">
-            <div><strong>Raw marks only.</strong> Summary, averages, and final scores are on the next page.</div>
-          </footer>
-        </div></div>
-      )}
+
       <div className="doc-stage"><div className="ar-doc">
         {styles}
-        {renderHeader(needsTwoPages ? "summary" : "only")}
+        {renderHeader("only")}
         {renderInfo()}
         <table className="ar-table">
           <colgroup>
