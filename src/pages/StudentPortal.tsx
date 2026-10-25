@@ -13,8 +13,10 @@ import { AssessmentRecord } from "../documents/AssessmentRecord";
 import { Transcript } from "../documents/Transcript";
 import { AdmissionLetter } from "../documents/AdmissionLetter";
 import type { Assessment, Exam, Mark, Student } from "../types";
+import { DauraReport } from "../documents/DauraReport";
+import { supabase } from "../lib/supabase";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission";
+type DocKey = "report" | "assessment" | "transcript" | "admission" | "daura";
 type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function StudentPortal() {
@@ -23,6 +25,10 @@ export default function StudentPortal() {
   const [loading, setLoading] = useState(true);
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocKey>("report");
+  const [dauraParticipations, setDauraParticipations] = useState<any[]>([]);
+  const [dauraData, setDauraData] = useState<{ programs: any[]; assessments: any[]; marks: any[] }>({ programs: [], assessments: [], marks: [] });
+  const [dauraLoading, setDauraLoading] = useState(false);
+  const [activeDauraId, setActiveDauraId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!CONFIG.studentLoginEnabled) { nav("/login"); return; }
@@ -42,6 +48,17 @@ export default function StudentPortal() {
   const marks = (data?.marks ?? []) as Mark[];
   const exams = (data?.exams ?? []) as Exam[];
   const assessments = (data?.assessments ?? []) as Assessment[];
+
+  useEffect(() => {
+    if (!student) return;
+    let cancelled = false;
+    (async () => {
+      const { data: parts } = await supabase.from("daura_participants").select("id, program_id, full_name, external, nin, phone").eq("student_id", student.id);
+      if (cancelled) return;
+      setDauraParticipations((parts as any[]) ?? []);
+    })();
+    return () => { cancelled = true; };
+  }, [student?.id]);
 
   const semesters = useMemo(() => {
     if (!student) return [];
@@ -72,7 +89,7 @@ export default function StudentPortal() {
 
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
-  const isSectionLevelDoc = doc === "transcript" || doc === "admission";
+  const isSectionLevelDoc = doc === "transcript" || doc === "admission" || doc === "daura";
 
   return (
     <>
@@ -109,10 +126,10 @@ export default function StudentPortal() {
               Document type
             </div>
             <div className="chip-line" style={{ marginBottom: 0 }}>
-              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
-              <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
+              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Reports</button>
               <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
               <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
+              {dauraParticipations.length > 0 && (<button className={"chip-f " + (doc === "daura" ? "active" : "")} onClick={() => setDoc("daura")}>Daura</button>)}
             </div>
           </div>
 
@@ -169,17 +186,102 @@ export default function StudentPortal() {
                 if (doc === "assessment") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={session} semester={semester} />
+                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={session} semester={semester} average={report.avg} pending={report.pending} />
                     </div>
                   );
                 }
                 return null;
               })
             )}
+            {doc === "daura" && (
+              <DauraView participations={dauraParticipations} data={dauraData} setData={setDauraData} loading={dauraLoading} setLoading={setDauraLoading} activeId={activeDauraId} setActiveId={setActiveDauraId} />
+            )}
           </div>
         </div>
         <PublicTabBar />
       </section>
     </>
+  );
+}
+
+function DauraView({ participations, data, setData, loading, setLoading, activeId, setActiveId }: {
+  participations: any[];
+  data: { programs: any[]; assessments: any[]; marks: any[] };
+  setData: (d: { programs: any[]; assessments: any[]; marks: any[] }) => void;
+  loading: boolean;
+  setLoading: (v: boolean) => void;
+  activeId: string | null;
+  setActiveId: (v: string | null) => void;
+}) {
+  useEffect(() => {
+    if (participations.length === 0) { setData({ programs: [], assessments: [], marks: [] }); return; }
+    const pids = participations.map((p: any) => p.program_id);
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      const [progs, asses, marksRes] = await Promise.all([
+        supabase.from("daura_programs").select("*").in("id", pids),
+        supabase.from("daura_assessments").select("*").in("program_id", pids),
+        supabase.from("daura_marks").select("*"),
+      ]);
+      if (cancelled) return;
+      const aidSet = new Set(((asses.data as any[]) ?? []).map((a: any) => a.id));
+      const filteredMarks = ((marksRes.data as any[]) ?? []).filter((m: any) => aidSet.has(m.assessment_id));
+      setData({ programs: (progs.data as any[]) ?? [], assessments: (asses.data as any[]) ?? [], marks: filteredMarks });
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [participations.length]);
+
+  if (participations.length === 0) {
+    return <div className="card pad"><div className="empty"><div className="t">No Daura programmes</div><div className="d">Your Daura participation will appear here when the school adds you.</div></div></div>;
+  }
+
+  const activeParticipant = participations.find((p: any) => p.program_id === activeId) ?? null;
+  const activeProgram = activeParticipant ? data.programs.find((pr: any) => pr.id === activeParticipant.program_id) : null;
+
+  if (!activeParticipant || !activeProgram) {
+    return (
+      <div>
+        <div className="chip-line no-print" style={{ marginBottom: 12 }}>
+          {participations.map((p: any) => {
+            const prog = data.programs.find((pr: any) => pr.id === p.program_id);
+            return (
+              <button key={p.program_id} className={"chip-f " + (activeId === p.program_id ? "active" : "")} onClick={() => setActiveId(p.program_id)}>
+                {prog?.name ?? "Daura programme"}
+              </button>
+            );
+          })}
+        </div>
+        {loading && <div className="card pad"><div className="sub">Loading…</div></div>}
+      </div>
+    );
+  }
+
+  const programAssessments = data.assessments.filter((a: any) => a.program_id === activeParticipant.program_id);
+  const programMarks = data.marks.filter((m: any) => m.participant_id === activeParticipant.id);
+
+  return (
+    <div>
+      <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <div className="chip-line" style={{ marginBottom: 0 }}>
+          {participations.map((p: any) => {
+            const prog = data.programs.find((pr: any) => pr.id === p.program_id);
+            return (
+              <button key={p.program_id} className={"chip-f " + (activeId === p.program_id ? "active" : "")} onClick={() => setActiveId(p.program_id)}>
+                {prog?.name ?? "Daura programme"}
+              </button>
+            );
+          })}
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this card</button>
+      </div>
+      <DauraReport
+        participant={{ id: activeParticipant.id, full_name: activeParticipant.full_name, external: activeParticipant.external, phone: activeParticipant.phone }}
+        program={{ id: activeProgram.id, name: activeProgram.name, description: activeProgram.description ?? null, start_date: activeProgram.start_date ?? null, end_date: activeProgram.end_date ?? null, weeks: activeProgram.weeks ?? 0, subjects: activeProgram.subjects ?? [] }}
+        assessments={programAssessments.map((a: any) => ({ id: a.id, subject: a.subject, label: a.label, max_marks: a.max_marks ?? 10 }))}
+        marks={programMarks.map((m: any) => ({ assessment_id: m.assessment_id, participant_id: m.participant_id, value: m.value }))}
+      />
+    </div>
   );
 }

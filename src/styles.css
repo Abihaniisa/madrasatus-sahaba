@@ -432,7 +432,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .tr-doc,
   .doc-stage > .al-doc,
   .doc-stage > .cs-doc,
-  .doc-stage > .crs-doc {
+  .doc-stage > .crs-doc,
+  .doc-stage > .dr-doc {
     zoom: min(1, calc(100cqw / 283mm));
   }
 }
@@ -444,7 +445,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .tr-doc,
   .doc-stage > .al-doc,
   .doc-stage > .cs-doc,
-  .doc-stage > .crs-doc {
+  .doc-stage > .crs-doc,
+  .doc-stage > .dr-doc {
     zoom: 0.45;
   }
 }

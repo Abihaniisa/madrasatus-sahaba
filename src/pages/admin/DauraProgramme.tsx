@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase, deleteDauraProgramme } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
-import { DelayedSkeleton } from "../../ui/primitives";
+import { DelayedSkeleton, Modal } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
 import { loadSchool, type SchoolData } from "../../lib/data";
+import { DauraReport } from "../../documents/DauraReport";
 import type { Student } from "../../types";
 
 type DauraProgram = {
@@ -37,6 +38,8 @@ export default function DauraProgrammePage() {
   const [tab, setTab] = useState<Tab>("participants");
   const [historyFor, setHistoryFor] = useState<DauraParticipant | null>(null);
   const [isSuper, setIsSuper] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
 
@@ -55,6 +58,16 @@ export default function DauraProgrammePage() {
   }
 
   useEffect(() => { if (ready && id) refreshAll(id); }, [ready, id]);
+
+  async function handleDelete() {
+    if (!program) return;
+    setDeleting(true);
+    const res = await deleteDauraProgramme(program.id);
+    setDeleting(false);
+    setConfirmDelete(false);
+    if (res.error) { window.alert("Delete failed: " + res.error); return; }
+    window.location.href = "/admin/daura";
+  }
 
   async function toggleStatus() {
     if (!program) return;
@@ -86,12 +99,17 @@ export default function DauraProgrammePage() {
               </p>
             </div>
             {isSuper && (
-              <button className={"btn btn-sm " + (program.status === "open" ? "btn-secondary" : "btn-primary")} onClick={toggleStatus}>
-                {program.status === "open" ? "Close programme" : "Reopen"}
-              </button>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button className={"btn btn-sm " + (program.status === "open" ? "btn-secondary" : "btn-primary")} onClick={toggleStatus}>
+                  {program.status === "open" ? "Close programme" : "Reopen"}
+                </button>
+                <button className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }} onClick={() => setConfirmDelete(true)}>
+                  Delete programme
+                </button>
+              </div>
             )}
           </div>
-          <div className="chip-line">
+          <div className="chip-line no-print">
             <button className={"chip-f " + (tab === "participants" ? "active" : "")} onClick={() => setTab("participants")}>Participants</button>
             <button className={"chip-f " + (tab === "marks" ? "active" : "")} onClick={() => setTab("marks")}>Marks</button>
             <button className={"chip-f " + (tab === "report" ? "active" : "")} onClick={() => setTab("report")}>Report</button>
@@ -105,11 +123,19 @@ export default function DauraProgrammePage() {
               onChange={() => refreshAll(program.id)} />
           )}
           {tab === "report" && (
-            <ReportTab program={program} participants={participants} assessments={assessments} school={school}
-              onOpenHistory={(p) => setHistoryFor(p)} />
+            <ReportTab program={program} participants={participants} assessments={assessments} />
           )}
         </div>
       </div>
+      <Modal
+        open={confirmDelete}
+        title="Delete this programme?"
+        message={program ? `Delete "${program.name}"? This permanently removes ${assessments.length} assessment${assessments.length === 1 ? "" : "s"}, ${participants.length} participant${participants.length === 1 ? "" : "s"}, and all recorded marks. This cannot be undone.` : ""}
+        confirmLabel={deleting ? "Deleting…" : "Delete"}
+        tone="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
       {historyFor && <HistoryPanel participant={historyFor} onClose={() => setHistoryFor(null)} />}
     </div>
   );
@@ -194,44 +220,50 @@ function ClassPicker({ school, existingIds, onClose, onAdded }: {
   school: SchoolData; existingIds: string[]; onClose: () => void; onAdded: (students: Student[]) => void;
 }) {
   const classes = Array.from(new Set(school.students.map(s => s.class_name))).sort();
-  const [cls, setCls] = useState(classes[0] ?? "");
-  const inClass = school.students.filter(s => s.class_name === cls && !existingIds.includes(s.id));
+  const [filter, setFilter] = useState<string>("all");
+  const available = school.students.filter(s => !existingIds.includes(s.id));
+  const visible = filter === "all" ? available : available.filter(s => s.class_name === filter);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   function toggle(id: string) { setSelected(prev => ({ ...prev, [id]: !prev[id] })); }
-  function selectAll() { const all: Record<string, boolean> = {}; for (const s of inClass) all[s.id] = true; setSelected(all); }
+  function selectVisible() { setSelected(prev => { const next = { ...prev }; for (const s of visible) next[s.id] = true; return next; }); }
   function clearAll() { setSelected({}); }
-  const chosen = inClass.filter(s => selected[s.id]);
+  const chosen = available.filter(s => selected[s.id]);
+  const classCount = new Set(chosen.map(s => s.class_name)).size;
 
   return (
     <div className="card pad mb3">
-      <div className="row g3 mb3" style={{ flexWrap: "wrap" }}>
-        <div className="field flex1" style={{ minWidth: 180 }}>
-          <label>Class</label>
-          <select className="input" value={cls} onChange={e => { setCls(e.target.value); setSelected({}); }}>
-            {classes.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={selectAll}>Select all</button>
-          <button className="btn btn-ghost btn-sm" onClick={clearAll}>Clear</button>
+      <div className="row g3 mb3" style={{ flexWrap: "wrap", justifyContent: "space-between" }}>
+        <div style={{ fontFamily: "var(--serif)", fontSize: 15, fontWeight: 600 }}>Add students from any class</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={selectVisible}>Select all{filter === "all" ? "" : " in " + filter}</button>
+          <button className="btn btn-ghost btn-sm" onClick={clearAll} disabled={chosen.length === 0}>Clear</button>
         </div>
       </div>
+      <div className="chip-line" style={{ marginBottom: 10 }}>
+        <button type="button" className={"chip-f " + (filter === "all" ? "active" : "")} onClick={() => setFilter("all")}>All</button>
+        {classes.map(c => (
+          <button key={c} type="button" className={"chip-f " + (filter === c ? "active" : "")} onClick={() => setFilter(c)}>{c}</button>
+        ))}
+      </div>
       <div style={{ maxHeight: 320, overflowY: "auto", border: "1px solid var(--line)", borderRadius: "var(--r-2)" }}>
-        {inClass.length === 0 ? (
-          <div className="empty"><div className="t">Everyone in this class is already added</div></div>
+        {visible.length === 0 ? (
+          <div className="empty"><div className="t">{filter === "all" ? "Everyone is already added" : "Everyone in " + filter + " is already added"}</div></div>
         ) : (
-          inClass.map(s => (
+          visible.map(s => (
             <label key={s.id} style={{ display: "grid", gridTemplateColumns: "22px 1fr auto", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: "1px solid var(--line)", cursor: "pointer" }}>
               <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggle(s.id)} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500 }}>{s.name}</div>
-                <div style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>{s.reg_no}</div>
+                <div style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>{s.reg_no} · {s.class_name}</div>
               </div>
             </label>
           ))
         )}
       </div>
-      <div className="row g2 mt3" style={{ justifyContent: "flex-end" }}>
+      <div className="row g2 mt3" style={{ justifyContent: "flex-end", alignItems: "center" }}>
+        <div className="sub" style={{ fontSize: 12, marginRight: "auto" }}>
+          {chosen.length === 0 ? "No students selected" : `${chosen.length} selected from ${classCount} class${classCount === 1 ? "" : "es"}`}
+        </div>
         <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
         <button className="btn btn-primary" disabled={chosen.length === 0} onClick={() => onAdded(chosen)}>
           Add {chosen.length || ""} {chosen.length === 1 ? "student" : "students"}
@@ -391,12 +423,14 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   );
 }
 
-function ReportTab({ program, participants, assessments, school, onOpenHistory }: {
+function ReportTab({ program, participants, assessments }: {
   program: DauraProgram; participants: DauraParticipant[]; assessments: DauraAssessment[];
-  school: SchoolData | null; onOpenHistory: (p: DauraParticipant) => void;
 }) {
   const [marks, setMarks] = useState<DauraMark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<DauraParticipant | null>(null);
+  const [printAll, setPrintAll] = useState(false);
+
   useEffect(() => {
     (async () => {
       if (assessments.length === 0) { setMarks([]); setLoading(false); return; }
@@ -407,67 +441,75 @@ function ReportTab({ program, participants, assessments, school, onOpenHistory }
     })();
   }, [assessments]);
 
+  useEffect(() => {
+    if (!printAll) return;
+    const t = setTimeout(() => {
+      window.print();
+      setTimeout(() => setPrintAll(false), 400);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [printAll]);
+
   if (loading) return <DelayedSkeleton ready={!loading} rows={4} />;
   if (assessments.length === 0) return <div className="card"><div className="empty"><div className="t">No assessments yet</div><div className="d">Add assessments in the Marks tab first.</div></div></div>;
 
   const sorted = [...participants].sort((a, b) => a.full_name.localeCompare(b.full_name));
-  const subjects = program.subjects ?? [];
-  function bySubject(pid: string): { bySubject: Record<string, number | null>; overall: number | null } {
-    const out: Record<string, number | null> = {};
-    for (const subj of subjects) {
-      const list = assessments.filter(a => a.subject === subj);
-      if (!list.length) { out[subj] = null; continue; }
-      let sum = 0;
-      for (const a of list) {
-        const m = marks.find(x => x.assessment_id === a.id && x.participant_id === pid);
-        sum += (m?.value == null ? 0 : m.value) / (a.max_marks || 10);
-      }
-      out[subj] = Math.round((sum / list.length) * 10000) / 100;
-    }
-    const vals = Object.values(out).filter((v): v is number => v != null);
-    return { bySubject: out, overall: vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100 : null };
+
+  function doPrintAll() { setPrintAll(true); }
+
+  function doPrintOne() {
+    window.print();
   }
 
+  // Bulk print view — all cards stacked, one per page
+  if (printAll) {
+    return (
+      <div>
+        <div className="cert-print-wrapper">
+          {sorted.map(p => (
+            <DauraReport key={p.id} program={program} participant={p} assessments={assessments} marks={marks} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Single participant card view
+  if (selected) {
+    return (
+      <div>
+        <div className="row mb3 no-print" style={{ justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)}>← Back to roster</button>
+          <button className="btn btn-primary btn-sm" onClick={doPrintOne}>{I.print} Print this card</button>
+        </div>
+        <div className="cert-print-wrapper">
+          <DauraReport program={program} participant={selected} assessments={assessments} marks={marks} />
+        </div>
+      </div>
+    );
+  }
+
+  // Roster view
   return (
     <div>
-      <div className="row mb3" style={{ justifyContent: "flex-end" }}>
-        <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print report</button>
+      <div className="row mb3 no-print" style={{ justifyContent: "flex-end" }}>
+        <button className="btn btn-primary btn-sm" onClick={doPrintAll}>{I.print} Print all {sorted.length}</button>
       </div>
-      <div className="rc" style={{ maxWidth: 960 }}>
-        <div className="rc-head">
-          <div className="s">Madrasatus Sahaba Li Tahfizul Qur'an</div>
-          <h2>{program.name} — Report</h2>
-          <div className="sub" style={{ marginTop: 4, fontSize: 12 }}>
-            {program.start_date || ""} {program.end_date ? `→ ${program.end_date}` : ""} · {sorted.length} participants
-          </div>
-        </div>
-        <table className="rt" style={{ fontSize: 12.5 }}>
-          <thead><tr>
-            <th style={{ width: 30 }}>#</th>
-            <th>Participant</th>
-            {subjects.map(s => <th key={s} style={{ textAlign: "right" }}>{s}</th>)}
-            <th style={{ textAlign: "right" }}>Average</th>
-          </tr></thead>
-          <tbody>
-            {sorted.map((p, i) => {
-              const { bySubject: bs, overall } = bySubject(p.id);
-              return (
-                <tr key={p.id}>
-                  <td className="n" style={{ color: "var(--ink-3)" }}>{i + 1}</td>
-                  <td>
-                    <button style={{ background: "none", border: 0, padding: 0, cursor: "pointer", textAlign: "left", color: "var(--ink)", font: "inherit", fontWeight: 600 }} onClick={() => onOpenHistory(p)}>
-                      {p.full_name}
-                    </button>
-                    {p.external && <span className="pill pill-info" style={{ marginLeft: 6, fontSize: 10 }}>external</span>}
-                  </td>
-                  {subjects.map(s => <td key={s} className="n">{bs[s] != null ? bs[s]!.toFixed(1) + "%" : "—"}</td>)}
-                  <td className="n" style={{ fontWeight: 600 }}>{overall != null ? overall.toFixed(1) + "%" : "—"}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <div className="rc-foot"><div>Daura results are separate from the semester and section averages.</div></div>
+      <div className="card" style={{ overflow: "hidden" }}>
+        {sorted.map((p, i) => (
+          <button key={p.id} onClick={() => setSelected(p)}
+            style={{ display: "grid", gridTemplateColumns: "30px minmax(0,1fr) auto auto", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--line)", background: "none", border: 0, borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: "var(--line)", width: "100%", textAlign: "left", cursor: "pointer", color: "inherit", font: "inherit" }}>
+            <div style={{ color: "var(--ink-3)", fontFamily: "var(--mono)", fontSize: 12 }}>{i + 1}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.full_name}</div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-3)" }}>
+                {p.external ? "External" : "Student"}{p.phone ? " · " + p.phone : ""}
+              </div>
+            </div>
+            {p.external && <span className="pill pill-info" style={{ fontSize: 10 }}>external</span>}
+            <div style={{ color: "var(--ink-4)" }}>{I.arrow}</div>
+          </button>
+        ))}
       </div>
     </div>
   );

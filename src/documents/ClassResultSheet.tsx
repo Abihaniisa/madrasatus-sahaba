@@ -90,12 +90,12 @@ export function ClassResultSheet({
 
               <table className="crs-table">
                 <colgroup>
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "24%" }} />
-                  {subjects.map((_, i) => <col key={i} style={{ width: "8%" }} />)}
-                  <col style={{ width: "9%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "10mm" }} />
+                  <col style={{ width: `${Math.max(50, students.reduce((m, s) => Math.max(m, s.name.length), 0) * 2.0 + 11)}mm` }} />
+                  {subjects.map((_, i) => <col key={i} style={{ width: "14mm" }} />)}
+                  <col style={{ width: "14mm" }} />
+                  <col style={{ width: "8mm" }} />
+                  <col style={{ width: "24mm" }} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -164,7 +164,7 @@ const STYLES = `
   .crs-head .doc { font-size: 13pt; color: #b8923a; letter-spacing: 2.5pt; text-transform: uppercase; margin-top: 1mm; font-weight: bold; }
   .crs-head .sess { font-size: 9pt; color: #555; margin-top: 0.8mm; }
   .crs-table {
-    width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, sans-serif;
+    width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, sans-serif;
     flex: 1;
   }
   .crs-table th, .crs-table td {
@@ -178,7 +178,7 @@ const STYLES = `
   .crs-table tbody td { height: 8mm; }
   .crs-table tbody tr:nth-child(even) td { background: #f6f9f6; }
   .crs-table td.pos { font-weight: bold; color: #143d27; font-size: 11pt; }
-  .crs-table td.nm { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 10.5pt; }
+  .crs-table td.nm { text-align: left; padding-left: 3mm; padding-right: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 10.5pt; white-space: nowrap; }
   .crs-table td.subj { font-family: "Courier New", monospace; font-size: 9.5pt; }
   .crs-table td.ov { background: #fbf3df !important; font-weight: bold; font-size: 10.5pt; color: #143d27; }
   .crs-table td.gr { font-weight: bold; color: #143d27; font-size: 11pt; }

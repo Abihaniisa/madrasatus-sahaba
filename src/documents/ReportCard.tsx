@@ -55,6 +55,8 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
             exams={exams}
             sessionLabel={session}
             semester={sem}
+            average={average}
+            pending={pending}
           />
         </div>
       )}

@@ -4,7 +4,7 @@
 import { CONFIG } from "../lib/config";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
-const PER_PAGE = 30;
+const PER_PAGE = 10;
 
 type Props = {
   className: string;
@@ -79,19 +79,19 @@ export function ClassSheet({
 
               <table className="cs-table">
                 <colgroup>
-                  <col style={{ width: "6%" }} />
-                  <col style={{ minWidth: "120px" }} />
+                  <col style={{ width: "9mm" }} />
+                  <col style={{ width: `${Math.max(48, sorted.reduce((m, st) => Math.max(m, st.name.length), 0) * 2.0 + 11)}mm` }} />
                   {subjAssessments.map((_, i) => (
-                    <col key={i} style={{ width: `${Math.max(3.5, 38 / Math.max(subjAssessments.length + 2, 1))}%` }} />
+                    <col key={i} style={{ width: `calc((100% - 9mm - ${Math.max(48, sorted.reduce((m, st) => Math.max(m, st.name.length), 0) * 2.0 + 11)}mm - 11mm - 16mm) / ${Math.max(1, subjAssessments.length)})` }} />
                   ))}
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "11mm" }} />
+                  <col style={{ width: "16mm" }} />
                 </colgroup>
                 <thead>
                   <tr>
                     <th>#</th>
                     <th className="nm">Student</th>
-                    {subjAssessments.map((a, i) => <th key={a.id}>A{i + 1}</th>)}
+                    {subjAssessments.map((a, i) => <th key={a.id}>{i + 1}</th>)}
                     <th>Exam</th>
                     <th>Final</th>
                   </tr>
@@ -117,7 +117,7 @@ export function ClassSheet({
 
               <footer className="cs-foot">
                 <div>{sorted.length} students · {subjAssessments.length} assessment{subjAssessments.length === 1 ? "" : "s"} · Exam out of {CONFIG.examMax}</div>
-                <div>Final = {CONFIG.assessmentWeight * 100}% of assessment average + {CONFIG.examWeight * 100}% of exam</div>
+                <div>Final = {CONFIG.assessmentWeight * 100}% of assessments average + {CONFIG.examWeight * 100}% of exam</div>
               </footer>
             </div>
           </div>
@@ -145,7 +145,7 @@ const STYLES = `
   .cs-head .doc { font-size: 13pt; color: #b8923a; letter-spacing: 2.5pt; text-transform: uppercase; margin-top: 1mm; font-weight: bold; }
   .cs-head .sess { font-size: 9pt; color: #555; margin-top: 0.8mm; }
   .cs-table {
-    width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, sans-serif;
+    width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, sans-serif;
     flex: 1;
   }
   .cs-table th, .cs-table td {
@@ -155,9 +155,9 @@ const STYLES = `
     background: #1f5a3a; color: #fff; font-weight: bold; height: 8mm;
     font-size: 10pt; letter-spacing: 0.3pt;
   }
-  .cs-table tbody td { height: 7.5mm; }
+  .cs-table tbody td { height: 12mm; }
   .cs-table tbody tr:nth-child(even) td { background: #f6f9f6; }
-  .cs-table td.nm { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; }
+  .cs-table td.nm { text-align: left; padding-left: 4mm; padding-right: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; white-space: nowrap; }
   .cs-table td.n { color: #7b827c; }
   .cs-table td.mk { font-family: "Courier New", monospace; font-weight: 600; font-size: 11pt; color: #143d27; }
   .cs-table td.mk.pending { color: #b0731d; }

@@ -25,7 +25,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        mode: "development",
+        mode: "production",
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api/],

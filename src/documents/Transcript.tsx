@@ -106,10 +106,10 @@ export function Transcript({ student, semesters }: Props) {
 
             <table className="tr-table">
               <colgroup>
-                <col style={{ width: "21%" }} /><col style={{ width: "13%" }} />
-                <col style={{ width: "11%" }} /><col style={{ width: "7%" }} />
-                <col style={{ width: "11%" }} /><col style={{ width: "7%" }} />
-                <col style={{ width: "12%" }} /><col style={{ width: "7%" }} /><col style={{ width: "11%" }} />
+                <col style={{ width: "30mm" }} /><col style={{ width: "22mm" }} />
+                <col style={{ width: "16mm" }} /><col style={{ width: "10mm" }} />
+                <col style={{ width: "16mm" }} /><col style={{ width: "10mm" }} />
+                <col style={{ width: "16mm" }} /><col style={{ width: "10mm" }} /><col style={{ width: "22mm" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -188,13 +188,13 @@ const STYLES = `
   .tr-info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
   .tr-info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
   .tr-info b { font-size: 10pt; }
-  .tr-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, sans-serif; flex: 1; }
+  .tr-table { width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, sans-serif; flex: 1; }
   .tr-table th, .tr-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 11pt; padding: 2mm 1mm; }
   .tr-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 8mm; font-size: 10pt; }
   .tr-table thead th.sub2 { background: #143d27; font-size: 9pt; }
   .tr-table tbody td { height: 12mm; }
   .tr-table tbody tr:nth-child(even) td { background: #f6f9f6; }
-  .tr-table td.cls { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 12pt; }
+  .tr-table td.cls { text-align: left; padding-left: 4mm; padding-right: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 12pt; white-space: nowrap; }
   .tr-table td.ann { background: #fbf3df !important; font-weight: bold; }
   .tr-table td.g { font-weight: bold; color: #143d27; font-size: 12pt; }
   .tr-table tfoot td { background: #143d27; color: #fff; height: 11mm; font-weight: bold; font-size: 10.5pt; }

@@ -85,8 +85,7 @@ export default function Records() {
               Document type
             </div>
             <div className="chip-line" style={{ marginBottom: 0 }}>
-              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Report Card</button>
-              <button className={"chip-f " + (doc === "assessment" ? "active" : "")} onClick={() => setDoc("assessment")}>Assessment Record</button>
+              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Reports</button>
               <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
               <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
             </div>
@@ -145,7 +144,7 @@ export default function Records() {
                 if (doc === "assessment") {
                   return (
                     <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={session} semester={semester} />
+                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={session} semester={semester} average={report.avg} pending={report.pending} />
                     </div>
                   );
                 }

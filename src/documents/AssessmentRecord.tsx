@@ -29,10 +29,12 @@ type Props = {
   exams?: Exam[];
   sessionLabel?: string;
   semester?: number;
+  average?: number | null;
+  pending?: boolean;
 };
 
 export function AssessmentRecord({
-  student, assessments, marks, exams = [], sessionLabel, semester,
+  student, assessments, marks, exams = [], sessionLabel, semester, average, pending,
 }: Props) {
   const session = sessionLabel ?? CONFIG.sessionLabel;
   const sem = semester ?? CONFIG.currentSemester;
@@ -73,9 +75,7 @@ export function AssessmentRecord({
   });
 
   const maxAssessments = Math.max(0, ...rows.map(r => r.assessments.length));
-  const subjW = 14;
   const summaryCols = maxAssessments;
-  const markW = (100 - 48 - subjW) / Math.max(1, summaryCols);
   const startIdx = 0;
 
   function renderHeader(part: "marks" | "summary" | "only") {
@@ -126,11 +126,11 @@ export function AssessmentRecord({
       .ar-doc .info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
       .ar-doc .info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
       .ar-doc .info b { font-size: 10pt; }
-      .ar-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
+      .ar-table { width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
       .ar-table th, .ar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1mm; overflow: hidden; }
       .ar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; }
       .ar-table thead th.subject { text-align: left; padding-left: 4mm; }
-      .ar-table tbody td.subject { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; }
+      .ar-table tbody td.subject { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: nowrap; }
       .ar-table tbody tr:nth-child(even) td:not(.subject) { background: #f6f9f6; }
       .ar-table .cell-mark { font-family: "Courier New", monospace; font-weight: 600; font-size: 11pt; color: #143d27; }
       .ar-table .cell-missing { color: #b0731d; }
@@ -138,7 +138,12 @@ export function AssessmentRecord({
       .ar-table .cell-avg { background: #fbf3df !important; font-weight: bold; font-size: 11pt; color: #143d27; }
       .ar-table .cell-final { background: #fbf3df !important; font-weight: bold; font-size: 12pt; color: #143d27; }
       .ar-table .cell-grade { font-weight: bold; font-size: 12pt; color: #143d27; }
-      .ar-foot { margin-top: auto; padding-top: 3mm; border-top: 0.4mm solid #b8923a; font-family: Arial, sans-serif; font-size: 8pt; color: #444; line-height: 1.5; display: flex; justify-content: space-between; gap: 8mm; }
+      .ar-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; margin-top: 3mm; border-top: 0.4mm solid #b8923a; padding-top: 3mm; }
+      .ar-summary > div { border: 0.35mm solid #1f5a3a; padding: 2.5mm 3mm; text-align: center; background: #eef3ee; }
+      .ar-summary small { display: block; font-family: Arial, sans-serif; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.8pt; color: #5a6a5f; }
+      .ar-summary strong { display: block; font-size: 18pt; font-weight: bold; color: #143d27; line-height: 1.15; }
+      .ar-summary em { font-style: normal; font-size: 8.5pt; color: #b8923a; font-weight: bold; }
+      .ar-foot { margin-top: 2mm; padding-top: 2mm; border-top: 0.4mm solid #b8923a; font-family: Arial, sans-serif; font-size: 8pt; color: #444; line-height: 1.5; }
       .ar-foot > div { flex: 1; }
       .ar-foot em { font-style: italic; color: #143d27; }
       .ar-empty { padding: 30mm 0; text-align: center; font-size: 11pt; color: #7b827c; font-style: italic; }
@@ -167,21 +172,22 @@ export function AssessmentRecord({
         {renderInfo()}
         <table className="ar-table">
           <colgroup>
-            <col style={{ width: `${subjW}%` }} />
+            <col style={{ width: "10ch" }} />
             {Array.from({ length: summaryCols }).map((_, i) => (
-              <col key={i} style={{ width: `${markW}%` }} />
+              <col key={i} style={{ width: "4ch" }} />
             ))}
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "7%" }} />
-            <col style={{ width: "7%" }} />
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "6%" }} />
-            <col style={{ width: "10%" }} />
+            <col style={{ width: "5ch" }} />
+            <col style={{ width: "5ch" }} />
+            <col style={{ width: "5ch" }} />
+            <col style={{ width: "5ch" }} />
+            <col style={{ width: "6ch" }} />
+            <col style={{ width: "5ch" }} />
+            <col style={{ width: "8ch" }} />
           </colgroup>
           <thead>
             <tr>
               <th className="subject">Subject</th>
-              {Array.from({ length: summaryCols }).map((_, i) => <th key={i}>A{startIdx + i + 1}</th>)}
+              {Array.from({ length: summaryCols }).map((_, i) => <th key={i}>{startIdx + i + 1}</th>)}
               <th>Avg</th>
               <th>{CONFIG.assessmentWeight * 100}%</th>
               <th>Exam</th>
@@ -213,9 +219,29 @@ export function AssessmentRecord({
             })}
           </tbody>
         </table>
+        <div className="ar-summary">
+          <div>
+            <small>Semester Average</small>
+            <strong>{average != null && !pending ? average.toFixed(1) : "—"}</strong>
+            <em>out of 100</em>
+          </div>
+          <div>
+            <small>Overall Grade</small>
+            <strong>{pending ? "—" : (average != null ? (average >= 75 ? "A" : average >= 60 ? "B" : average >= 50 ? "C" : "D") : "—")}</strong>
+            <em>{pending ? "Provisional" : (average != null ? (average >= 75 ? "Distinction" : average >= 60 ? "Credit" : average >= 50 ? "Pass" : "Fail") : "—")}</em>
+          </div>
+          <div>
+            <small>Assessments</small>
+            <strong>{maxAssessments}</strong>
+            <em>per subject</em>
+          </div>
+        </div>
         <footer className="ar-foot">
-          <div><strong>Assessment Avg</strong> = mean of A1..AN (out of {CONFIG.assessmentMax}, scaled to 100). <strong>{CONFIG.assessmentWeight * 100}%</strong> = Avg × {CONFIG.assessmentWeight}.</div>
-          <div><strong>Exam</strong> = raw score (out of {CONFIG.examMax}). <strong>{CONFIG.examWeight * 100}%</strong> = Exam × {CONFIG.examWeight}. <strong>Final</strong> = {CONFIG.assessmentWeight * 100}% + {CONFIG.examWeight * 100}%.</div>
+          <div>
+            <strong>Final score</strong> = {CONFIG.assessmentWeight * 100}% of assessments + {CONFIG.examWeight * 100}% of exam.
+            <strong> Assessments average</strong> = sum of all marks ÷ count, out of {CONFIG.assessmentMax}.
+            <strong> Grade:</strong> A (75+) · B (60–74) · C (50–59) · D (below 50).
+          </div>
         </footer>
       </div></div>
     </>

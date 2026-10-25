@@ -26,7 +26,7 @@ type DocKey =
 type SessionOption = { session: string; semester: 1 | 2; key: string };
 
 const VALID_DOCS: DocKey[] = ["report", "assessment", "admission", "transcript", "class-sheet", "class-result"];
-const PER_STUDENT_DOCS: DocKey[] = ["report", "assessment", "admission", "transcript"];
+const PER_STUDENT_DOCS: DocKey[] = ["report", "admission", "transcript"];
 const CLASS_LEVEL_DOCS: DocKey[] = ["class-sheet", "class-result"];
 
 export default function BulkPrint() {
@@ -147,7 +147,7 @@ export default function BulkPrint() {
             <div className="chip-line" style={{ marginBottom: 0 }}>
               {PER_STUDENT_DOCS.map(k => (
                 <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                  {k === "report" ? "Report Cards" : k === "assessment" ? "Assessment Records" : k === "transcript" ? "Transcripts" : "Admission Letters"}
+                  {k === "report" ? "Reports" : k === "transcript" ? "Transcripts" : "Admission Letters"}
                 </button>
               ))}
             </div>
@@ -233,7 +233,7 @@ export default function BulkPrint() {
                 );
                 return (
                   <div key={student.id} style={{ marginBottom: 8 }}>
-                    <AssessmentRecord student={{ ...student, class_name: cls }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={activeSession.session} semester={activeSession.semester} />
+                    <AssessmentRecord student={{ ...student, class_name: cls }} assessments={periodAssessments} marks={data.marks} exams={periodExams} sessionLabel={activeSession.session} semester={activeSession.semester} average={report.avg} pending={report.pending} />
                   </div>
                 );
               }

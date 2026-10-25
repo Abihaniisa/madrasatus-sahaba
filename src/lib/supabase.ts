@@ -155,3 +155,20 @@ export async function deleteStudentCompletely(studentId: string): Promise<{ erro
   }
   return { error: null };
 }
+
+// ─── Full Daura programme deletion (super admin) ────────────────
+// Postgres cascades: daura_programs → daura_assessments → daura_marks
+//                    daura_programs → daura_participants → daura_marks
+// Single DELETE. Atomic. Verified after.
+export async function deleteDauraProgramme(programId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from("daura_programs").delete().eq("id", programId);
+  if (error) return { error: error.message };
+  // Verify the row is gone (catches RLS silently blocking the delete)
+  const { count, error: vErr } = await supabase
+    .from("daura_programs")
+    .select("*", { count: "exact", head: true })
+    .eq("id", programId);
+  if (vErr) return { error: "verify failed: " + vErr.message };
+  if ((count ?? 0) > 0) return { error: "Programme still exists after delete — RLS blocked or DB error" };
+  return { error: null };
+}
