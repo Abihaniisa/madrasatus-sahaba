@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
 import { supabase, useRequireAuth } from "../../lib/supabase";
+import { getSettings } from "../../lib/settings";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
@@ -111,12 +112,12 @@ export default function StudentForm() {
 
     const newStudent = data as Student;
     await supabase.from("enrollments").insert({
-      student_id: newStudent.id, class_name: cls, session_label: CONFIG.sessionLabel,
+      student_id: newStudent.id, class_name: cls, session_label: getSettings().session_label,
       status: "active", started: newStudent.joined,
     });
     await supabase.from("fees").insert({
       student_id: newStudent.id, year: CONFIG.regYear,
-      amount: CONFIG.registrationFee, paid: 0, status: "unpaid",
+      amount: CONFIG.registrationFee, status: "unpaid",
     });
     setBusy(false);
     nav(`/admin/student/${newStudent.id}`);

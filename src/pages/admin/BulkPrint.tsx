@@ -5,6 +5,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
+import { getSettings } from "../../lib/settings";
+import { getEffectiveSemester } from "../../lib/calendar";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
 import { buildAllSemesters } from "../../lib/calc";
 import { useRequireAuth } from "../../lib/supabase";
@@ -73,10 +75,10 @@ export default function BulkPrint() {
       }
     }
     if (set.size === 0) {
-      set.set(`${CONFIG.sessionLabel}|${CONFIG.currentSemester}`, {
-        session: CONFIG.sessionLabel,
-        semester: CONFIG.currentSemester as 1 | 2,
-        key: `${CONFIG.sessionLabel}|${CONFIG.currentSemester}`,
+      set.set(`${getSettings().session_label}|${getEffectiveSemester()}`, {
+        session: getSettings().session_label,
+        semester: getEffectiveSemester() as 1 | 2,
+        key: `${getSettings().session_label}|${getEffectiveSemester()}`,
       });
     }
     return Array.from(set.values()).sort((a, b) => {

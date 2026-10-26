@@ -59,7 +59,6 @@ export type Fee = {
   student_id: string;
   year: string;
   amount: number;
-  paid: number;
   status: "unpaid" | "partial" | "paid" | "scholarship";
 };
 
@@ -72,6 +71,7 @@ export type FeePayment = {
   reference: string | null;
   note: string | null;
   paid_on: string;
+  receipt_no: string | null;
   recorded_by: string | null;
   created_at: string;
 };
@@ -101,4 +101,15 @@ export type SubjectResult = {
   final: number | null;
   grade: Grade;
   count: number;
+};
+
+
+export type Enrollment = {
+  id: string;
+  student_id: string;
+  class_name: string;
+  session_label: string;
+  status: "active" | "repeating" | "withdrawn" | "graduated" | "completed";
+  started: string | null;
+  ended: string | null;
 };

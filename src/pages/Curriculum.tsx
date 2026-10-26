@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CONFIG, SECTIONS } from "../lib/config";
+import { getSettings } from "../lib/settings";
 import { CURRICULUM } from "../lib/curriculum";
 import { allWeeks, formatRange, type Week } from "../lib/calendar";
 import { PublicLayout, I } from "../ui/Shell";
@@ -80,7 +81,7 @@ function ClassDetail({ cls, onBack }: { cls: string; onBack: () => void }) {
         <div className="wrap">
           <button className="btn btn-ghost btn-sm mb4 no-print" onClick={onBack}>{I.back} Back to curriculum</button>
           <div className="section-head">
-            <span className="eyebrow">{CONFIG.sessionLabel}</span>
+            <span className="eyebrow">{getSettings().session_label}</span>
             <h1 className="d1">{cls}</h1>
             <p className="lede">{entry.overview}</p>
             <div style={{ marginTop: 14 }} className="no-print">
@@ -101,7 +102,7 @@ function ClassDetail({ cls, onBack }: { cls: string; onBack: () => void }) {
           </div>
 
           <div className="hidden-print" style={{ marginBottom: 14, fontSize: 12, color: "var(--ink-3)" }}>
-            {cls} · {semester === 1 ? "Semester 1" : "Semester 2"} · {CONFIG.sessionLabel}
+            {cls} · {semester === 1 ? "Semester 1" : "Semester 2"} · {getSettings().session_label}
           </div>
 
           {subjectsToShow.map(subj => (

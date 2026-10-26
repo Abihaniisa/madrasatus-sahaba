@@ -3,6 +3,8 @@
 // On screen and print: certificate cover first, then report card data.
 
 import { CONFIG, SECTIONS } from "../lib/config";
+import { getSettings } from "../lib/settings";
+import { getEffectiveSemester } from "../lib/calendar";
 import { gradeFor } from "../lib/calc";
 import { Certificate } from "./Certificate";
 import { AssessmentRecord } from "./AssessmentRecord";
@@ -26,8 +28,8 @@ export function ReportCard({ student, results, average, pending, sessionLabel, s
   const overallGrade = gradeFor(pending ? null : average);
   const passed = results.filter(r => !r.pending && r.final != null && r.final >= 50).length;
   const total = results.length;
-  const sem = semester ?? CONFIG.currentSemester;
-  const session = sessionLabel ?? CONFIG.sessionLabel;
+  const sem = semester ?? getEffectiveSemester();
+  const session = sessionLabel ?? getSettings().session_label;
   const semesterText = sem === 1 ? "First" : "Second";
   const overallCode = gradeFor(pending ? null : average).code;
   const showCert = overallCode === "A" || overallCode === "B";

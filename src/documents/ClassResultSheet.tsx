@@ -2,6 +2,8 @@
 // Premium A4 layout matching Family-2 documents. Fit-to-screen on mobile.
 
 import { CONFIG } from "../lib/config";
+import { getSettings } from "../lib/settings";
+import { getEffectiveSemester } from "../lib/calendar";
 import { buildReport } from "../lib/data";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
@@ -28,8 +30,8 @@ export function ClassResultSheet({
   className, students, assessments, marks, exams,
   sessionLabel, semester,
 }: Props) {
-  const session = sessionLabel ?? CONFIG.sessionLabel;
-  const sem = semester ?? CONFIG.currentSemester;
+  const session = sessionLabel ?? getSettings().session_label;
+  const sem: 1 | 2 = (semester === 2 ? 2 : semester === 1 ? 1 : getEffectiveSemester());
   const semesterText = sem === 1 ? "First" : "Second";
 
   const rows: Row[] = students.map(student => {

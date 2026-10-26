@@ -3,6 +3,8 @@
 // Caller is responsible for skipping the page-break wrapper when this returns null.
 
 import { CONFIG, SECTIONS } from "../lib/config";
+import { getSettings } from "../lib/settings";
+import { getEffectiveSemester } from "../lib/calendar";
 import { gradeFor } from "../lib/calc";
 import type { Student, SubjectResult } from "../types";
 
@@ -21,8 +23,8 @@ const TITLES: Record<string, string> = {
 };
 
 export function Certificate({ student, average, pending, semester, sessionLabel }: Props) {
-  const sem = semester ?? CONFIG.currentSemester;
-  const session = sessionLabel ?? CONFIG.sessionLabel;
+  const sem = semester ?? getEffectiveSemester();
+  const session = sessionLabel ?? getSettings().session_label;
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const overall = gradeFor(pending ? null : average);
   const semesterText = sem === 1 ? "First" : "Second";

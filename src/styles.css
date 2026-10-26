@@ -377,27 +377,6 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 @keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 
 /* ═══ ADMIN — sheet (class result sheet) ═══ */
-.rc { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); padding: 28px 32px; max-width: 820px; margin: 0 auto; box-shadow: var(--sh-2); }
-.rc-head { text-align: center; padding-bottom: 16px; border-bottom: 2px solid var(--primary); margin-bottom: 16px; }
-.rc-head .s { font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
-.rc-head h2 { font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--primary); margin: 3px 0; }
-.rc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; padding: 10px 0; border-bottom: 1px solid var(--line); margin-bottom: 16px; font-size: 12.5px; }
-.rc-meta .r { display: flex; justify-content: space-between; gap: 10px; }
-.rc-meta .k { color: var(--ink-3); }
-.rc-meta .v { font-weight: 500; text-align: right; }
-.rc-sum { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; padding: 14px 0; border-top: 2px solid var(--primary); margin-top: 6px; }
-.rc-sum .it { text-align: center; }
-.rc-sum .l { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); font-weight: 600; margin-bottom: 4px; }
-.rc-sum .v { font-family: var(--serif); font-size: 21px; font-weight: 600; color: var(--primary); line-height: 1; }
-.rc-foot { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 11px; color: var(--ink-4); text-align: center; line-height: 1.7; }
-.rc-sign { margin-top: 18px; display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); gap: 20px; }
-.rc-sign > div { flex: 1; text-align: center; }
-.rc-landscape { padding: 22px 26px; max-width: none; }
-.table-land { font-size: 12.5px; }
-.table-land td, .table-land th { padding: 8px 10px; }
-.sheet-print .rc-head .s { white-space: normal; overflow-wrap: break-word; text-transform: none; font-family: var(--serif); font-size: 20px; font-weight: 600; color: var(--primary); letter-spacing: 0; line-height: 1.25; padding: 0 8px; }
-.sheet-print .rc-head h2 { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-3); margin: 6px 0 0; }
-.sheet-table { table-layout: auto; }
 .sheet-table thead th.assess { text-transform: none; letter-spacing: 0; font-size: 11px; white-space: nowrap; padding: 8px 10px; vertical-align: bottom; }
 .sheet-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -18px; padding: 0 18px; }
 .sheet-scroll .sheet-table { min-width: 640px; width: 100%; }
@@ -436,6 +415,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .dr-doc {
     zoom: min(1, calc(100cqw / 283mm));
   }
+  .doc-stage > .rct-doc {
+    zoom: min(1, calc(100cqw / 148mm));
+  }
 }
 /* Fallback for browsers without container query units (very old). */
 @supports not (width: 1cqw) {
@@ -448,6 +430,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .crs-doc,
   .doc-stage > .dr-doc {
     zoom: 0.45;
+  }
+  .doc-stage > .rct-doc {
+    zoom: 0.6;
   }
 }
 .doc-stage:not(:last-child) { break-after: page; page-break-after: always; }
@@ -480,7 +465,9 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .tr-doc,
   .doc-stage > .al-doc,
   .doc-stage > .cs-doc,
-  .doc-stage > .crs-doc { zoom: 1 !important; }
+  .doc-stage > .crs-doc,
+  .doc-stage > .dr-doc,
+  .doc-stage > .rct-doc { zoom: 1 !important; }
 
   .report-card { page-break-inside: avoid; break-inside: avoid; box-shadow: none; margin: 0; }
   .report-card-page-2 .doc-stage { margin: 0; break-after: auto; page-break-after: auto; }

@@ -14,9 +14,10 @@ import { Transcript } from "../documents/Transcript";
 import { AdmissionLetter } from "../documents/AdmissionLetter";
 import type { Assessment, Exam, Mark, Student } from "../types";
 import { DauraReport } from "../documents/DauraReport";
+import { Receipt } from "../documents/Receipt";
 import { supabase } from "../lib/supabase";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission" | "daura";
+type DocKey = "report" | "assessment" | "transcript" | "admission" | "daura" | "receipts";
 type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function StudentPortal() {
@@ -48,6 +49,8 @@ export default function StudentPortal() {
   const marks = (data?.marks ?? []) as Mark[];
   const exams = (data?.exams ?? []) as Exam[];
   const assessments = (data?.assessments ?? []) as Assessment[];
+  const feePayments = (data?.fee_payments ?? []) as any[];
+  const fees = (data?.fees ?? []) as any[];
 
   useEffect(() => {
     if (!student) return;
@@ -88,8 +91,11 @@ export default function StudentPortal() {
   if (!data || !student) return null;
 
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
+  const isGraduated = student.status === "graduated";
+  const enrollments = (data?.enrollments ?? []) as any[];
+  const lastEnroll = isGraduated ? enrollments.filter((e: any) => e.student_id === student.id && (e.status === "completed" || e.status === "graduated")).sort((a: any, b: any) => b.session_label.localeCompare(a.session_label))[0] : null;
   const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
-  const isSectionLevelDoc = doc === "transcript" || doc === "admission" || doc === "daura";
+  const isSectionLevelDoc = doc === "transcript" || doc === "admission" || doc === "daura" || doc === "receipts";
 
   return (
     <>
@@ -115,8 +121,18 @@ export default function StudentPortal() {
               <h1>{student.name}</h1>
               <div className="pmeta">
                 <span>Reg. No. <strong>{student.reg_no}</strong></span>
-                <span>Class <strong>{student.class_name}</strong></span>
-                <span>Section <strong>{sectionName}</strong></span>
+                {isGraduated && lastEnroll ? (
+                  <>
+                    <span>Status <strong>Graduated</strong></span>
+                    <span>From <strong>{lastEnroll.class_name}</strong></span>
+                    <span>Class of <strong>{lastEnroll.session_label}</strong></span>
+                  </>
+                ) : (
+                  <>
+                    <span>Class <strong>{student.class_name}</strong></span>
+                    <span>Section <strong>{sectionName}</strong></span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -130,6 +146,7 @@ export default function StudentPortal() {
               <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
               <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
               {dauraParticipations.length > 0 && (<button className={"chip-f " + (doc === "daura" ? "active" : "")} onClick={() => setDoc("daura")}>Daura</button>)}
+              {feePayments.length > 0 && (<button className={"chip-f " + (doc === "receipts" ? "active" : "")} onClick={() => setDoc("receipts")}>Receipts</button>)}
             </div>
           </div>
 
@@ -195,6 +212,9 @@ export default function StudentPortal() {
             )}
             {doc === "daura" && (
               <DauraView participations={dauraParticipations} data={dauraData} setData={setDauraData} loading={dauraLoading} setLoading={setDauraLoading} activeId={activeDauraId} setActiveId={setActiveDauraId} />
+            )}
+            {doc === "receipts" && (
+              <ReceiptsView student={student} payments={feePayments} fees={fees} />
             )}
           </div>
         </div>
@@ -282,6 +302,66 @@ function DauraView({ participations, data, setData, loading, setLoading, activeI
         assessments={programAssessments.map((a: any) => ({ id: a.id, subject: a.subject, label: a.label, max_marks: a.max_marks ?? 10 }))}
         marks={programMarks.map((m: any) => ({ assessment_id: m.assessment_id, participant_id: m.participant_id, value: m.value }))}
       />
+    </div>
+  );
+}
+
+function ReceiptsView({ student, payments, fees }: {
+  student: any;
+  payments: any[];
+  fees: any[];
+}) {
+  const [selected, setSelected] = useState<any | null>(null);
+
+  if (payments.length === 0) {
+    return <div className="card pad"><div className="empty"><div className="t">No receipts yet</div><div className="d">Fee payments recorded by the school will appear here.</div></div></div>;
+  }
+
+  function feeFor(year: string) {
+    const f = fees.find(x => x.year === year);
+    const amount = f?.amount ?? 0;
+    const paid = payments.filter(p => p.year === year).reduce((sum, p) => sum + p.amount, 0);
+    return { amount, paid, balance: Math.max(0, amount - paid) };
+  }
+
+  if (selected) {
+    const { amount, paid, balance } = feeFor(selected.year);
+    return (
+      <div>
+        <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)}>← All receipts</button>
+          <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this receipt</button>
+        </div>
+        <div className="cert-print-wrapper">
+          <Receipt student={student} payment={selected} amount={amount} paid={paid} balance={balance} />
+        </div>
+      </div>
+    );
+  }
+
+  const sorted = [...payments].sort((a, b) => (b.paid_on ?? "").localeCompare(a.paid_on ?? ""));
+
+  return (
+    <div>
+      <div className="card" style={{ overflow: "hidden" }}>
+        {sorted.map(p => (
+          <button key={p.id} onClick={() => setSelected(p)}
+            style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--line)", background: "none", border: 0, borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: "var(--line)", width: "100%", textAlign: "left", cursor: "pointer", color: "inherit", font: "inherit" }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {new Date(p.paid_on).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+              </div>
+              <div style={{ fontSize: 11.5, color: "var(--ink-3)" }}>
+                {p.receipt_no ? "Receipt " + p.receipt_no : p.reference || p.year}
+              </div>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
+              ₦{Number(p.amount).toLocaleString("en-NG")}
+            </div>
+            <div style={{ color: "var(--ink-4)" }}>{I.arrow}</div>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

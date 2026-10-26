@@ -5,6 +5,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
+import { getSettings } from "../../lib/settings";
+import { getEffectiveSemester } from "../../lib/calendar";
 import { loadSchool, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
@@ -58,7 +60,7 @@ export default function EditMarks() {
       if (!set.has(key)) set.set(key, { session: e.session_label, semester: (e.semester === 2 ? 2 : 1) as 1 | 2, key });
     }
     if (set.size === 0 && cls) {
-      set.set(`${CONFIG.sessionLabel}|${CONFIG.currentSemester}`, { session: CONFIG.sessionLabel, semester: CONFIG.currentSemester as 1 | 2, key: `${CONFIG.sessionLabel}|${CONFIG.currentSemester}` });
+      set.set(`${getSettings().session_label}|${getEffectiveSemester()}`, { session: getSettings().session_label, semester: getEffectiveSemester() as 1 | 2, key: `${getSettings().session_label}|${getEffectiveSemester()}` });
     }
     return Array.from(set.values()).sort((a, b) => {
       const s = a.session.localeCompare(b.session);
@@ -75,7 +77,7 @@ export default function EditMarks() {
   }, [sessionOptions, sessionKey]);
 
   const isHistorical = activeSession
-    ? !(activeSession.session === CONFIG.sessionLabel && activeSession.semester === CONFIG.currentSemester)
+    ? !(activeSession.session === getSettings().session_label && activeSession.semester === getEffectiveSemester())
     : false;
   const canEdit = isSuper || !isHistorical;
 

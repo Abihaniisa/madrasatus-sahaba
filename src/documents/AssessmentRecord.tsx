@@ -4,6 +4,8 @@
 // If N <= 10, only page 2 renders.
 
 import { CONFIG } from "../lib/config";
+import { getSettings } from "../lib/settings";
+import { getEffectiveSemester } from "../lib/calendar";
 import { gradeFor } from "../lib/calc";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
@@ -36,13 +38,18 @@ type Props = {
 export function AssessmentRecord({
   student, assessments, marks, exams = [], sessionLabel, semester, average, pending,
 }: Props) {
-  const session = sessionLabel ?? CONFIG.sessionLabel;
-  const sem = semester ?? CONFIG.currentSemester;
+  const session = sessionLabel ?? getSettings().session_label;
+  const sem = semester ?? getEffectiveSemester();
   const semesterText = sem === 1 ? "First" : "Second";
 
   const rows: Row[] = CONFIG.subjects.map(subject => {
     const list = assessments
-      .filter(a => a.subject === subject)
+      .filter(a =>
+        a.subject === subject &&
+        a.class_name === student.class_name &&
+        a.session_label === session &&
+        a.semester === sem
+      )
       .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
       .map(a => {
         const m = marks.find(mk => mk.assessment_id === a.id && mk.student_id === student.id);

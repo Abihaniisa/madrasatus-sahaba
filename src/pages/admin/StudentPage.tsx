@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
+import { getSettings } from "../../lib/settings";
+import { getEffectiveSemester } from "../../lib/calendar";
 import { buildReport, loadSchool, type SchoolData } from "../../lib/data";
 import { fmtNGN } from "../../lib/calc";
 import { useRequireAuth, amISuperAdmin, supabase, deleteStudentCompletely } from "../../lib/supabase";
@@ -38,6 +40,8 @@ export default function StudentPage() {
 
   const report = buildReport(s, data.assessments, data.marks, data.exams);
   const fee = data.fees.find(f => f.student_id === s.id && f.year === CONFIG.regYear);
+  const feePaid = fee ? data.feePayments.filter(p => p.student_id === s.id && p.year === fee.year).reduce((sum, p) => sum + p.amount, 0) : 0;
+  const feeBalance = fee ? Math.max(0, fee.amount - feePaid) : 0;
   const phone = (s.student_phone || s.guardian_phone || "").replace(/[^0-9+]/g, "");
 
   async function toggleMode() {
@@ -88,7 +92,7 @@ export default function StudentPage() {
               <h1>{s.name}</h1>
               <div className="pmeta">
                 <span>Reg. No. <strong>{s.reg_no}</strong></span>
-                <span>Class <strong>{s.class_name}</strong></span>
+                <span>{s.status === "graduated" ? "Graduated from" : "Class"} <strong>{s.class_name}</strong></span>
                 {s.nin && <span>NIN <strong className="mono">{"•".repeat(7) + s.nin.slice(-4)}</strong></span>}
               </div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -121,7 +125,7 @@ export default function StudentPage() {
             <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
               <div>
                 <div className="d3">Semester Report Card</div>
-                <div className="sub" style={{ marginTop: 2 }}>{CONFIG.sessionLabel} · {CONFIG.semesterLabel}</div>
+                <div className="sub" style={{ marginTop: 2 }}>{getSettings().session_label} · Semester {getEffectiveSemester()}</div>
               </div>
               <button className="btn btn-primary btn-sm" onClick={() => setShowPrintModal(true)}>{I.print} Print report</button>
             </div>
@@ -136,8 +140,8 @@ export default function StudentPage() {
               {fee ? (
                 <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "baseline" }}>
                   <div><div className="sub">Amount</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtNGN(fee.amount)}</div></div>
-                  <div><div className="sub">Paid</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtNGN(fee.paid)}</div></div>
-                  <div><div className="sub">Balance</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600, color: "var(--warning)" }}>{fmtNGN(fee.amount - fee.paid)}</div></div>
+                  <div><div className="sub">Paid</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600 }}>{fmtNGN(feePaid)}</div></div>
+                  <div><div className="sub">Balance</div><div style={{ fontFamily: "var(--serif)", fontSize: 18, fontWeight: 600, color: "var(--warning)" }}>{fmtNGN(feeBalance)}</div></div>
                   <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
                     <span className={"pill pill-dot pill-" + feeTone}>{feeLabel}</span>
                     {fee.status !== "paid" && fee.status !== "scholarship" && phone && (

@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase, amISuperAdmin } from "../../lib/supabase";
 import { CONFIG } from "../../lib/config";
+import { getSettings } from "../../lib/settings";
+import { getEffectiveSemester } from "../../lib/calendar";
 import type { Student } from "../../types";
 
 type Props = {
@@ -24,7 +26,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
     setReady(false);
     const { data } = await supabase.from("exams").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", CONFIG.sessionLabel).eq("semester", CONFIG.currentSemester);
+      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
     const map: Record<string, number | null> = {};
     for (const e of (data ?? []) as any[]) map[e.student_id] = e.value;
     setMarks(map);
@@ -46,7 +48,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
   async function onBlur(sid: string) {
     const value = marks[sid] ?? null;
     await supabase.from("exams").upsert(
-      { student_id: sid, class_name: cls, subject, session_label: CONFIG.sessionLabel, semester: 1, value },
+      { student_id: sid, class_name: cls, subject, session_label: getSettings().session_label, semester: getEffectiveSemester(), value },
       { onConflict: "student_id,subject,session_label,semester" }
     );
   }
@@ -58,7 +60,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
     const ids = sorted.map(s => s.id);
     await supabase.from("exams").delete()
       .in("student_id", ids).eq("subject", subject)
-      .eq("session_label", CONFIG.sessionLabel).eq("semester", CONFIG.currentSemester);
+      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
     await load();
   }
 
@@ -84,7 +86,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
             <select className="input" style={{ maxWidth: 170 }} value={subject} onChange={e => setSubject(e.target.value)}>
               {CONFIG.subjects.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-            <span className="chip-a active" style={{ cursor: "default" }}>{CONFIG.semesterLabel} Exam</span>
+            <span className="chip-a active" style={{ cursor: "default" }}>Exam</span>
             {isSuper && (
               <button className="chip-a" onClick={clearExam} style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>Clear exam</button>
             )}

@@ -13,10 +13,15 @@ export type Week = {
 function buildWeeks(sessionStartISO: string): Week[] {
   const start = new Date(sessionStartISO + "T00:00:00Z");
   const weeks: Week[] = [];
-  let cursor = 1, teachingCounter = 0;
-  let semester: 1 | 2 = 1;
+  let cursor = 1;
+  let teachingBlockIdx = 0;
+  let teachingCounter = 0;
 
   for (const block of CONFIG.calendar.blocks) {
+    if (block.type === "teaching") {
+      teachingBlockIdx++;
+      teachingCounter = 0;
+    }
     for (let i = 0; i < block.weeks; i++) {
       const weekStart = new Date(start);
       weekStart.setUTCDate(start.getUTCDate() + (cursor - 1) * 7);
@@ -26,9 +31,8 @@ function buildWeeks(sessionStartISO: string): Week[] {
       let weekSemester: 1 | 2 | undefined;
       if (block.type === "teaching") {
         teachingCounter++;
-        if (teachingCounter > 18) { teachingCounter = 1; semester = 2; }
         teachingWeek = teachingCounter;
-        weekSemester = semester;
+        weekSemester = teachingBlockIdx <= 1 ? 1 : 2;
       }
       weeks.push({ num: cursor, blockType: block.type, blockLabel: block.label, startDate: weekStart, endDate: weekEnd, semester: weekSemester, teachingWeek });
       cursor++;
@@ -240,4 +244,24 @@ export function useLiveStatus(): LiveStatus {
   }
 
   return computeLiveStatus(now, getSettings());
+}
+
+// Derive the current semester from session_start_date + calendar schedule.
+// Falls back to the last teaching week's semester during exam/break/holiday weeks.
+export function getCurrentSemester(now: Date = new Date()): 1 | 2 {
+  const weeks = allWeeks();
+  const t = now.getTime();
+  const current = weeks.find(w => t >= w.startDate.getTime() && t < w.endDate.getTime() + 86400000);
+  if (current?.semester) return current.semester;
+  const past = weeks.filter(w => w.startDate.getTime() <= t).reverse();
+  const lastTeaching = past.find(w => w.semester);
+  return lastTeaching?.semester ?? 1;
+}
+
+// Returns the effective semester: manual override from settings, else derived from date.
+// Use this EVERYWHERE instead of getCurrentSemester() — respects the admin override.
+export function getEffectiveSemester(now: Date = new Date()): 1 | 2 {
+  const override = getSettings().current_semester_override;
+  if (override === 1 || override === 2) return override;
+  return getCurrentSemester(now);
 }

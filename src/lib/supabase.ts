@@ -66,7 +66,7 @@ export function useRequireAuth(): boolean {
 export type StudentPortalData = {
   ok: boolean; error?: string; student?: any;
   marks?: any[]; exams?: any[]; assessments?: any[];
-  fees?: any[]; fee_payments?: any[]; daura_participations?: any[]; classmates?: any[];
+  fees?: any[]; fee_payments?: any[]; daura_participations?: any[]; classmates?: any[]; enrollments?: any[];
 };
 
 const STUDENT_KEY = "madrasah.student";
@@ -128,6 +128,21 @@ export async function amISuperAdmin(): Promise<boolean> {
 //   daura_participants → students : SET NULL  (would orphan — must delete manually)
 //   daura_marks → daura_participants : CASCADE (auto-delete when participant goes)
 // Strategy: manually remove Daura participation, delete student, verify everything.
+// Compute the next sequential receipt number for a student+year.
+// Format: R{year}-{regSeq}-{seq}  where regSeq is the last segment of student.reg_no
+// and seq is (count of payments in that year + 1), zero-padded to 2 digits.
+export async function nextReceiptNo(studentId: string, year: string, regNo: string): Promise<{ receiptNo: string; error: string | null }> {
+  const { count, error } = await supabase
+    .from("fee_payments")
+    .select("*", { count: "exact", head: true })
+    .eq("student_id", studentId)
+    .eq("year", year);
+  if (error) return { receiptNo: "", error: error.message };
+  const seq = (count ?? 0) + 1;
+  const regSeq = regNo.split(/[-/]/).pop() || "000";
+  return { receiptNo: `R${year}-${regSeq}-${String(seq).padStart(2, "0")}`, error: null };
+}
+
 export async function deleteStudentCompletely(studentId: string): Promise<{ error: string | null }> {
   // 1. Fetch this student's Daura participations
   const { data: participations, error: pErr } = await supabase

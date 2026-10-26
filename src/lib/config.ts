@@ -18,10 +18,8 @@ export const CONFIG = {
   assessmentWeight: 0.30,
   examWeight: 0.70,
   regYear: "2026",
-  registrationFee: 5000,
+  registrationFee: 10000,
   sessionLabel: "2026/2027",
-  semesterLabel: "Semester 1",
-  currentSemester: 1,
   studentLoginEnabled: true,
   builder: {
     name: "Abihani Isa",
@@ -75,36 +73,3 @@ export const TRANSCRIPT_GROUPS: Record<string, string[]> = {
   "Senior Secondary": ["Thanawiyyah 4", "Thanawiyyah 5", "Thanawiyyah 6"],
   "Higher":           ["Aliyyah 1", "Aliyyah 2", "Aliyyah 3", "Aliyyah 4"],
 };
-
-// ─── Derived settings ─────────────────────────────────────────────
-// Ramadan dates are computed from CONFIG.calendar.blocks, not hardcoded.
-
-export type SchoolSettings = {
-  session_label: string;
-  current_semester: number;
-  reg_year: string;
-  session_start_date: string;
-  session_end_date: string;
-  ramadan_start_date: string | null;
-  ramadan_end_date: string | null;
-};
-
-function deriveSettings(): SchoolSettings {
-  const start = new Date(CONFIG.calendar.sessionStart + "T00:00:00Z");
-  const totalWeeks = CONFIG.calendar.blocks.reduce((sum, b) => sum + b.weeks, 0);
-  const end = new Date(start);
-  end.setUTCDate(start.getUTCDate() + totalWeeks * 7 - 1);
-
-
-  return {
-    session_label: CONFIG.sessionLabel,
-    current_semester: CONFIG.currentSemester,
-    reg_year: CONFIG.regYear,
-    session_start_date: CONFIG.calendar.sessionStart,
-    session_end_date: end.toISOString().slice(0, 10),
-    ramadan_start_date: null,
-    ramadan_end_date: null,
-  };
-}
-
-export const SETTINGS: SchoolSettings = deriveSettings();

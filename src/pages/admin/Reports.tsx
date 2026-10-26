@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
+import { getEffectiveSemester } from "../../lib/calendar";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
 import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
@@ -37,7 +38,7 @@ export function ReportPage() {
             </div>
           </div>
           <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
-            <button className="btn btn-primary" onClick={() => window.print()}>{I.print} Print {CONFIG.currentSemester === 1 ? "First" : "Second"} Semester Report</button>
+            <button className="btn btn-primary" onClick={() => window.print()}>{I.print} Print {getEffectiveSemester() === 1 ? "First" : "Second"} Semester Report</button>
           </div>
           <div className="cert-print-wrapper">
             <ReportCard student={s} results={report.results} average={report.avg} pending={report.pending} assessments={data.assessments} marks={data.marks} exams={data.exams} />

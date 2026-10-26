@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, amISuperAdmin } from "../../lib/supabase";
 import { CONFIG } from "../../lib/config";
+import { getSettings } from "../../lib/settings";
+import { getEffectiveSemester } from "../../lib/calendar";
 import { Modal } from "../../ui/primitives";
 import type { Assessment, Mark, Student } from "../../types";
 
@@ -24,7 +26,7 @@ export default function AssessmentSheet({
     setReady(false);
     const { data } = await supabase.from("assessments").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", CONFIG.sessionLabel).eq("semester", CONFIG.currentSemester)
+      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester())
       .order("created_at");
     const list = (data as Assessment[]) ?? [];
     setAssessments(list);
@@ -58,7 +60,7 @@ export default function AssessmentSheet({
     if (!active || !isSuper) return;
     await supabase.from("assessments").delete()
       .eq("class_name", cls).eq("label", active.label)
-      .eq("session_label", CONFIG.sessionLabel).eq("semester", CONFIG.currentSemester);
+      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
     setConfirmDelete(false);
     await load();
   }

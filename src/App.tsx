@@ -12,6 +12,8 @@ import StudentPage from "./pages/admin/StudentPage";
 import StudentForm from "./pages/admin/StudentForm";
 import { ReportPage } from "./pages/admin/Reports";
 import Fees from "./pages/admin/Fees";
+import FeesStudent from "./pages/admin/FeesStudent";
+import FeesPrint from "./pages/admin/FeesPrint";
 import Content from "./pages/admin/Content";
 import Access from "./pages/admin/Access";
 import Promotion from "./pages/admin/Promotion";
@@ -45,6 +47,8 @@ export default function App() {
         <Route path="/admin/bulk" element={<BulkPrint />} />
         <Route path="/admin/report/:id" element={<ReportPage />} />
         <Route path="/admin/fees" element={<Fees />} />
+        <Route path="/admin/fees/student/:id" element={<FeesStudent />} />
+        <Route path="/admin/fees/print" element={<FeesPrint />} />
         <Route path="/admin/content" element={<Content />} />
         <Route path="/admin/access" element={<Access />} />
         <Route path="/admin/promotion" element={<Promotion />} />

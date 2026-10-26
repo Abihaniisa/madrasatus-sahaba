@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useRequireAuth, amISuperAdmin } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { getSettings, loadSettings, saveSettings, type SchoolSettings } from "../../lib/settings";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
@@ -14,7 +14,9 @@ export default function Settings() {
   const nav = useNavigate();
   const [allowed, setAllowed] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [session_label, setSessionLabel] = useState("");
   const [session_start_date, setSessionStart] = useState("");
+  const [current_semester_override, setSemesterOverride] = useState<string>("");
   const [ramadan_start_date, setRamadanStart] = useState("");
   const [ramadan_end_date, setRamadanEnd] = useState("");
   const [busy, setBusy] = useState(false);
@@ -27,7 +29,9 @@ export default function Settings() {
       if (!isSuper) { nav("/admin"); return; }
       setAllowed(true);
       const s = await loadSettings();
+      setSessionLabel(s.session_label);
       setSessionStart(s.session_start_date);
+      setSemesterOverride(s.current_semester_override == null ? "" : String(s.current_semester_override));
       setRamadanStart(s.ramadan_start_date ?? "");
       setRamadanEnd(s.ramadan_end_date ?? "");
       setLoading(false);
@@ -40,6 +44,7 @@ export default function Settings() {
 
   async function save() {
     setMsg(null);
+    if (!session_label) { setMsg({ type: "err", text: "Session label is required." }); return; }
     if (!session_start_date) { setMsg({ type: "err", text: "Session start date is required." }); return; }
     if ((ramadan_start_date && !ramadan_end_date) || (!ramadan_start_date && ramadan_end_date)) {
       setMsg({ type: "err", text: "Enter both Ramadan start and end, or leave both empty." });
@@ -50,8 +55,11 @@ export default function Settings() {
       return;
     }
     setBusy(true);
+    await supabase.auth.refreshSession();
     const payload: Partial<SchoolSettings> = {
+      session_label,
       session_start_date,
+      current_semester_override: current_semester_override === "" ? null : parseInt(current_semester_override, 10),
       ramadan_start_date: ramadan_start_date || null,
       ramadan_end_date: ramadan_end_date || null,
     };
@@ -76,10 +84,28 @@ export default function Settings() {
 
           <div className="card pad mb4">
             <div className="d3" style={{ marginBottom: 12 }}>Session</div>
+            <div className="field" style={{ marginBottom: 12 }}>
+              <label>Session label</label>
+              <input className="input" value={session_label} onChange={e => setSessionLabel(e.target.value)} placeholder="2026/2027" />
+              <div className="hint">The academic session identifier, e.g. 2026/2027. Shown on reports, receipts, transcripts.</div>
+            </div>
             <div className="field">
               <label>Session start date</label>
               <input className="input" type="date" value={session_start_date} onChange={e => setSessionStart(e.target.value)} />
               <div className="hint">The first day of the academic year. All weeks, exams, holidays and the session end are computed from this date.</div>
+            </div>
+          </div>
+
+          <div className="card pad mb4">
+            <div className="d3" style={{ marginBottom: 12 }}>Current semester</div>
+            <div className="field">
+              <label>Semester override</label>
+              <select className="input" value={current_semester_override} onChange={e => setSemesterOverride(e.target.value)}>
+                <option value="">Auto (derived from session dates)</option>
+                <option value="1">First semester</option>
+                <option value="2">Second semester</option>
+              </select>
+              <div className="hint">Leave on Auto. Override only for testing or backfilling.</div>
             </div>
           </div>
 

@@ -1,30 +1,35 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// src/pages/admin/Fees.tsx — landing: global search across all students + class list.
+// Class detail: Paid / Partial / Unpaid filters, checkbox per row, batch print within class.
+
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, type SchoolData } from "../../lib/data";
-import { useRequireAuth, amISuperAdmin } from "../../lib/supabase";
+import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I, waLink } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { computeFee, fmtNGN, type FeeStatus } from "../../lib/calc";
+import { getSettings } from "../../lib/settings";
 import type { Student } from "../../types";
-import { FeePanel } from "./FeePanel";
 
 export default function Fees() {
   const ready = useRequireAuth();
   const [data, setData] = useState<SchoolData | null>(null);
   const [scope, setScope] = useState<string>("all");
+  const [q, setQ] = useState("");
   const [inClass, setInClass] = useState<string | null>(null);
-  const [isSuper, setIsSuper] = useState(false);
-  async function reload() { setData(await loadSchool()); }
-  useEffect(() => { loadSchool().then(setData); amISuperAdmin().then(setIsSuper); }, []);
+  useEffect(() => { loadSchool().then(setData); }, []);
 
-  if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={5} /></div></div>;
-  if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={5} /></div></div>;
-  if (inClass) return <ClassDetail cls={inClass} data={data} onBack={() => setInClass(null)} isSuper={isSuper} onRefresh={reload} />;
+  if (!ready || !data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
+  if (inClass) return <ClassDetail cls={inClass} data={data} onBack={() => setInClass(null)} />;
 
   const scopes = [{ id: "all", label: "All" }, { id: "foundation", label: "Foundation" }, { id: "secondary", label: "Secondary" }, { id: "higher", label: "Higher" }];
   const classesToShow = scope === "all" ? ALL_CLASSES : (SECTIONS.find(s => s.id === scope)?.classes ?? []);
+  const ql = q.trim().toLowerCase();
+  const searchResults = ql.length >= 2
+    ? data.students.filter(s => s.name.toLowerCase().includes(ql) || s.reg_no.toLowerCase().includes(ql)).slice(0, 20)
+    : [];
 
   return (
     <div>
@@ -33,11 +38,37 @@ export default function Fees() {
         <div className="wrap">
           <div className="crumb"><Link to="/admin">Portal</Link><span>/</span><span className="current">Fees</span></div>
           <div className="phead">
-            <div><h1>Fees</h1><p className="sub">Registration fee · {CONFIG.sessionLabel} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
+            <div><h1>Fees</h1><p className="sub">Registration fee · {getSettings().session_label} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
           </div>
+
+          <div style={{ marginBottom: 14 }}>
+            <input className="input" placeholder="Search any student by name or Reg. No." value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 420 }} />
+          </div>
+
+          {ql.length >= 2 && (
+            <div className="card mb4" style={{ overflow: "hidden" }}>
+              {searchResults.length === 0 ? (
+                <div className="empty" style={{ padding: "20px" }}><div className="d">No students match "{q}"</div></div>
+              ) : (
+                searchResults.map(s => (
+                  <Link key={s.id} to={`/admin/fees/student/${s.id}`}
+                    style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: "1px solid var(--line)", color: "inherit" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.name}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--ink-3)", fontFamily: "var(--mono)" }}>{s.reg_no}</div>
+                    </div>
+                    <span className="pill pill-neutral">{s.class_name}</span>
+                    <span style={{ color: "var(--ink-4)" }}>{I.arrow}</span>
+                  </Link>
+                ))
+              )}
+            </div>
+          )}
+
           <div className="chip-line">
             {scopes.map(sc => <button key={sc.id} className={"chip-f " + (scope === sc.id ? "active" : "")} onClick={() => setScope(sc.id)}>{sc.label}</button>)}
           </div>
+
           <div className="fee-sum">
             {classesToShow.map(cls => {
               const students = data.students.filter(s => s.class_name === cls);
@@ -64,36 +95,39 @@ export default function Fees() {
   );
 }
 
-function ClassDetail({ cls, data, onBack, isSuper, onRefresh }: { cls: string; data: SchoolData; onBack: () => void; isSuper: boolean; onRefresh: () => void }) {
-  const [activeStudent, setActiveStudent] = useState<Student | null>(null);
-  const [copied, setCopied] = useState(false);
+type StatusFilter = "paid" | "unpaid";
+
+function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onBack: () => void }) {
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<StatusFilter>("unpaid");
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+
   const students = data.students.filter(s => s.class_name === cls);
-  const order: Record<FeeStatus, number> = { unpaid: 0, partial: 1, scholarship: 2, paid: 3 };
-  const sorted = [...students].sort((a, b) => {
-    const ca = computeFee(a.id, data.fees, data.feePayments).status;
-    const cb = computeFee(b.id, data.fees, data.feePayments).status;
-    if (order[ca] !== order[cb]) return order[ca] - order[cb];
-    return a.name.localeCompare(b.name);
-  });
-  const unpaidStudents = sorted.filter(s => {
-    const st = computeFee(s.id, data.fees, data.feePayments).status;
-    return st === "unpaid" || st === "partial";
-  });
-  async function copyUnpaidPhones() {
-    const phones = unpaidStudents.map(s => {
-      const raw = s.student_phone || s.guardian_phone || "";
-      const digits = raw.replace(/[^0-9]/g, "");
-      if (!digits) return null;
-      return digits.startsWith("234") ? "+" + digits : digits.startsWith("0") ? "+234" + digits.slice(1) : "+234" + digits;
-    }).filter((p): p is string => !!p);
-    if (!phones.length) return;
-    try { await navigator.clipboard.writeText(phones.join(", ")); }
-    catch {
-      const ta = document.createElement("textarea"); ta.value = phones.join(", ");
-      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-    }
-    setCopied(true); setTimeout(() => setCopied(false), 2200);
+  const withStatus = useMemo(() => {
+    return students
+      .map(s => ({ s, c: computeFee(s.id, data.fees, data.feePayments) }))
+      .sort((a, b) => a.s.name.localeCompare(b.s.name));
+  }, [students, data]);
+
+  const filtered = useMemo(() => {
+    if (status === "paid") return withStatus.filter(x => x.c.status === "paid" || x.c.status === "scholarship");
+    return withStatus.filter(x => x.c.status === "unpaid" || x.c.status === "partial");
+  }, [withStatus, status]);
+
+  const counts = useMemo(() => ({
+    paid: withStatus.filter(x => x.c.status === "paid" || x.c.status === "scholarship").length,
+    unpaid: withStatus.filter(x => x.c.status === "unpaid" || x.c.status === "partial").length,
+  }), [withStatus]);
+
+  const selectedIds = Object.keys(selected).filter(id => selected[id]);
+  function toggle(id: string) { setSelected(prev => ({ ...prev, [id]: !prev[id] })); }
+  function selectAllVisible() { setSelected(prev => { const n = { ...prev }; for (const { s } of filtered) n[s.id] = true; return n; }); }
+  function clearAll() { setSelected({}); }
+  function printSelected() {
+    if (selectedIds.length === 0) return;
+    navigate(`/admin/fees/print?ids=${selectedIds.join(",")}`);
   }
+
   return (
     <div>
       <AdminTop />
@@ -105,40 +139,57 @@ function ClassDetail({ cls, data, onBack, isSuper, onRefresh }: { cls: string; d
             <span>/</span><span className="current">{cls}</span>
           </div>
           <div className="phead">
-            <div><h1>{cls}</h1><p className="sub">{students.length - unpaidStudents.length} paid · {unpaidStudents.length} unpaid · {CONFIG.sessionLabel}</p></div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {unpaidStudents.length > 0 && <button className="btn btn-secondary btn-sm" onClick={copyUnpaidPhones}>{copied ? <>{I.check} Copied</> : <>{I.link} Copy unpaid numbers</>}</button>}
-              <button className="btn btn-secondary btn-sm" onClick={onBack}>{I.back} All classes</button>
-            </div>
+            <div><h1>{cls}</h1><p className="sub">{students.length} students · {counts.unpaid} not fully paid · {getSettings().session_label}</p></div>
+            <button className="btn btn-secondary btn-sm" onClick={onBack}>{I.back} All classes</button>
           </div>
-          {unpaidStudents.length > 0 && <div className="notice" style={{ marginBottom: 12 }}>Copy unpaid phone numbers into a WhatsApp Broadcast List to send one reminder to all.</div>}
-          <div className="card" style={{ overflow: "hidden" }}>
-            {sorted.map(s => {
-              const c = computeFee(s.id, data.fees, data.feePayments);
-              const tone = c.status === "paid" ? "success" : c.status === "partial" ? "warning" : c.status === "scholarship" ? "info" : "danger";
-              const label = c.status === "paid" ? "Paid" : c.status === "partial" ? "Partial" : c.status === "scholarship" ? "Scholarship" : "Unpaid";
-              const phone = (s.student_phone || s.guardian_phone || "").replace(/[^0-9+]/g, "");
-              const showRemind = c.status !== "paid" && c.status !== "scholarship" && phone;
-              return (
-                <div key={s.id} className="fee-student">
-                  <div className="avatar">{(s.name[0] ?? "") + (s.name.split(/\s+/)[1]?.[0] ?? "")}</div>
-                  <button onClick={() => setActiveStudent(s)} style={{ background: "none", border: 0, textAlign: "left", padding: 0, cursor: "pointer", minWidth: 0 }}>
-                    <div className="sname">{s.name}</div>
-                    <div className="sid">{s.reg_no}{phone ? ` · ${phone}` : ""}</div>
-                  </button>
-                  <div className="num">{fmtNGN(c.paid)}<span className="lbl">Paid</span></div>
-                  <div className="num" style={{ color: c.balance > 0 ? "var(--warning)" : undefined }}>{fmtNGN(c.balance)}<span className="lbl">Balance</span></div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 8 }}>
-                    <span className={"pill pill-dot pill-" + tone}>{label}</span>
-                    {showRemind && <a className="btn btn-wa btn-sm" href={waLink(phone, `As-salamu alaykum. A reminder about the registration fee for ${s.name} (${s.reg_no}).`)} target="_blank" rel="noopener noreferrer">{I.whatsapp} Remind</a>}
+
+          <div className="chip-line">
+            <button className={"chip-f " + (status === "paid" ? "active" : "")} onClick={() => setStatus("paid")}>Paid ({counts.paid})</button>
+            <button className={"chip-f " + (status === "unpaid" ? "active" : "")} onClick={() => setStatus("unpaid")}>Unpaid ({counts.unpaid})</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+            {selectedIds.length > 0 ? (
+              <>
+                <button className="btn btn-primary btn-sm" onClick={printSelected}>{I.print} Print {selectedIds.length} receipt{selectedIds.length === 1 ? "" : "s"}</button>
+                <button className="btn btn-ghost btn-sm" onClick={clearAll}>Clear</button>
+              </>
+            ) : (
+              <button className="btn btn-ghost btn-sm" onClick={selectAllVisible}>Select all shown</button>
+            )}
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="card"><div className="empty"><div className="t">No students {status === "paid" ? "paid in full" : "with outstanding balance"}</div></div></div>
+          ) : (
+            <div className="card" style={{ overflow: "hidden" }}>
+              {filtered.map(({ s, c }) => {
+                const tone = c.status === "paid" ? "success" : c.status === "partial" ? "warning" : c.status === "scholarship" ? "info" : "danger";
+                const label = c.status === "paid" ? "Paid in full" : c.status === "partial" ? "Partial" : c.status === "scholarship" ? "Scholarship" : "Unpaid";
+                const canSelect = c.paid > 0;
+                return (
+                  <div key={s.id} style={{ display: "grid", gridTemplateColumns: "24px minmax(0, 1fr) auto", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
+                    <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {canSelect && (
+                        <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggle(s.id)} onClick={e => e.stopPropagation()} style={{ cursor: "pointer", width: 18, height: 18 }} />
+                      )}
+                    </div>
+                    <button onClick={() => navigate(`/admin/fees/student/${s.id}`)}
+                      style={{ background: "none", border: 0, textAlign: "left", padding: 0, cursor: "pointer", minWidth: 0, width: "100%" }}>
+                      <div style={{ fontWeight: 500, fontSize: 14, color: "var(--ink)", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, lineHeight: 1.3 }}>{s.name}</div>
+                      <div style={{ fontSize: 11.5, color: "var(--ink-3)", fontFamily: "var(--mono)", marginTop: 2 }}>{s.reg_no}</div>
+                      <div style={{ fontSize: 11.5, color: c.balance > 0 ? "var(--warning)" : "var(--ink-3)", marginTop: 2, fontWeight: c.balance > 0 ? 600 : 400 }}>
+                        {c.balance > 0 ? "Balance " + fmtNGN(c.balance) : "Paid in full"}
+                      </div>
+                    </button>
+                    <span className={"pill pill-dot pill-" + tone} style={{ whiteSpace: "nowrap" }}>{label}</span>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
-      {activeStudent && <FeePanel student={activeStudent} data={data} isSuper={isSuper} onClose={() => setActiveStudent(null)} onRefresh={onRefresh} />}
     </div>
   );
 }
