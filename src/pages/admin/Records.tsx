@@ -32,7 +32,7 @@ export default function Records() {
 
   const classPeriods: ClassPeriod[] = useMemo(() => {
     if (!student || !data) return [];
-    const semesters = buildAllSemesters(student, data.assessments, data.marks, data.exams);
+    const semesters = buildAllSemesters(student, data.assessments, data.marks, data.exams, data.enrollments);
     const byClass = new Map<string, { session: string; semester: 1 | 2 }[]>();
     for (const g of semesters) {
       if (!byClass.has(g.class_name)) byClass.set(g.class_name, []);
@@ -127,7 +127,7 @@ export default function Records() {
               <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : (
               activePeriod.semesters.map(({ session, semester }) => {
-                const report = buildReport(student, data.assessments, data.marks, data.exams, semester, session, activePeriod.className);
+                const report = buildReport(student, data.assessments, data.marks, data.exams, semester, session, activePeriod.className, data.enrollments);
                 const periodAssessments = data.assessments.filter(a =>
                   a.class_name === activePeriod.className && a.session_label === session && a.semester === semester
                 );

@@ -65,7 +65,7 @@ export default function StudentPortal() {
 
   const semesters = useMemo(() => {
     if (!student) return [];
-    return buildAllSemesters(student, assessments, marks, exams);
+    return buildAllSemesters(student, assessments, marks, exams, data?.enrollments ?? []);
   }, [student, assessments, marks, exams]);
 
   const classPeriods: ClassPeriod[] = useMemo(() => {
@@ -186,7 +186,7 @@ export default function StudentPortal() {
               <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : (
               activePeriod.semesters.map(({ session, semester }) => {
-                const report = buildReport(student, assessments, marks, exams, semester, session, activePeriod.className);
+                const report = buildReport(student, assessments, marks, exams, semester, session, activePeriod.className, data?.enrollments ?? []);
                 const periodAssessments = assessments.filter(a =>
                   a.class_name === activePeriod.className && a.session_label === session && a.semester === semester
                 );

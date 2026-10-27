@@ -84,7 +84,7 @@ export default function Promotion() {
     for (const cls of ALL_CLASSES) {
       const cohort = cohortFor(data, cls, currentSession);
       for (const student of cohort) {
-        const report = buildReport(student, data.assessments, data.marks, data.exams, undefined, currentSession, cls);
+        const report = buildReport(student, data.assessments, data.marks, data.exams, undefined, currentSession, cls, data.enrollments);
         const failed = report.results
           .filter(r => !r.pending && r.final != null && r.final < 50)
           .map(r => ({ subject: r.subject, final: r.final! }));

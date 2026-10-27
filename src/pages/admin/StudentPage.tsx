@@ -38,7 +38,7 @@ export default function StudentPage() {
   const s = data.students.find(x => x.id === id);
   if (!s) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 
-  const report = buildReport(s, data.assessments, data.marks, data.exams);
+  const report = buildReport(s, data.assessments, data.marks, data.exams, undefined, undefined, undefined, data.enrollments);
   const fee = data.fees.find(f => f.student_id === s.id && f.year === CONFIG.regYear);
   const feePaid = fee ? data.feePayments.filter(p => p.student_id === s.id && p.year === fee.year).reduce((sum, p) => sum + p.amount, 0) : 0;
   const feeBalance = fee ? Math.max(0, fee.amount - feePaid) : 0;

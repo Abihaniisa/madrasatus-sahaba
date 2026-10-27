@@ -215,10 +215,10 @@ export default function BulkPrint() {
                 return <div key={student.id} style={{ marginBottom: 8 }}><AdmissionLetter student={student} /></div>;
               }
               if (doc === "transcript") {
-                const semGroups = buildAllSemesters(student, data.assessments, data.marks, data.exams);
+                const semGroups = buildAllSemesters(student, data.assessments, data.marks, data.exams, data.enrollments);
                 return <div key={student.id} style={{ marginBottom: 8 }}><Transcript student={{ ...student, class_name: cls }} semesters={semGroups} /></div>;
               }
-              const report = buildReport(student, data.assessments, data.marks, data.exams, activeSession.semester, activeSession.session, cls);
+              const report = buildReport(student, data.assessments, data.marks, data.exams, activeSession.semester, activeSession.session, cls, data.enrollments);
               if (doc === "report") {
                 return (
                   <div key={student.id} style={{ marginBottom: 8 }}>

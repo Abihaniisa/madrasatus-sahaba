@@ -18,7 +18,7 @@ export function ReportPage() {
   if (!data) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
   const s = data.students.find(x => x.id === id);
   if (!s) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
-  const report = buildReport(s, data.assessments, data.marks, data.exams);
+  const report = buildReport(s, data.assessments, data.marks, data.exams, undefined, undefined, undefined, data.enrollments);
 
   return (
     <div>

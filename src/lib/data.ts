@@ -62,7 +62,8 @@ export function buildReport(
   exams: Exam[],
   semester = getEffectiveSemester(),
   sessionLabel = getSettings().session_label,
-  className?: string
+  className?: string,
+  enrollments: Enrollment[] = []
 ): FullReport {
   const targetClass = className ?? student.class_name;
   const classAssess = assessments.filter(a =>
@@ -83,7 +84,7 @@ export function buildReport(
     const examRow = studentExams.find(e => e.subject === subject);
     return subjectResult(subject, classAssess, marksByAssess, examRow?.value ?? null);
   });
-  const semesters = buildAllSemesters(student, assessments, marks, exams);
+  const semesters = buildAllSemesters(student, assessments, marks, exams, enrollments);
   return {
     results,
     avg: semesterAvg(results),

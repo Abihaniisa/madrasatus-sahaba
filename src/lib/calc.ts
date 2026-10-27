@@ -1,7 +1,7 @@
 // src/lib/calc.ts — grades, averages, semester aggregation, fee math.
 // All numeric logic lives here. Do not duplicate arithmetic elsewhere.
 
-import type { Assessment, Exam, Fee, FeePayment, Grade, Mark, Student, SubjectResult } from "../types";
+import type { Assessment, Enrollment, Exam, Fee, FeePayment, Grade, Mark, Student, SubjectResult } from "../types";
 import { CONFIG } from "./config";
 
 export function gradeFor(p: number | null): Grade {
@@ -62,9 +62,15 @@ export type SemesterGroup = {
   results: (SubjectResult & { pending: boolean })[]; avg: number | null;
 };
 
-export function buildAllSemesters(student: Student, assessments: Assessment[], marks: Mark[], exams: Exam[]): SemesterGroup[] {
+export function buildAllSemesters(student: Student, assessments: Assessment[], marks: Mark[], exams: Exam[], enrollments: Enrollment[] = []): SemesterGroup[] {
+  const enrolledCombos = new Set(
+    enrollments
+      .filter(e => e.student_id === student.id)
+      .map(e => `${e.class_name}|${e.session_label}`)
+  );
   const groups = new Map<string, Assessment[]>();
   for (const a of assessments) {
+    if (enrollments.length > 0 && !enrolledCombos.has(`${a.class_name}|${a.session_label}`)) continue;
     const key = `${a.class_name}|${a.session_label}|${a.semester}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(a);
