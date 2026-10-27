@@ -10,6 +10,7 @@ import { AdminTop } from "../../ui/AdminShell";
 import { I, waLink } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { computeFee, fmtNGN, type FeeStatus } from "../../lib/calc";
+import { invalidateSchoolCache } from "../../lib/data";
 import { getSettings } from "../../lib/settings";
 import type { Student } from "../../types";
 

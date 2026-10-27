@@ -3,16 +3,24 @@
 // Wrapped in .doc-stage so the global fit-to-screen CSS applies.
 
 import { CONFIG, SECTIONS } from "../lib/config";
-import type { Student } from "../types";
+import type { Enrollment, Student } from "../types";
 
-type Props = { student: Student };
+type Props = { student: Student; enrollments?: Enrollment[] };
 
-export function AdmissionLetter({ student }: Props) {
-  const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
+export function AdmissionLetter({ student, enrollments = [] }: Props) {
+  // Derive admitted class from the EARLIEST enrollment (sorted by session_label ascending).
+  const studentEnr = enrollments.filter(e => e.student_id === student.id);
+  const earliest = [...studentEnr].sort((a, b) => a.session_label.localeCompare(b.session_label))[0];
+  const admittedClass = earliest?.class_name ?? student.class_name;
+  const admittedSectionId = SECTIONS.find(s => s.classes.includes(admittedClass))?.id ?? student.section;
+  const sectionName = SECTIONS.find(s => s.id === admittedSectionId)?.name ?? admittedSectionId;
+
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-  const admissionDate = student.joined
-    ? new Date(student.joined).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-    : "—";
+  const admissionDate = earliest?.started
+    ? new Date(earliest.started).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+    : (student.joined
+        ? new Date(student.joined).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "—");
   const statusLabel = student.status.charAt(0).toUpperCase() + student.status.slice(1);
   const modeLabel = student.mode === "online" ? "Online" : "Physical";
 
@@ -35,7 +43,7 @@ export function AdmissionLetter({ student }: Props) {
             <h2>Admission Record</h2>
             <div className="f name"><span>Student</span><b>{student.name}</b></div>
             <div className="f"><span>Reg. No.</span><b>{student.reg_no}</b></div>
-            <div className="f"><span>Class</span><b>{student.class_name}</b></div>
+            <div className="f"><span>Class</span><b>{admittedClass}</b></div>
             <div className="f"><span>Section</span><b>{sectionName}</b></div>
             <div className="f"><span>Mode</span><b>{modeLabel}</b></div>
             <div className="f"><span>Admission Date</span><b>{admissionDate}</b></div>
@@ -51,7 +59,7 @@ export function AdmissionLetter({ student }: Props) {
             <p>
               We are pleased to confirm that <strong>{student.name}</strong> has been admitted to{" "}
               <strong>{CONFIG.name}</strong> with effect from <strong>{admissionDate}</strong>. The student
-              is placed in <strong>{student.class_name}</strong> of the <strong>{sectionName}</strong> section
+              is placed in <strong>{admittedClass}</strong> of the <strong>{sectionName}</strong> section
               and will attend in the <strong>{modeLabel}</strong> mode.
             </p>
             <p>

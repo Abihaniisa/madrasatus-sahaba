@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: "injectManifest",
+      srcDir: "public",
+      filename: "sw.js",
       registerType: "autoUpdate",
+      injectRegister: false,
       includeAssets: ["favicon.svg", "robots.txt"],
       manifest: {
         name: "Madrasa",
@@ -24,32 +28,11 @@ export default defineConfig({
           { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" }
         ]
       },
-      workbox: {
-        mode: "production",
-        globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.origin.includes("supabase.co"),
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "supabase-data",
-              networkTimeoutSeconds: 5,
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts",
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 }
-            }
-          }
-        ]
-      }
-    })
+})
   ],
+  build: {
+    minify: "esbuild",
+    chunkSizeWarningLimit: 1500
+  },
   server: { host: "0.0.0.0", port: 5173 }
 });

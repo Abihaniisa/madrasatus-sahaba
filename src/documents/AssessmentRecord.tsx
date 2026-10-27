@@ -91,7 +91,7 @@ export function AssessmentRecord({
         <img src="/logo.svg" alt="" />
         <div className="titles">
           <div className="school">{CONFIG.name}</div>
-          <div className="doc">Assessment Record{part === "marks" ? " — Marks" : part === "summary" ? " — Summary" : ""}</div>
+          <div className="doc">Assessment Report{part === "marks" ? " — Marks" : part === "summary" ? " — Summary" : ""}</div>
           <div className="sess">{session} · {semesterText} Semester</div>
         </div>
         <img src="/logo.svg" alt="" style={{ visibility: "hidden" }} />

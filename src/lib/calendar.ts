@@ -265,3 +265,25 @@ export function getEffectiveSemester(now: Date = new Date()): 1 | 2 {
   if (override === 1 || override === 2) return override;
   return getCurrentSemester(now);
 }
+
+// Returns "2026/2027" derived from a Date's year. Used for first enrollment.
+export function getSessionLabel(when: Date = new Date()): string {
+  const y = when.getUTCFullYear();
+  return `${y}/${y + 1}`;
+}
+
+// Advances "2026/2027" → "2027/2028". Used by promotion.
+export function incrementSessionLabel(label: string): string {
+  const m = label.match(/^(\d{4})\/(\d{4})$/);
+  if (!m) return label;
+  const a = parseInt(m[1], 10) + 1;
+  return `${a}/${a + 1}`;
+}
+
+// Given a session label and a start month/day, returns the start Date.
+// Used by promotion to keep session_start_date aligned (optional).
+export function sessionStartDateFor(label: string, month: number = 3, day: number = 28): Date {
+  const m = label.match(/^(\d{4})\//);
+  const y = m ? parseInt(m[1], 10) : new Date().getUTCFullYear();
+  return new Date(Date.UTC(y, month - 1, day));
+}

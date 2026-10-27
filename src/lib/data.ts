@@ -18,7 +18,17 @@ export type SchoolData = {
   exams: Exam[]; fees: Fee[]; feePayments: FeePayment[]; enrollments: Enrollment[];
 };
 
-export async function loadSchool(): Promise<SchoolData> {
+// In-memory cache for loadSchool. Reduces redundant fetches across admin pages.
+// Invalidate after every write so reads get fresh data.
+const SCHOOL_CACHE_TTL_MS = 30_000;
+let schoolCache: { data: SchoolData | null; at: number } = { data: null, at: 0 };
+let schoolInflight: Promise<SchoolData> | null = null;
+
+export function invalidateSchoolCache(): void {
+  schoolCache = { data: null, at: 0 };
+}
+
+async function fetchSchool(): Promise<SchoolData> {
   const [students, assessments, marks, exams, fees, feePayments, enrollments] = await Promise.all([
     supabase.from("students").select("*").order("name"),
     supabase.from("assessments").select("*").order("created_at"),
@@ -37,6 +47,21 @@ export async function loadSchool(): Promise<SchoolData> {
     feePayments: (feePayments.data as FeePayment[]) ?? [],
     enrollments: (enrollments.data as Enrollment[]) ?? [],
   };
+}
+
+export async function loadSchool(): Promise<SchoolData> {
+  const now = Date.now();
+  if (schoolCache.data && (now - schoolCache.at) < SCHOOL_CACHE_TTL_MS) {
+    return schoolCache.data;
+  }
+  if (schoolInflight) return schoolInflight;
+  schoolInflight = fetchSchool()
+    .then(data => {
+      schoolCache = { data, at: Date.now() };
+      return data;
+    })
+    .finally(() => { schoolInflight = null; });
+  return schoolInflight;
 }
 
 export async function loadMaterials(publishedOnly = true): Promise<Material[]> {
@@ -158,4 +183,14 @@ export function graduatedBySectionAndYear(data: SchoolData): Record<string, Reco
     result[section][year].push(s);
   }
   return result;
+}
+
+// Returns the session_label of the latest active enrollment for a given class.
+// Used as the default session for new assessments/exams for that class.
+export function currentSessionForClass(data: SchoolData, className: string): string | null {
+  const rows = data.enrollments
+    .filter(e => e.class_name === className && (e.status === "active" || e.status === "repeating"))
+    .map(e => e.session_label)
+    .sort();
+  return rows.length ? rows[rows.length - 1] : null;
 }

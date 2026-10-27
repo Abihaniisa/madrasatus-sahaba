@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { SECTIONS, CONFIG } from "../../lib/config";
-import { getEffectiveSemester } from "../../lib/calendar";
+import { getEffectiveSemester, getSessionLabel } from "../../lib/calendar";
 import { getSettings } from "../../lib/settings";
-import { classAverage, buildReport, loadSchool, type SchoolData } from "../../lib/data";
+import { classAverage, buildReport, loadSchool, currentSessionForClass, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -173,8 +173,9 @@ export default function ClassPage() {
       let source = data;
       try { source = await loadSchool(); } catch { /* fall back */ }
 
+      const classSession = currentSessionForClass(source ?? data!, cls) ?? getSessionLabel(new Date());
       const existing = (source?.assessments ?? []).filter(
-        a => a.class_name === cls && a.semester === getEffectiveSemester() && a.session_label === getSettings().session_label
+        a => a.class_name === cls && a.semester === getEffectiveSemester() && a.session_label === classSession
       );
       const numbers = new Set(existing.map(a => {
         const m = a.label.match(/^Assessment\s+(\d+)$/i);
@@ -186,7 +187,7 @@ export default function ClassPage() {
       const newRows = CONFIG.subjects.map(subject => ({
         class_name: cls, subject, label,
         max_marks: CONFIG.assessmentMax,
-        session_label: getSettings().session_label, semester: getEffectiveSemester(),
+        session_label: classSession, semester: getEffectiveSemester(),
       }));
       const { error } = await supabase.from("assessments").insert(newRows);
       if (error) throw error;
@@ -225,6 +226,7 @@ export default function ClassPage() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-sheet`}>{I.print} Assessment Sheet</Link>
               <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-result`}>{I.file} Result Sheet</Link>
+              <Link className="btn btn-primary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=report`}>{I.print} Bulk print</Link>
               <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}`}>{I.print} Bulk print</Link>
               {sheet === "none" && (
                 <>

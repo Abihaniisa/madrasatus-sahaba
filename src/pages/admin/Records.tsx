@@ -120,7 +120,7 @@ export default function Records() {
 
           <div className="cert-print-wrapper">
             {doc === "admission" ? (
-              <AdmissionLetter student={student} />
+              <AdmissionLetter student={student} enrollments={data.enrollments} />
             ) : doc === "transcript" ? (
               <Transcript student={student} semesters={semesters} />
             ) : !activePeriod ? (

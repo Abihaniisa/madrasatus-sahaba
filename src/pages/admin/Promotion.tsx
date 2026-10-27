@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ALL_CLASSES, SECTIONS } from "../../lib/config";
-import { cohortFor, buildReport, loadSchool, type SchoolData } from "../../lib/data";
+import { cohortFor, buildReport, loadSchool, currentSessionForClass, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin } from "../../lib/supabase";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
@@ -40,12 +40,6 @@ function isLastClassOfSchool(cls: string): boolean {
   return ALL_CLASSES[ALL_CLASSES.length - 1] === cls;
 }
 
-function suggestNextSession(current: string): string {
-  const m = current.match(/^(\d{4})\/(\d{4})$/);
-  if (!m) return current;
-  return `${parseInt(m[1], 10) + 1}/${parseInt(m[2], 10) + 1}`;
-}
-
 function defaultDecision(status: RowStatus, cls: string): Decision {
   if (status === "passed") return isLastClassOfSchool(cls) ? "graduate" : "promote";
   return "repeat";
@@ -60,9 +54,7 @@ export default function Promotion() {
   const nav = useNavigate();
   const [data, setData] = useState<SchoolData | null>(null);
   const [allowed, setAllowed] = useState(false);
-  const settings = getSettings();
-  const [currentSession, setCurrentSession] = useState(settings.session_label);
-  const [nextSession, setNextSession] = useState(suggestNextSession(settings.session_label));
+
   const [overrides, setOverrides] = useState<Record<string, Decision>>({});
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -82,9 +74,11 @@ export default function Promotion() {
     if (!data) return [];
     const out: Row[] = [];
     for (const cls of ALL_CLASSES) {
-      const cohort = cohortFor(data, cls, currentSession);
+      const classSession = currentSessionForClass(data, cls);
+      if (!classSession) continue;
+      const cohort = cohortFor(data, cls, classSession);
       for (const student of cohort) {
-        const report = buildReport(student, data.assessments, data.marks, data.exams, undefined, currentSession, cls, data.enrollments);
+        const report = buildReport(student, data.assessments, data.marks, data.exams, undefined, classSession, cls, data.enrollments);
         const failed = report.results
           .filter(r => !r.pending && r.final != null && r.final < 50)
           .map(r => ({ subject: r.subject, final: r.final! }));
@@ -96,7 +90,7 @@ export default function Promotion() {
       }
     }
     return out;
-  }, [data, currentSession, overrides]);
+  }, [data, overrides]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Row[]>();
@@ -147,8 +141,6 @@ export default function Promotion() {
     });
 
     const { data: rpc, error } = await (await import("../../lib/supabase")).supabase.rpc("promote_cohort", {
-      p_current_session: currentSession,
-      p_next_session: nextSession,
       p_decisions: decisionsPayload,
     });
 
@@ -186,22 +178,12 @@ export default function Promotion() {
               <h1>End of session</h1>
               <p className="sub">
                 Move active students to their next class, repeat, withdraw, or graduate.
-                Only students with an active enrollment in <strong>{currentSession}</strong> are shown.
+                Only students with an active enrollment in the current session are shown.
               </p>
             </div>
           </div>
 
           <div className="card pad mb4">
-            <div className="row g3" style={{ flexWrap: "wrap" }}>
-              <div className="field flex1" style={{ minWidth: 180 }}>
-                <label>Current session</label>
-                <input className="input" value={currentSession} onChange={e => setCurrentSession(e.target.value)} />
-              </div>
-              <div className="field flex1" style={{ minWidth: 180 }}>
-                <label>New session</label>
-                <input className="input" value={nextSession} onChange={e => setNextSession(e.target.value)} />
-              </div>
-            </div>
             <div style={{ marginTop: 14, display: "flex", justifyContent: "flex-end", gap: 8, flexWrap: "wrap" }}>
               <button className="btn btn-ghost" onClick={resetDefaults}>Reset to defaults</button>
               <button className="btn btn-primary" disabled={busy || rows.length === 0} onClick={() => setConfirmOpen(true)}>
@@ -219,7 +201,7 @@ export default function Promotion() {
           {!data ? (
             <DelayedSkeleton ready={!!data} rows={5} />
           ) : grouped.length === 0 ? (
-            <div className="card"><div className="empty"><div className="t">No active students in {currentSession}</div><div className="d">Enrollments for this session do not exist yet. Create them by enrolling students, or change the current session.</div></div></div>
+            <div className="card"><div className="empty"><div className="t">No active students</div><div className="d">There are no active enrollments to promote. Create enrollments by registering students first.</div></div></div>
           ) : (
             grouped.map(([cls, classRows]) => {
               const target = nextClass(cls);
@@ -298,39 +280,18 @@ export default function Promotion() {
 
       <Modal
         open={confirmOpen}
-        title="Confirm promotion"
-        confirmLabel={busy ? "Applying…" : `Promote ${counts.promote + counts.graduate + counts.repeat + counts.withdrawn} student${(counts.promote + counts.graduate + counts.repeat + counts.withdrawn) === 1 ? "" : "s"}`}
+        title="Confirm Promotion?"
+        confirmLabel={busy ? "Applying…" : "Confirm"}
         cancelLabel="Cancel"
-        tone={isSemester2 ? "danger" : "primary"}
+        tone="danger"
         onConfirm={execute}
         onCancel={() => setConfirmOpen(false)}
       >
-        <div style={{ display: "grid", gap: 6, fontSize: 13, marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "var(--ink-3)" }}>Current session</span>
-            <span style={{ fontWeight: 500 }}>{currentSession}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ color: "var(--ink-3)" }}>New session</span>
-            <span style={{ fontWeight: 500 }}>{nextSession}</span>
-          </div>
-        </div>
-        <div style={{ display: "grid", gap: 4, fontSize: 13, padding: "10px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", marginBottom: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}><span>Promote</span><strong>{counts.promote}</strong></div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}><span>Repeat</span><strong>{counts.repeat}</strong></div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}><span>Withdrawn</span><strong>{counts.withdrawn}</strong></div>
-          <div style={{ display: "flex", justifyContent: "space-between" }}><span>Graduate</span><strong>{counts.graduate}</strong></div>
-        </div>
-        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--ink-2)", marginBottom: 10 }}>
-          Students will move to the next class at the start of the new session. All existing marks, exams, enrollments, and receipts stay intact.
+        <p style={{ fontSize: 14, lineHeight: 1.6, color: "var(--ink)", marginBottom: 14 }}>
+          Students will advance to their next classes or graduate. Academic sessions follow enrollment history, not today's date.
         </p>
-        {isSemester2 && (
-          <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--warning)", background: "var(--warning-soft)", padding: "8px 10px", borderRadius: 6, marginBottom: 10 }}>
-            Semester 2 is currently active. Promoted students will have no Semester 1 records for their new class.
-          </p>
-        )}
-        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--danger)", fontWeight: 500 }}>
-          ⚠ This will be applied immediately and cannot be undone from the app.
+        <p style={{ fontSize: 13.5, lineHeight: 1.5, color: "var(--danger)", fontWeight: 600 }}>
+          🔴 Warning: This action cannot be undone.
         </p>
       </Modal>
     </div>
