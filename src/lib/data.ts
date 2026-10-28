@@ -6,7 +6,7 @@ import { supabase } from "./supabase";
 import type { Assessment, Enrollment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "../types";
 import { CONFIG, SECTIONS } from "./config";
 import { getSettings } from "./settings";
-import { getEffectiveSemester } from "./calendar";
+import { getEffectiveSemester, getSessionLabel } from "./calendar";
 import {
   subjectResult, semesterAvg, hasPending,
   buildAllSemesters, cumulativeAvg as calcCumulative,
@@ -193,4 +193,52 @@ export function currentSessionForClass(data: SchoolData, className: string): str
     .map(e => e.session_label)
     .sort();
   return rows.length ? rows[rows.length - 1] : null;
+}
+
+// Returns the current session's sessional Daura programme, or null if none.
+export async function currentSessionalDaura(session_label: string): Promise<any | null> {
+  const { data } = await supabase
+    .from("daura_programs")
+    .select("*")
+    .eq("kind", "sessional")
+    .eq("session_label", session_label)
+    .maybeSingle();
+  return data ?? null;
+}
+
+// Returns all special Daura programmes, newest first.
+export async function listSpecialDauras(): Promise<any[]> {
+  const { data } = await supabase
+    .from("daura_programs")
+    .select("*")
+    .eq("kind", "special")
+    .order("created_at", { ascending: false });
+  return (data as any[]) ?? [];
+}
+
+// The school's "current session" — derived from active enrollments across all students.
+// Fallback: getSessionLabel(today) if no active enrollments exist yet.
+// This is the single source of truth for "what session is the school in right now."
+export function currentSchoolSession(data: SchoolData): string {
+  const active = data.enrollments.filter(
+    e => (e.status === "active" || e.status === "repeating") && !e.ended
+  );
+  if (active.length === 0) return getSessionLabel(new Date());
+  const sessions = Array.from(new Set(active.map(e => e.session_label))).sort();
+  return sessions[sessions.length - 1];
+}
+
+// Async — queries DB directly. No SchoolData needed.
+// Used by StudentForm where SchoolData isn't loaded yet.
+export async function getCurrentSchoolSessionFromDB(): Promise<string> {
+  const { data } = await supabase
+    .from("enrollments")
+    .select("session_label")
+    .in("status", ["active", "repeating"])
+    .order("session_label", { ascending: false })
+    .limit(1);
+  if (data && data.length > 0) {
+    return (data[0] as { session_label: string }).session_label;
+  }
+  return getSessionLabel(new Date());
 }

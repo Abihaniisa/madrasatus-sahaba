@@ -113,3 +113,27 @@ export type Enrollment = {
   started: string | null;
   ended: string | null;
 };
+
+export type DauraProgram = {
+  id: string;
+  name: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  weeks: number;
+  status: "open" | "closed";
+  subjects: string[];
+  kind: "sessional" | "special";
+  session_label: string | null;
+  created_at: string;
+};
+
+export type DauraAssessment = {
+  id: string;
+  program_id: string;
+  subject: string;
+  label: string;
+  max_marks: number;
+  is_evaluation: boolean;
+  created_at: string;
+};

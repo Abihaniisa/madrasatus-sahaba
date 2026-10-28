@@ -10,7 +10,7 @@ import { AdminTop } from "../../ui/AdminShell";
 import { I, waLink } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { computeFee, fmtNGN, type FeeStatus } from "../../lib/calc";
-import { invalidateSchoolCache } from "../../lib/data";
+import { invalidateSchoolCache, currentSchoolSession } from "../../lib/data";
 import { getSettings } from "../../lib/settings";
 import type { Student } from "../../types";
 
@@ -39,7 +39,7 @@ export default function Fees() {
         <div className="wrap">
           <div className="crumb"><Link to="/admin">Portal</Link><span>/</span><span className="current">Fees</span></div>
           <div className="phead">
-            <div><h1>Fees</h1><p className="sub">Registration fee · {getSettings().session_label} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
+            <div><h1>Fees</h1><p className="sub">Registration fee · {data ? currentSchoolSession(data) : getSettings().session_label} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
           </div>
 
           <div style={{ marginBottom: 14 }}>
@@ -140,7 +140,7 @@ function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onB
             <span>/</span><span className="current">{cls}</span>
           </div>
           <div className="phead">
-            <div><h1>{cls}</h1><p className="sub">{students.length} students · {counts.unpaid} not fully paid · {getSettings().session_label}</p></div>
+            <div><h1>{cls}</h1><p className="sub">{students.length} students · {counts.unpaid} not fully paid · {currentSchoolSession(data)}</p></div>
             <button className="btn btn-secondary btn-sm" onClick={onBack}>{I.back} All classes</button>
           </div>
 

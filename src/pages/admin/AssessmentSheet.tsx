@@ -2,7 +2,8 @@
 // The 3-second flow: class → subject → assessment label → marks.
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase, amISuperAdmin } from "../../lib/supabase";
+import { supabase, amISuperAdmin, isAssessmentLocked } from "../../lib/supabase";
+import { loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
@@ -18,17 +19,20 @@ export default function AssessmentSheet({
   const [marks, setMarks] = useState<Record<string, number | null>>({});
   const [ready, setReady] = useState(false);
   const [isSuper, setIsSuper] = useState(false);
+  const [activeLocked, setActiveLocked] = useState(false);
+  const [data, setData] = useState<SchoolData | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
+  useEffect(() => { loadSchool().then(setData); }, []);
 
   async function load() {
     setReady(false);
-    const { data } = await supabase.from("assessments").select("*")
+    const { data: assRows } = await supabase.from("assessments").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester())
+      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester())
       .order("created_at");
-    const list = (data as Assessment[]) ?? [];
+    const list = (assRows as Assessment[]) ?? [];
     setAssessments(list);
     const last = list[list.length - 1];
     setActiveId(last?.id ?? null);
@@ -53,6 +57,10 @@ export default function AssessmentSheet({
   }
 
   const active = assessments.find(a => a.id === activeId) || null;
+  useEffect(() => {
+    if (!active) { setActiveLocked(false); return; }
+    isAssessmentLocked(active.label, active.session_label, active.semester).then(setActiveLocked);
+  }, [active?.id, active?.label, active?.session_label, active?.semester]);
   const sorted = useMemo(() => [...students].sort((a, b) => a.name.localeCompare(b.name)), [students]);
   const recordedCount = useMemo(() => sorted.filter(s => marks[s.id] != null).length, [sorted, marks]);
 
@@ -60,7 +68,7 @@ export default function AssessmentSheet({
     if (!active || !isSuper) return;
     await supabase.from("assessments").delete()
       .eq("class_name", cls).eq("label", active.label)
-      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
+      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester());
     setConfirmDelete(false);
     await load();
   }
@@ -102,9 +110,11 @@ export default function AssessmentSheet({
       <div className="asheet">
         <div className="asheet-head">
           <div className="row1">
-            <select className="input" style={{ maxWidth: 200 }} value={subject} onChange={e => setSubject(e.target.value)}>
-              {CONFIG.subjects.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <div className="chips">
+              {CONFIG.subjects.map(s => (
+                <button key={s} className={"chip-a " + (subject === s ? "active" : "")} onClick={() => setSubject(s)}>{s}</button>
+              ))}
+            </div>
           </div>
         </div>
         <div className="empty" style={{ padding: "44px 20px" }}>
@@ -124,16 +134,18 @@ export default function AssessmentSheet({
       <div className="asheet-head">
         <div className="row1">
           <div className="chips">
-            <select className="input" style={{ maxWidth: 150 }} value={subject} onChange={e => setSubject(e.target.value)}>
-              {CONFIG.subjects.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            {CONFIG.subjects.map(s => (
+              <button key={s} className={"chip-a " + (subject === s ? "active" : "")} onClick={() => setSubject(s)}>{s}</button>
+            ))}
+          </div>
+          <div className="chips" style={{ marginTop: 6 }}>
             {assessments.map(a => (
               <button key={a.id} className={"chip-a " + (a.id === activeId ? "active" : "")} onClick={() => loadMarksFor(a.id)}>
                 {a.label}
               </button>
             ))}
           </div>
-          <div className="sub" style={{ fontSize: 12, marginLeft: "auto" }}>Out of <strong>{active.max_marks}</strong></div>
+          <div className="sub" style={{ fontSize: 12, marginLeft: "auto" }}>{activeLocked ? "🔒 Locked · " : ""}Out of <strong>{active.max_marks}</strong></div>
         </div>
       </div>
 
@@ -145,6 +157,9 @@ export default function AssessmentSheet({
         <div className="prog"><span className="num">{recordedCount}</span> of {sorted.length} recorded</div>
       </div>
 
+      <div className="no-print" style={{ padding: "8px 18px", background: "var(--primary-soft)", borderLeft: "3px solid var(--primary)", fontSize: 13, fontWeight: 500, color: "var(--primary)" }}>
+        Entering marks for <strong>{subject}</strong> · <strong>{active.label}</strong> · out of <strong>{active.max_marks}</strong>
+      </div>
       <div className="asheet-body">
         {sorted.map(s => {
           const v = marks[s.id];

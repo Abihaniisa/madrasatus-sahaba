@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
 import { supabase, useRequireAuth } from "../../lib/supabase";
-import { getSessionLabel } from "../../lib/calendar";
+import { getCurrentSchoolSessionFromDB, loadSchool, invalidateSchoolCache } from "../../lib/data";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
@@ -87,6 +87,8 @@ export default function StudentForm() {
       }).eq("id", original.id);
       setBusy(false);
       if (error) { setError(error.message); return; }
+      invalidateSchoolCache();
+      await loadSchool();
       nav(`/admin/student/${original.id}`);
       return;
     }
@@ -112,13 +114,15 @@ export default function StudentForm() {
 
     const newStudent = data as Student;
     await supabase.from("enrollments").insert({
-      student_id: newStudent.id, class_name: cls, session_label: getSessionLabel(new Date()),
+      student_id: newStudent.id, class_name: cls, session_label: await getCurrentSchoolSessionFromDB(),
       status: "active", started: newStudent.joined,
     });
     await supabase.from("fees").insert({
       student_id: newStudent.id, year: CONFIG.regYear,
       amount: CONFIG.registrationFee, status: "unpaid",
     });
+    invalidateSchoolCache();
+    await loadSchool();
     setBusy(false);
     nav(`/admin/student/${newStudent.id}`);
   }

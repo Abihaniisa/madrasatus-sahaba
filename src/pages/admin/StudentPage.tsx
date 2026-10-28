@@ -6,7 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
-import { buildReport, loadSchool, type SchoolData } from "../../lib/data";
+import { buildReport, loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { fmtNGN } from "../../lib/calc";
 import { useRequireAuth, amISuperAdmin, supabase, deleteStudentCompletely } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
@@ -125,7 +125,7 @@ export default function StudentPage() {
             <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
               <div>
                 <div className="d3">Semester Report Card</div>
-                <div className="sub" style={{ marginTop: 2 }}>{getSettings().session_label} · Semester {getEffectiveSemester()}</div>
+                <div className="sub" style={{ marginTop: 2 }}>{currentSchoolSession(data)} · Semester {getEffectiveSemester()}</div>
               </div>
               <button className="btn btn-primary btn-sm" onClick={() => setShowPrintModal(true)}>{I.print} Print report</button>
             </div>

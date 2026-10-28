@@ -2,7 +2,7 @@
 // Class + session + semester always current (derived from date + enrollments).
 // Document picker: Reports / Transcripts / Admission Letters (per-student docs)
 //                   + Class Sheet / Result Sheet (class-level docs, from ClassPage links).
-// URL params: ?class=<class>&doc=<report|transcript|admission|class-sheet|class-result>
+// URL params: ?class=<class>&doc=<report|transcript|admission>
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
@@ -17,18 +17,15 @@ import { DelayedSkeleton } from "../../ui/primitives";
 import { ReportCard } from "../../documents/ReportCard";
 import { AssessmentRecord } from "../../documents/AssessmentRecord";
 import { AdmissionLetter } from "../../documents/AdmissionLetter";
-import { ClassSheet } from "../../documents/ClassSheet";
-import { ClassResultSheet } from "../../documents/ClassResultSheet";
 import { Transcript } from "../../documents/Transcript";
 import type { Student } from "../../types";
 
-type DocKey = "report" | "transcript" | "admission" | "class-sheet" | "class-result";
+type DocKey = "report" | "transcript" | "admission";
 
-const CLASS_LEVEL_DOCS: DocKey[] = ["class-sheet", "class-result"];
 const PER_STUDENT_DOCS: DocKey[] = ["report", "transcript", "admission"];
 
 function isValidDoc(v: string | null): v is DocKey {
-  return v === "report" || v === "transcript" || v === "admission" || v === "class-sheet" || v === "class-result";
+  return v === "report" || v === "transcript" || v === "admission";
 }
 
 export default function BulkPrint() {
@@ -39,7 +36,6 @@ export default function BulkPrint() {
   const urlDoc = searchParams.get("doc");
   const cls = (urlClass && ALL_CLASSES.includes(urlClass)) ? urlClass : (ALL_CLASSES[0] ?? "");
   const [doc, setDoc] = useState<DocKey>(isValidDoc(urlDoc) ? urlDoc : "report");
-  const [subject, setSubject] = useState<string>(CONFIG.subjects[0]);
 
   useEffect(() => { loadSchool().then(setData); }, []);
 
@@ -86,33 +82,20 @@ export default function BulkPrint() {
             <Link to={`/admin/class/${encodeURIComponent(cls)}`} className="btn btn-ghost btn-sm">{I.back} Back to class</Link>
           </div>
 
-          {!CLASS_LEVEL_DOCS.includes(doc) && (
-            <div className="no-print" style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-                Document
-              </div>
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                {PER_STUDENT_DOCS.map(k => (
-                  <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
-                    {k === "report" ? "Reports" : k === "transcript" ? "Transcripts" : "Admission Letters"}
-                  </button>
-                ))}
-              </div>
+          <div className="no-print" style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
+              Document
             </div>
-          )}
+            <div className="chip-line" style={{ marginBottom: 0 }}>
+              {PER_STUDENT_DOCS.map(k => (
+                <button key={k} className={"chip-f " + (doc === k ? "active" : "")} onClick={() => setDoc(k)}>
+                  {k === "report" ? "Reports" : k === "transcript" ? "Transcripts" : "Admission Letters"}
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {doc === "class-sheet" && (
-            <div className="no-print" style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-                Subject
-              </div>
-              <div className="chip-line" style={{ marginBottom: 0 }}>
-                {CONFIG.subjects.map(s => (
-                  <button key={s} className={"chip-f " + (subject === s ? "active" : "")} onClick={() => setSubject(s)}>{s}</button>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14 }}>
             <button className="btn btn-primary btn-sm" onClick={() => window.print()} disabled={!studentsInClass.length}>
@@ -121,34 +104,11 @@ export default function BulkPrint() {
           </div>
 
           <div className="print-hint no-print">
-            <div><strong>Print setup:</strong> {CLASS_LEVEL_DOCS.includes(doc) ? "Portrait" : "Landscape"} · A4 · Default margins.</div>
+            <div><strong>Print setup:</strong> Landscape · A4 · Default margins.</div>
           </div>
 
           <div className="cert-print-wrapper">
-            {studentsInClass.length === 0 && CLASS_LEVEL_DOCS.includes(doc) ? (
-              <div className="card pad"><div className="empty"><div className="t">No students enrolled in {cls} for {sessionLabel}</div></div></div>
-            ) : doc === "class-sheet" ? (
-              <ClassSheet
-                className={cls}
-                subject={subject}
-                students={studentsInClass}
-                assessments={data.assessments}
-                marks={data.marks}
-                exams={data.exams}
-                sessionLabel={sessionLabel}
-                semester={semester}
-              />
-            ) : doc === "class-result" ? (
-              <ClassResultSheet
-                className={cls}
-                students={studentsInClass}
-                assessments={data.assessments}
-                marks={data.marks}
-                exams={data.exams}
-                sessionLabel={sessionLabel}
-                semester={semester}
-              />
-            ) : studentsInClass.length === 0 ? (
+            {studentsInClass.length === 0 ? (
               <div className="card pad"><div className="empty"><div className="t">No students enrolled in {cls} for {sessionLabel}</div></div></div>
             ) : studentsInClass.map(student => {
               if (doc === "admission") {

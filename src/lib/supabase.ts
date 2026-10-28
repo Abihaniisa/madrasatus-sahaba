@@ -213,3 +213,45 @@ export async function deleteDauraProgramme(programId: string): Promise<{ error: 
   if ((count ?? 0) > 0) return { error: "Programme still exists after delete — RLS blocked or DB error" };
   return { error: null };
 }
+
+// ─── Lock helpers — backed by the generic locks table ───
+// Scope: 'assessment' | 'exam' | 'daura_assessment'
+// Key: e.g. "A3|2026/2027|1" (label|session|semester) or "Qur'an|2026/2027|1" (subject|session|semester)
+
+export async function isLocked(scope: string, scope_key: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("locks")
+    .select("locked")
+    .eq("scope", scope)
+    .eq("scope_key", scope_key)
+    .maybeSingle();
+  return (data as { locked: boolean } | null)?.locked === true;
+}
+
+export async function setLock(scope: string, scope_key: string, locked: boolean, lockedBy: string | null = null): Promise<{ error: string | null }> {
+  if (locked) {
+    const { error } = await supabase.from("locks").upsert(
+      { scope, scope_key, locked: true, locked_at: new Date().toISOString(), locked_by: lockedBy },
+      { onConflict: "scope,scope_key" }
+    );
+    return { error: error?.message ?? null };
+  }
+  const { error } = await supabase.from("locks").delete().eq("scope", scope).eq("scope_key", scope_key);
+  return { error: error?.message ?? null };
+}
+
+// Assessment lock — key: "A3|2026/2027|1"
+export async function isAssessmentLocked(label: string, session_label: string, semester: number): Promise<boolean> {
+  return isLocked("assessment", `${label}|${session_label}|${semester}`);
+}
+export async function setAssessmentLock(label: string, session_label: string, semester: number, locked: boolean): Promise<{ error: string | null }> {
+  return setLock("assessment", `${label}|${session_label}|${semester}`, locked);
+}
+
+// Exam lock — key: "Qur'an|2026/2027|1"
+export async function isExamLocked(subject: string, session_label: string, semester: number): Promise<boolean> {
+  return isLocked("exam", `${subject}|${session_label}|${semester}`);
+}
+export async function setExamLock(subject: string, session_label: string, semester: number, locked: boolean): Promise<{ error: string | null }> {
+  return setLock("exam", `${subject}|${session_label}|${semester}`, locked);
+}

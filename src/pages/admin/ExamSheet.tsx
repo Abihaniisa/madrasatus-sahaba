@@ -1,7 +1,8 @@
 // src/pages/admin/ExamSheet.tsx — record exam marks for one class + subject.
 
 import { useEffect, useState } from "react";
-import { supabase, amISuperAdmin } from "../../lib/supabase";
+import { supabase, amISuperAdmin, isExamLocked } from "../../lib/supabase";
+import { loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
@@ -19,21 +20,28 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
   const [marks, setMarks] = useState<Record<string, number | null>>({});
   const [ready, setReady] = useState(false);
   const [isSuper, setIsSuper] = useState(false);
+  const [examLocked, setExamLocked] = useState(false);
+  const [data, setData] = useState<SchoolData | null>(null);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
+  useEffect(() => { loadSchool().then(setData); }, []);
 
   async function load() {
     setReady(false);
-    const { data } = await supabase.from("exams").select("*")
+    const { data: exRows } = await supabase.from("exams").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
+      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester());
     const map: Record<string, number | null> = {};
-    for (const e of (data ?? []) as any[]) map[e.student_id] = e.value;
+    for (const e of (exRows ?? []) as any[]) map[e.student_id] = e.value;
     setMarks(map);
     setReady(true);
   }
 
   useEffect(() => { load(); }, [cls, subject]);
+
+  useEffect(() => {
+    isExamLocked(subject, (data ? currentSchoolSession(data) : ""), getEffectiveSemester()).then(setExamLocked);
+  }, [cls, subject]);
 
   const sorted = [...students].sort((a, b) => a.name.localeCompare(b.name));
   const recorded = sorted.filter(s => marks[s.id] != null).length;
@@ -48,7 +56,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
   async function onBlur(sid: string) {
     const value = marks[sid] ?? null;
     await supabase.from("exams").upsert(
-      { student_id: sid, class_name: cls, subject, session_label: getSettings().session_label, semester: getEffectiveSemester(), value },
+      { student_id: sid, class_name: cls, subject, session_label: (data ? currentSchoolSession(data) : ""), semester: getEffectiveSemester(), value },
       { onConflict: "student_id,subject,session_label,semester" }
     );
   }
@@ -60,7 +68,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
     const ids = sorted.map(s => s.id);
     await supabase.from("exams").delete()
       .in("student_id", ids).eq("subject", subject)
-      .eq("session_label", getSettings().session_label).eq("semester", getEffectiveSemester());
+      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester());
     await load();
   }
 
@@ -83,10 +91,12 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
       <div className="asheet-head">
         <div className="row1">
           <div className="chips">
-            <select className="input" style={{ maxWidth: 170 }} value={subject} onChange={e => setSubject(e.target.value)}>
-              {CONFIG.subjects.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-            <span className="chip-a active" style={{ cursor: "default" }}>Exam</span>
+            {CONFIG.subjects.map(s => (
+              <button key={s} className={"chip-a " + (subject === s ? "active" : "")} onClick={() => setSubject(s)}>{s}</button>
+            ))}
+          </div>
+          <div className="chips" style={{ marginTop: 6 }}>
+            <span className="chip-a active" style={{ cursor: "default" }}>{examLocked ? "🔒 " : ""}Exam</span>
             {isSuper && (
               <button className="chip-a" onClick={clearExam} style={{ color: "var(--danger)", borderColor: "var(--danger)" }}>Clear exam</button>
             )}
@@ -103,6 +113,9 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
         <div className="prog"><span className="num">{recorded}</span> of {sorted.length} recorded</div>
       </div>
 
+      <div className="no-print" style={{ padding: "8px 18px", background: "var(--primary-soft)", borderLeft: "3px solid var(--primary)", fontSize: 13, fontWeight: 500, color: "var(--primary)" }}>
+        Entering marks for <strong>{subject}</strong> · Exam · out of <strong>100</strong>
+      </div>
       <div className="asheet-body">
         {sorted.map(s => {
           const v = marks[s.id];
@@ -118,7 +131,8 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
                 value={v == null ? "" : String(v)} placeholder="—"
                 onChange={e => onInput(s.id, e.target.value)}
                 onBlur={() => onBlur(s.id)}
-                onFocus={e => e.currentTarget.select()} />
+                onFocus={e => e.currentTarget.select()}
+                disabled={examLocked && !isSuper} />
             </div>
           );
         })}

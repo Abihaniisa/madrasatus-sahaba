@@ -21,6 +21,10 @@ import Daura from "./pages/admin/Daura";
 import DauraProgrammePage from "./pages/admin/DauraProgramme";
 import Manage from "./pages/admin/Manage";
 import Settings from "./pages/admin/Settings";
+import GraduatedYear from "./pages/admin/GraduatedYear";
+import Assessments from "./pages/admin/Assessments";
+import AssessmentSheetPage from "./pages/admin/AssessmentSheetPage";
+import ResultSheetPage from "./pages/admin/ResultSheetPage";
 import Records from "./pages/admin/Records";
 import BulkPrint from "./pages/admin/BulkPrint";
 import EditMarks from "./pages/admin/EditMarks";
@@ -54,6 +58,10 @@ export default function App() {
         <Route path="/admin/promotion" element={<Promotion />} />
         <Route path="/admin/manage" element={<Manage />} />
         <Route path="/admin/settings" element={<Settings />} />
+        <Route path="/admin/assessments" element={<Assessments />} />
+        <Route path="/admin/assessment-sheet" element={<AssessmentSheetPage />} />
+        <Route path="/admin/result-sheet" element={<ResultSheetPage />} />
+        <Route path="/admin/graduated/:section/:year" element={<GraduatedYear />} />
         <Route path="/admin/daura" element={<Daura />} />
         <Route path="/admin/daura/:id" element={<DauraProgrammePage />} />
 

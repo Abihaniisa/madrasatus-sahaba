@@ -67,7 +67,6 @@ export default function ClassPage() {
   const [attempt, setAttempt] = useState(0);
   const [sheet, setSheet] = useState<"none" | "assessment" | "exam">("none");
   const [isSuper, setIsSuper] = useState(false);
-  const [confirmNewAssessment, setConfirmNewAssessment] = useState(false);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -95,6 +94,7 @@ export default function ClassPage() {
       .catch(() => { if (live) setIsSuper(false); });
     return () => { live = false; };
   }, [ready]);
+
 
   useEffect(() => {
     if (!ready || data || failed) return;
@@ -166,43 +166,6 @@ export default function ClassPage() {
     setAttempt(a => a + 1);
   }
 
-  async function createAssessment() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      let source = data;
-      try { source = await loadSchool(); } catch { /* fall back */ }
-
-      const classSession = currentSessionForClass(source ?? data!, cls) ?? getSessionLabel(new Date());
-      const existing = (source?.assessments ?? []).filter(
-        a => a.class_name === cls && a.semester === getEffectiveSemester() && a.session_label === classSession
-      );
-      const numbers = new Set(existing.map(a => {
-        const m = a.label.match(/^Assessment\s+(\d+)$/i);
-        return m ? parseInt(m[1], 10) : 0;
-      }));
-      let next = 1;
-      while (numbers.has(next)) next++;
-      const label = `Assessment ${next}`;
-      const newRows = CONFIG.subjects.map(subject => ({
-        class_name: cls, subject, label,
-        max_marks: CONFIG.assessmentMax,
-        session_label: classSession, semester: getEffectiveSemester(),
-      }));
-      const { error } = await supabase.from("assessments").insert(newRows);
-      if (error) throw error;
-
-      setConfirmNewAssessment(false);
-      refresh();
-      setToast(`${label} created. You can now find it in 'Enter marks'.`);
-    } catch {
-      setConfirmNewAssessment(false);
-      setToast("Couldn't create the assessment. Check your connection and try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   return (
     <div>
       <AdminTop />
@@ -224,21 +187,11 @@ export default function ClassPage() {
               </p>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-sheet`}>{I.print} Assessment Sheet</Link>
-              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=class-result`}>{I.file} Result Sheet</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/assessment-sheet?class=${encodeURIComponent(cls)}`}>{I.print} Assessment Sheet</Link>
+              <Link className="btn btn-secondary btn-sm" to={`/admin/result-sheet?class=${encodeURIComponent(cls)}`}>{I.file} Result Sheet</Link>
               <Link className="btn btn-primary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}&doc=report`}>{I.print} Bulk print</Link>
-              <Link className="btn btn-secondary btn-sm" to={`/admin/bulk?class=${encodeURIComponent(cls)}`}>{I.print} Bulk print</Link>
               {sheet === "none" && (
                 <>
-                  {isSuper && (
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      disabled={!data || busy}
-                      onClick={() => setConfirmNewAssessment(true)}
-                    >
-                      {I.plus} New Assessment
-                    </button>
-                  )}
                   <button className="btn btn-secondary btn-sm" disabled={!data} onClick={() => setSheet("assessment")}>Enter marks</button>
                   <button className="btn btn-primary btn-sm" disabled={!data} onClick={() => setSheet("exam")}>Enter exam</button>
                 </>
@@ -284,14 +237,6 @@ export default function ClassPage() {
 
       {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
 
-      <Modal
-        open={confirmNewAssessment}
-        title="Create new assessment?"
-        message={`This creates the next Assessment for all ${CONFIG.subjects.length} subjects in ${cls}. Teachers will then fill in marks for their subject.`}
-        confirmLabel={busy ? "Creating…" : "Create"}
-        onConfirm={createAssessment}
-        onCancel={() => { if (!busy) setConfirmNewAssessment(false); }}
-      />
     </div>
   );
 }

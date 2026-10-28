@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SECTIONS } from "../../lib/config";
-import { classAverage, loadSchool, type SchoolData } from "../../lib/data";
+import { classAverage, loadSchool, graduatedBySectionAndYear, type SchoolData } from "../../lib/data";
 import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -205,6 +205,31 @@ export default function Landing() {
                         );
                       })}
                     </div>
+                    {(() => {
+                      const gradMap = graduatedBySectionAndYear(data);
+                      const years = gradMap[sec.name] ?? {};
+                      const yearKeys = Object.keys(years).sort().reverse();
+                      if (yearKeys.length === 0) return null;
+                      return (
+                        <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--muted)", border: "1px solid var(--line)", borderRadius: "var(--r-2)" }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 8 }}>
+                            Graduated
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                            {yearKeys.map(y => (
+                              <Link
+                                key={y}
+                                to={`/admin/graduated/${encodeURIComponent(sec.name)}/${encodeURIComponent(y)}`}
+                                className="chip-f"
+                                style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                              >
+                                Class of {y} · {years[y].length}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}
