@@ -125,6 +125,7 @@ export type DauraProgram = {
   subjects: string[];
   kind: "sessional" | "special";
   session_label: string | null;
+  targets: Record<string, string> | null;
   created_at: string;
 };
 
@@ -136,4 +137,22 @@ export type DauraAssessment = {
   max_marks: number;
   is_evaluation: boolean;
   created_at: string;
+};
+
+export type DauraParticipant = {
+  id: string;
+  program_id: string;
+  student_id: string | null;
+  full_name: string;
+  external: boolean;
+  phone: string | null;
+  nin: string | null;
+  created_at: string;
+};
+
+export type DauraMark = {
+  id: string;
+  assessment_id: string;
+  participant_id: string;
+  value: number | null;
 };

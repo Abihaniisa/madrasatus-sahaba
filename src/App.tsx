@@ -19,6 +19,7 @@ import Access from "./pages/admin/Access";
 import Promotion from "./pages/admin/Promotion";
 import Daura from "./pages/admin/Daura";
 import DauraProgrammePage from "./pages/admin/DauraProgramme";
+import DauraAssessmentSheetPage from "./pages/admin/DauraAssessmentSheetPage";
 import Manage from "./pages/admin/Manage";
 import Settings from "./pages/admin/Settings";
 import GraduatedYear from "./pages/admin/GraduatedYear";
@@ -64,6 +65,7 @@ export default function App() {
         <Route path="/admin/graduated/:section/:year" element={<GraduatedYear />} />
         <Route path="/admin/daura" element={<Daura />} />
         <Route path="/admin/daura/:id" element={<DauraProgrammePage />} />
+        <Route path="/admin/daura/:id/assessment-sheet" element={<DauraAssessmentSheetPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

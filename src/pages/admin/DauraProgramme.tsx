@@ -6,25 +6,9 @@ import { DelayedSkeleton, Modal } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
 import { loadSchool, type SchoolData } from "../../lib/data";
 import { DauraReport } from "../../documents/DauraReport";
-import type { Student } from "../../types";
+import { DauraAssessmentReport } from "../../documents/DauraAssessmentReport";
+import type { DauraProgram, DauraParticipant, DauraAssessment, DauraMark, Student } from "../../types";
 
-type DauraProgram = {
-  id: string; name: string; description: string | null;
-  start_date: string | null; end_date: string | null;
-  weeks: number; status: "open" | "closed"; subjects: string[];
-};
-type DauraParticipant = {
-  id: string; program_id: string; student_id: string | null;
-  full_name: string; external: boolean;
-  phone: string | null; nin: string | null; created_at: string;
-};
-type DauraAssessment = {
-  id: string; program_id: string; subject: string;
-  label: string; max_marks: number; created_at: string;
-};
-type DauraMark = {
-  id: string; assessment_id: string; participant_id: string; value: number | null;
-};
 type Tab = "participants" | "marks" | "report";
 
 export default function DauraProgrammePage() {
@@ -100,6 +84,9 @@ export default function DauraProgrammePage() {
             </div>
             {isSuper && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Link to={`/admin/daura/${program.id}/assessment-sheet`} className="btn btn-secondary btn-sm">
+                  {I.print} Assessment Sheet
+                </Link>
                 <button className={"btn btn-sm " + (program.status === "open" ? "btn-secondary" : "btn-primary")} onClick={toggleStatus}>
                   {program.status === "open" ? "Close programme" : "Reopen"}
                 </button>
@@ -152,6 +139,38 @@ function ParticipantsTab({ program, participants, school, isSuper, onChange, onO
 
   return (
     <div>
+      {isSuper && (
+        <div className="card pad mb3" style={{ background: "var(--muted)" }}>
+          <div className="d3" style={{ marginBottom: 8 }}>Targets</div>
+          <div className="sub" style={{ marginBottom: 12, fontSize: 12 }}>
+            What the participant is working toward in each subject. Shown prominently on the report card.
+          </div>
+          <div className="stack g3">
+            {(program.subjects ?? []).map(subj => (
+              <div className="field" key={subj}>
+                <label>{subj}</label>
+                <input
+                  className="input"
+                  value={(program.targets?.[subj] ?? "")}
+                  placeholder={
+                    subj === "Qur'an" ? "e.g. 5 Hizb" :
+                    subj === "Hadith" ? "e.g. Arba'un Hadith" :
+                    subj === "Tajweed" ? "e.g. Kitab al-Tajweed Book 1" :
+                    subj === "Fiqh" ? "e.g. Mukhtasar al-Akhdari" :
+                    subj === "Arabic" ? "e.g. Nahwul Wadih Book 1" :
+                    "Target for " + subj
+                  }
+                  onChange={async e => {
+                    const nextTargets = { ...(program.targets ?? {}), [subj]: e.target.value };
+                    await supabase.from("daura_programs").update({ targets: nextTargets }).eq("id", program.id);
+                    onChange();
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {isSuper && program.status === "open" && (
         <div className="row g2 mb3" style={{ flexWrap: "wrap" }}>
           <button className="btn btn-secondary btn-sm" onClick={() => setPickerOpen(true)}>{I.plus} Add from class</button>
@@ -315,8 +334,11 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [marks, setMarks] = useState<DauraMark[]>([]);
   const [loadingMarks, setLoadingMarks] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const inSubject = assessments.filter(a => a.subject === subject);
+  const regularAssessments = inSubject.filter(a => !a.is_evaluation);
+  const evaluation = inSubject.find(a => a.is_evaluation) ?? null;
   const active = inSubject.find(a => a.id === activeId) ?? inSubject[inSubject.length - 1] ?? null;
 
   useEffect(() => {
@@ -329,22 +351,78 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
     });
   }, [active?.id]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Create one assessment across ALL subjects of this programme.
+  // Sessional Daura: cap 24. Special Daura: no cap.
   async function addAssessment() {
-    const label = "Assessment " + (inSubject.length + 1);
-    await supabase.from("daura_assessments").insert({ program_id: program.id, subject, label, max_marks: 10 });
+    if (program.kind === "sessional" && regularAssessments.length >= 24) {
+      setToast("Maximum 24 assessments for sessional Daura.");
+      return;
+    }
+    // Determine next label number based on ALL subjects (not just current)
+    const allRegular = assessments.filter(a => !a.is_evaluation);
+    const numbers = new Set<number>();
+    for (const a of allRegular) {
+      const m = a.label.match(/^Assessment\s+(\d+)$/i);
+      if (m) numbers.add(parseInt(m[1], 10));
+    }
+    let next = 1;
+    while (numbers.has(next)) next++;
+    const label = "Assessment " + next;
+    const rows = subjects.map(subj => ({
+      program_id: program.id,
+      subject: subj,
+      label,
+      max_marks: 10,
+      is_evaluation: false,
+    }));
+    const { error } = await supabase.from("daura_assessments").insert(rows);
+    if (error) { setToast("Failed: " + error.message); return; }
+    setToast(`${label} created for ${subjects.length} subjects.`);
     onChange();
   }
+
+  // Create evaluation for ALL subjects (only if no evaluation exists for this programme yet).
+  async function addEvaluation() {
+    const existingEval = assessments.find(a => a.is_evaluation);
+    if (existingEval) { setToast("Evaluation already exists for this programme."); return; }
+    const rows = subjects.map(subj => ({
+      program_id: program.id,
+      subject: subj,
+      label: "Evaluation",
+      max_marks: 100,
+      is_evaluation: true,
+    }));
+    const { error } = await supabase.from("daura_assessments").insert(rows);
+    if (error) { setToast("Failed: " + error.message); return; }
+    setToast("Evaluation created for " + subjects.length + " subjects.");
+    onChange();
+  }
+
   async function removeActive() {
     if (!active) return;
-    if (!window.confirm(`Delete "${active.label}"? All ${participants.length} marks recorded for it will be removed.`)) return;
-    await supabase.from("daura_assessments").delete().eq("id", active.id);
-    setActiveId(null); onChange();
+    if (!window.confirm(`Delete "${active.label}" for ALL subjects? All ${participants.length} participants' marks for it will be removed.`)) return;
+    // Delete same label across all subjects in this programme
+    await supabase.from("daura_assessments")
+      .delete()
+      .eq("program_id", program.id)
+      .eq("label", active.label)
+      .eq("is_evaluation", active.is_evaluation);
+    setActiveId(null);
+    onChange();
   }
+
   function markFor(pid: string): number | null {
     if (!active) return null;
     const m = marks.find(x => x.assessment_id === active.id && x.participant_id === pid);
     return m?.value ?? null;
   }
+
   async function onBlur(pid: string, raw: string) {
     if (!active) return;
     const digits = raw.replace(/[^0-9]/g, "");
@@ -362,6 +440,17 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
 
   const sorted = [...participants].sort((a, b) => a.full_name.localeCompare(b.full_name));
   const recorded = active ? sorted.filter(p => markFor(p.id) != null).length : 0;
+  const nextLabel = "Assessment " + (() => {
+    const allRegular = assessments.filter(a => !a.is_evaluation);
+    const numbers = new Set<number>();
+    for (const a of allRegular) {
+      const m = a.label.match(/^Assessment\s+(\d+)$/i);
+      if (m) numbers.add(parseInt(m[1], 10));
+    }
+    let next = 1;
+    while (numbers.has(next)) next++;
+    return next;
+  })();
 
   return (
     <div>
@@ -370,12 +459,15 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
           <button key={s} className={"chip-f " + (subject === s ? "active" : "")} onClick={() => { setSubject(s); setActiveId(null); }}>{s}</button>
         ))}
       </div>
+
       {isSuper && program.status === "open" && (
         <div className="row g2 mb3" style={{ flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-sm" onClick={addAssessment}>{I.plus} New assessment</button>
-          {active && <button className="btn btn-ghost btn-sm" onClick={removeActive} style={{ color: "var(--danger)" }}>Delete current assessment</button>}
+          <button className="btn btn-primary btn-sm" onClick={addAssessment}>{I.plus} Create {nextLabel}</button>
+          {!evaluation && <button className="btn btn-secondary btn-sm" onClick={addEvaluation}>{I.plus} Create Evaluation</button>}
+          {active && <button className="btn btn-ghost btn-sm" onClick={removeActive} style={{ color: "var(--danger)" }}>Delete {active.label}</button>}
         </div>
       )}
+
       {!active ? (
         <div className="card"><div className="empty"><div className="t">No assessments for {subject} yet</div></div></div>
       ) : (
@@ -383,12 +475,20 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
           <div className="asheet-head">
             <div className="row1">
               <div className="chips">
-                {inSubject.map(a => (
+                {regularAssessments.map(a => (
                   <button key={a.id} className={"chip-a " + (a.id === active.id ? "active" : "")} onClick={() => setActiveId(a.id)}>{a.label}</button>
                 ))}
+                {evaluation && (
+                  <button className={"chip-a " + (evaluation.id === active.id ? "active" : "")} onClick={() => setActiveId(evaluation.id)}>
+                    ⭐ Evaluation
+                  </button>
+                )}
               </div>
               <div className="sub" style={{ fontSize: 12, marginLeft: "auto" }}>Out of <strong>{active.max_marks}</strong></div>
             </div>
+          </div>
+          <div className="no-print" style={{ padding: "8px 18px", background: "var(--primary-soft)", borderLeft: "3px solid var(--primary)", fontSize: 13, fontWeight: 500, color: "var(--primary)" }}>
+            Entering marks for <strong>{subject}</strong> · <strong>{active.label}</strong> · out of <strong>{active.max_marks}</strong>
           </div>
           <div className="asheet-sub">
             <div className="prog"><span className="num">{recorded}</span> of {sorted.length} recorded</div>
@@ -419,6 +519,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
           </div>
         </div>
       )}
+      {toast && <div className="toast" role="status" aria-live="polite">{toast}</div>}
     </div>
   );
 }
@@ -467,7 +568,10 @@ function ReportTab({ program, participants, assessments }: {
       <div>
         <div className="cert-print-wrapper">
           {sorted.map(p => (
-            <DauraReport key={p.id} program={program} participant={p} assessments={assessments} marks={marks} />
+            <>
+              <DauraReport key={p.id + "-rep"} program={program} participant={p} assessments={assessments} marks={marks} />
+              <DauraAssessmentReport key={p.id + "-ar"} program={program} participant={p} assessments={assessments} marks={marks} />
+            </>
           ))}
         </div>
       </div>
@@ -483,7 +587,10 @@ function ReportTab({ program, participants, assessments }: {
           <button className="btn btn-primary btn-sm" onClick={doPrintOne}>{I.print} Print this card</button>
         </div>
         <div className="cert-print-wrapper">
-          <DauraReport program={program} participant={selected} assessments={assessments} marks={marks} />
+          <>
+            <DauraReport program={program} participant={selected} assessments={assessments} marks={marks} />
+            <DauraAssessmentReport program={program} participant={selected} assessments={assessments} marks={marks} />
+          </>
         </div>
       </div>
     );

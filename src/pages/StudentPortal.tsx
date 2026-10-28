@@ -297,10 +297,10 @@ function DauraView({ participations, data, setData, loading, setLoading, activeI
         <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this card</button>
       </div>
       <DauraReport
-        participant={{ id: activeParticipant.id, full_name: activeParticipant.full_name, external: activeParticipant.external, phone: activeParticipant.phone }}
-        program={{ id: activeProgram.id, name: activeProgram.name, description: activeProgram.description ?? null, start_date: activeProgram.start_date ?? null, end_date: activeProgram.end_date ?? null, weeks: activeProgram.weeks ?? 0, subjects: activeProgram.subjects ?? [] }}
-        assessments={programAssessments.map((a: any) => ({ id: a.id, subject: a.subject, label: a.label, max_marks: a.max_marks ?? 10 }))}
-        marks={programMarks.map((m: any) => ({ assessment_id: m.assessment_id, participant_id: m.participant_id, value: m.value }))}
+        participant={activeParticipant as any}
+        program={activeProgram as any}
+        assessments={programAssessments as any}
+        marks={programMarks as any}
       />
     </div>
   );
