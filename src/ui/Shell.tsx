@@ -1,5 +1,4 @@
-// src/ui/Shell.tsx — public nav, footer, tab bar, icons, waLink, Logo, ScrollToTop.
-
+// src/ui/Shell.tsx — public chrome v2. Icons, brand, nav, footer, mobile tab bar.
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CONFIG } from "../lib/config";
@@ -46,28 +45,28 @@ export function PublicNav({ onSignOut }: { onSignOut?: () => void } = {}) {
   const p = loc.pathname;
   const on = (k: string) => (p === k ? "active" : "");
   return (
-    <nav className="nav">
-      <div className="wrap nav-inner">
-        <Link to="/" className="brand">
-          <img src="/logo.svg" alt="" className="brand-logo" />
+    <header className="pub-header">
+      <div className="wrap pub-nav">
+        <Link to="/" className="pub-brand" aria-label={CONFIG.short + " home"}>
+          <img src="/logo.svg" alt="" className="pub-brand-mark" />
           <div>
-            <div className="brand-name">{CONFIG.short}</div>
-            <div className="brand-sub">{CONFIG.sub}</div>
+            <div className="pub-brand-name">{CONFIG.short}</div>
+            <div className="pub-brand-sub">{CONFIG.sub}</div>
           </div>
         </Link>
-        <div className="nav-links">
+        <nav className="pub-nav-links" aria-label="Main navigation">
           <Link to="/" className={on("/")}>Home</Link>
           <Link to="/curriculum" className={on("/curriculum")}>Curriculum</Link>
           <Link to="/materials" className={on("/materials")}>Materials</Link>
-          <Link to="/login">Portal</Link>
-        </div>
+          <Link to="/login" className={on("/login")}>Portal</Link>
+        </nav>
         {onSignOut ? (
-          <button className="btn btn-ghost btn-sm" onClick={onSignOut} title="Sign out">Sign out</button>
+          <button className="pub-portal-link" onClick={onSignOut} title="Sign out">Sign out</button>
         ) : (
-          <Link to="/login" className="btn btn-primary btn-sm">Enter portal</Link>
+          <Link className="pub-portal-link" to="/login">Enter portal&nbsp; ↗</Link>
         )}
       </div>
-    </nav>
+    </header>
   );
 }
 
@@ -80,46 +79,47 @@ export function PublicTabBar() {
     catch { return "/login"; }
   })();
   return (
-    <div className="tabbar">
-      <div className="tabbar-inner">
-        <Link to="/" className={on("/")}>{I.home}Home</Link>
-        <Link to="/curriculum" className={on("/curriculum")}>{I.book}Curriculum</Link>
-        <Link to="/materials" className={on("/materials")}>{I.folder}Materials</Link>
-        <Link to={portalHref} className={on("/me") || on("/login")}>{I.login}Portal</Link>
-      </div>
-    </div>
+    <nav className="pub-mobile-nav" aria-label="Mobile navigation">
+      <Link to="/" className={on("/")}><span className="pub-nav-icon">⌂</span>Home</Link>
+      <Link to="/curriculum" className={on("/curriculum")}><span className="pub-nav-icon">▤</span>Curriculum</Link>
+      <Link to="/materials" className={on("/materials")}><span className="pub-nav-icon">▱</span>Materials</Link>
+      <Link to={portalHref} className={on("/me") || on("/login")}><span className="pub-nav-icon">↗</span>Portal</Link>
+    </nav>
   );
 }
 
 export function PublicFoot() {
   return (
-    <footer className="foot">
+    <footer className="pub-foot">
       <div className="wrap">
-        <div className="foot-grid">
-          <div className="foot-col">
-            <div className="brand" style={{ marginBottom: 8 }}>
-              <img src="/logo.svg" alt="" className="brand-logo" />
+        <div className="pub-foot-grid">
+          <div>
+            <div className="pub-foot-brand">
+              <img src="/logo.svg" alt="" className="pub-brand-mark pub-foot-mark" />
               <div>
-                <div className="brand-name">{CONFIG.name}</div>
-                <div className="brand-sub">Est. {CONFIG.founded}</div>
+                <div className="pub-brand-name" style={{ color: "#fff", whiteSpace: "normal" }}>{CONFIG.short}</div>
+                <div className="pub-brand-sub" style={{ color: "rgba(255,255,255,.55)" }}>{CONFIG.sub} · Est. {CONFIG.founded}</div>
               </div>
             </div>
-            <p className="sub" style={{ maxWidth: 320 }}>A school dedicated to memorisation of the Holy Qur'an and the study of Islamic sciences.</p>
+            <p className="pub-foot-copy">A school dedicated to memorisation of the Holy Qur'an and the study of Islamic sciences.</p>
           </div>
-          <div className="foot-col">
-            <h4>School</h4>
-            <Link to="/">Home</Link><Link to="/curriculum">Curriculum</Link><Link to="/materials">Materials</Link><Link to="/login">Portal</Link>
+          <div className="pub-foot-col">
+            <h3>School</h3>
+            <Link to="/">Home</Link>
+            <Link to="/curriculum">Curriculum</Link>
+            <Link to="/materials">Materials</Link>
+            <Link to="/login">Portal</Link>
           </div>
-          <div className="foot-col">
-            <h4>Builder</h4>
+          <div className="pub-foot-col">
+            <h3>Builder</h3>
             <Link to="/builder" className="builder-credit">Built by {CONFIG.builder.name}</Link>
-            <a href={`mailto:${CONFIG.builder.email}`}>{CONFIG.builder.email}</a>
-            <a href={`https://wa.me/${CONFIG.builder.phone}`} target="_blank" rel="noopener noreferrer">WhatsApp</a>
+            <a href={"mailto:" + CONFIG.builder.email}>{CONFIG.builder.email}</a>
+            <a href={"https://wa.me/" + CONFIG.builder.phone} target="_blank" rel="noopener noreferrer">WhatsApp</a>
           </div>
         </div>
-        <div className="foot-bottom">
-          <div>&copy; {new Date().getFullYear()} {CONFIG.name}</div>
-          <div>Founded by {CONFIG.founder}</div>
+        <div className="pub-foot-bottom">
+          <span>© {new Date().getFullYear()} {CONFIG.name}</span>
+          <span>Founded by {CONFIG.founder}</span>
         </div>
       </div>
     </footer>

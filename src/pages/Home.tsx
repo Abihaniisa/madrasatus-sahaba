@@ -1,11 +1,12 @@
-// src/pages/Home.tsx — public homepage. Includes inline LivePointer (countdown banner).
+// src/pages/Home.tsx — public homepage (redesign v2).
+// Live counter from useLiveStatus(); counter fills the row, date sits beneath.
 
 import { Link } from "react-router-dom";
-import { CONFIG, SECTIONS } from "../lib/config";
+import { CONFIG, SECTIONS, SITE_IMAGES, SITE_IMAGE_FALLBACKS, type SiteImageKey } from "../lib/config";
 import { useLiveStatus } from "../lib/calendar";
-import { PublicLayout, I, waLink } from "../ui/Shell";
+import { PublicLayout, waLink } from "../ui/Shell";
 
-function LivePointer() {
+function LiveCounter() {
   const status = useLiveStatus();
   const diff = Math.max(0, status.target.getTime() - Date.now());
   const d = Math.floor(diff / 864e5);
@@ -13,101 +14,127 @@ function LivePointer() {
   const m = Math.floor((diff % 36e5) / 6e4);
   const s = Math.floor((diff % 6e4) / 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
-
   return (
-    <section className="lp-status" aria-label="School status">
-      <div className="lp-panel">
-        <div className="lp-lead">
-          <div className="lp-dot-wrapper">
-            <div className={`lp-dot ${status.mode === "session" ? "calm" : ""}`} />
-            <div className="lp-ring" />
-            <div className="lp-ring" />
-          </div>
-          <div className="lp-headline">
-            {status.context} · <strong>{status.action}</strong>
-          </div>
-        </div>
-        <div className="lp-right">
-          <div className="lp-units" role="timer">
-            <div className="lp-unit"><b>{d}</b><span>Days</span></div>
-            <div className="lp-sep" />
-            <div className="lp-unit"><b>{pad(h)}</b><span>Hrs</span></div>
-            <div className="lp-sep" />
-            <div className="lp-unit"><b>{pad(m)}</b><span>Mins</span></div>
-            <div className="lp-sep" />
-            <div className="lp-unit"><b>{pad(s)}</b><span>Secs</span></div>
-          </div>
-          {status.dateLabel && <div className="lp-date">{status.dateLabel}</div>}
-        </div>
+    <div className="pub-counter-area">
+      <div className="pub-counter" role="timer" aria-live="off">
+        <div className="pub-counter-unit"><b>{d}</b><span>Days</span></div>
+        <div className="pub-counter-sep" />
+        <div className="pub-counter-unit"><b>{pad(h)}</b><span>Hrs</span></div>
+        <div className="pub-counter-sep" />
+        <div className="pub-counter-unit"><b>{pad(m)}</b><span>Mins</span></div>
+        <div className="pub-counter-sep" />
+        <div className="pub-counter-unit"><b>{pad(s)}</b><span>Secs</span></div>
       </div>
-    </section>
+      {status.dateLabel && <div className="pub-counter-date">{status.dateLabel}</div>}
+    </div>
   );
 }
 
+function SiteImage({ k, alt, className }: { k: SiteImageKey; alt: string; className: string }) {
+  return (
+    <div className={className} style={{ background: SITE_IMAGE_FALLBACKS[k] }}>
+      <img
+        src={SITE_IMAGES[k]}
+        alt={alt}
+        loading="lazy"
+        onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
+    </div>
+  );
+}
 
 export default function Home() {
+  const status = useLiveStatus();
   return (
     <PublicLayout>
-      <LivePointer />
-      <section className="home-hero">
-        <div className="wrap">
-          <div className="home-hero-inner">
-            <span className="eyebrow">Established {CONFIG.founded}</span>
-            <h1 className="d1">{CONFIG.name}</h1>
-            <p className="lede">
-              Preparing students to memorise the Book of Allah with structure, consistency, and an unbroken chain of learning.
-            </p>
-            <div className="hero-actions">
-              <Link to="/curriculum" className="btn btn-primary">View curriculum {I.arrow}</Link>
-              <a href={waLink(CONFIG.whatsapp, "As-salamu alaykum. I would like to enquire about admission.")} target="_blank" rel="noopener noreferrer" className="btn btn-wa">
-                {I.whatsapp} Begin admission
-              </a>
-            </div>
-            <div className="hero-arabic">وَرَتِّلِ الْقُرْءَانَ تَرْتِيلًا</div>
+      <section className="pub-status" aria-label="Current academic semester">
+        <div className="wrap pub-status-inner">
+          <div className="pub-status-label">
+            <span className="pub-status-dot" />
+            <span><strong>{status.context}</strong> · <strong>{status.action}</strong></span>
           </div>
+          <LiveCounter />
         </div>
       </section>
 
-      <section className="home-programme">
+      <section className="pub-hero">
         <div className="wrap">
-          <div className="section-head">
-            <span className="eyebrow">The programme</span>
-            <h2 className="d2">Three sections. One path.</h2>
-            <p className="lede">Every student follows a documented curriculum from foundation to full memorisation.</p>
-          </div>
-          <div className="struct-grid">
-            {SECTIONS.map((sec) => (
-              <div key={sec.id} className="struct-card">
-                <div className="title">
-                  <span>{sec.name}</span>
-                  {sec.inactive && <span className="pill pill-neutral">Opening soon</span>}
-                </div>
-                <div className="classes">
-                  {sec.classes.map((c) => <span key={c} className="chip">{c}</span>)}
-                </div>
-                <div className="desc">{sec.desc}</div>
+          <div className="pub-hero-shell">
+            <SiteImage k="hero" alt="Students reciting and studying the Qur'an" className="pub-hero-photo" />
+            <div className="pub-hero-content">
+              <span className="pub-eyebrow">Established {CONFIG.founded}</span>
+              <h1>{CONFIG.name}</h1>
+              <p className="pub-hero-copy">
+                Preparing students to memorise the Book of Allah with structure, consistency, and an unbroken chain of learning.
+              </p>
+              <div className="pub-hero-actions">
+                <Link className="pub-btn pub-btn-light" to="/curriculum">Explore curriculum <span>→</span></Link>
+                <a
+                  className="pub-btn pub-btn-glass"
+                  href={waLink(CONFIG.whatsapp, "As-salamu alaykum. I would like to enquire about admission.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Inquire about admission
+                </a>
               </div>
-            ))}
+              <div className="pub-hero-verse">وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا</div>
+            </div>
+            <div className="pub-hero-caption">Learning · Memorisation · Tarbiyah</div>
           </div>
         </div>
       </section>
 
-      <section className="home-founder">
-        <div className="wrap-narrow">
-          <div className="founder-block">
-            <div className="founder-photo">
-              <img src={CONFIG.founderImage} alt={CONFIG.founder} loading="lazy" decoding="async"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = "hidden"; }} />
+      <section className="pub-programme" id="programme">
+        <div className="wrap">
+          <div className="pub-section-heading">
+            <span className="pub-kicker">The programme</span>
+            <h2 className="pub-section-title">Three sections. One path.</h2>
+            <p className="pub-section-intro">Every student follows a documented curriculum from foundation to full memorisation.</p>
+          </div>
+          <div className="pub-programmes">
+            {SECTIONS.map((sec, i) => {
+              const key: SiteImageKey = sec.id === "foundation" ? "foundation" : sec.id === "secondary" ? "secondary" : "higher";
+              const stage = "Stage " + String(i + 1).padStart(2, "0");
+              return (
+                <article key={sec.id} className="pub-programme-card">
+                  <SiteImage k={key} alt={sec.name + " students"} className="pub-programme-image" />
+                  <div className="pub-programme-body">
+                    <span className="pub-stage-number">{stage}</span>
+                    <h3 className="pub-programme-title">{sec.name}</h3>
+                    <div className="pub-programme-tags">
+                      {sec.classes.slice(0, 2).map(c => <span key={c} className="pub-tag">{c}</span>)}
+                      {sec.inactive && <span className="pub-tag">Opening soon</span>}
+                    </div>
+                    <p>{sec.desc}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="pub-founder">
+        <div className="wrap">
+          <article className="pub-founder-card">
+            <div className="pub-founder-image" style={{ background: SITE_IMAGE_FALLBACKS.founder }}>
+              <img
+                src={CONFIG.founderImage}
+                alt={CONFIG.founder + ", founder of " + CONFIG.short}
+                loading="lazy"
+                onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
             </div>
-            <div className="founder-info">
-              <h3>{CONFIG.founder}</h3>
-              <div className="role">{CONFIG.founderRole}</div>
+            <div className="pub-founder-copy">
+              <span className="pub-kicker">The founder</span>
+              <h2>{CONFIG.founder}</h2>
+              <div className="pub-founder-role">{CONFIG.founderRole}</div>
               <p>
-                A devoted scholar and educator who established {CONFIG.name} to provide authentic,
-                structured, and accessible Qur'anic education to students from all backgrounds.
+                A devoted scholar and educator who established {CONFIG.name} to provide authentic, structured, and accessible Qur'anic education to students from all backgrounds.
               </p>
             </div>
-          </div>
+          </article>
         </div>
       </section>
     </PublicLayout>

@@ -1,6 +1,4 @@
 // src/lib/config.ts — school constants + derived settings.
-// Single source of truth. If a value is used in two places, it lives here.
-
 import type { Section } from "../types";
 
 export const CONFIG = {
@@ -57,6 +55,25 @@ export const CONFIG = {
       { type: "holiday",  weeks: 1,  label: "Post-Daura Holiday" },
     ] as const,
   },
+};
+
+// Public site imagery — replace any URL with your own photograph.
+// Fallback gradients render automatically if a URL fails.
+export const SITE_IMAGES = {
+  hero: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1800&q=88",
+  foundation: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=88",
+  secondary: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=900&q=88",
+  higher: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=88",
+} as const;
+
+export type SiteImageKey = keyof typeof SITE_IMAGES;
+
+export const SITE_IMAGE_FALLBACKS: Record<SiteImageKey | "founder", string> = {
+  hero: "linear-gradient(135deg,#315b40,#102f21)",
+  foundation: "linear-gradient(135deg,#e2eadf,#a8bea9)",
+  secondary: "linear-gradient(135deg,#dce7df,#8fa995)",
+  higher: "linear-gradient(135deg,#e9e1d1,#b9a77d)",
+  founder: "linear-gradient(135deg,#e8e0cf,#b8a77f)",
 };
 
 export const SECTIONS: Section[] = [
