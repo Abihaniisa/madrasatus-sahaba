@@ -57,9 +57,13 @@ export default function Assessments() {
       if (!isSuper) return; // gate
       setAllowed(true);
       setData(await loadSchool());
-      await loadRows();
     })();
   }, [ready]);
+
+  useEffect(() => {
+    if (!data) return;
+    loadRows();
+  }, [data, session, semester]);
 
   useEffect(() => {
     if (!toast) return;
@@ -82,6 +86,7 @@ export default function Assessments() {
 
   async function createAssessment() {
     if (!rows) return;
+    if (busy) return; // prevent double-click
     if (rows.length >= MAX_ASSESSMENTS) {
       setToast(`Maximum ${MAX_ASSESSMENTS} assessments per session. Delete one to create another.`);
       setConfirmCreate(false);
@@ -102,6 +107,19 @@ export default function Assessments() {
         semester,
       }))
     );
+    const { data: existing } = await supabase
+      .from("assessments")
+      .select("id")
+      .eq("label", label)
+      .eq("session_label", session)
+      .eq("semester", semester)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      setBusy(false);
+      setConfirmCreate(false);
+      setToast(`${label} already exists. Delete it first to recreate.`);
+      return;
+    }
     const { error } = await supabase.from("assessments").insert(newRows);
     setBusy(false);
     setConfirmCreate(false);
@@ -160,8 +178,8 @@ export default function Assessments() {
                 {" "}{session} · Semester {semester} · {count} of {MAX_ASSESSMENTS} created.
               </p>
             </div>
-            {canCreate && (
-              <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => setConfirmCreate(true)}>
+            {canCreate && !busy && (
+              <button className="btn btn-primary btn-sm" onClick={() => setConfirmCreate(true)}>
                 {I.plus} Create Assessment {nextNumber()}
               </button>
             )}

@@ -569,8 +569,8 @@ function ReportTab({ program, participants, assessments }: {
         <div className="cert-print-wrapper">
           {sorted.map(p => (
             <>
-              <DauraReport key={p.id + "-rep"} program={program} participant={p} assessments={assessments} marks={marks} />
               <DauraAssessmentReport key={p.id + "-ar"} program={program} participant={p} assessments={assessments} marks={marks} />
+              <DauraReport key={p.id + "-rep"} program={program} participant={p} assessments={assessments} marks={marks} />
             </>
           ))}
         </div>
@@ -588,8 +588,8 @@ function ReportTab({ program, participants, assessments }: {
         </div>
         <div className="cert-print-wrapper">
           <>
-            <DauraReport program={program} participant={selected} assessments={assessments} marks={marks} />
             <DauraAssessmentReport program={program} participant={selected} assessments={assessments} marks={marks} />
+            <DauraReport program={program} participant={selected} assessments={assessments} marks={marks} />
           </>
         </div>
       </div>

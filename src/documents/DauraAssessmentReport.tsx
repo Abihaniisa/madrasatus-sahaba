@@ -56,25 +56,17 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
 
             <table className="dar-table">
               <colgroup>
-                <col style={{ width: "24mm" }} />
+                <col style={{ width: "30mm" }} />
                 {block.map((_, i) => <col key={i} style={{ width: "6mm" }} />)}
-                <col style={{ width: "18mm" }} />
-                <col style={{ width: "18mm" }} />
                 <col style={{ width: "22mm" }} />
-                <col style={{ width: "18mm" }} />
-                <col style={{ width: "20mm" }} />
-                <col style={{ width: "14mm" }} />
+                <col style={{ width: "22mm" }} />
               </colgroup>
               <thead>
                 <tr>
                   <th className="subject">Subject</th>
                   {block.map(i => <th key={i}>{i + 1}</th>)}
-                  <th>Average</th>
-                  <th>70%</th>
                   <th>Evaluation</th>
-                  <th>30%</th>
-                  <th>Final</th>
-                  <th>Grade</th>
+                  <th>Average</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,12 +95,8 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                         const v = m?.value ?? null;
                         return <td key={i} className={"cell-mark " + (v == null ? "cell-missing" : "")}>{v != null ? v : "—"}</td>;
                       })}
-                      <td className="cell-avg">{avg10 != null ? avg10.toFixed(1) : "—"}</td>
-                      <td className="cell-avg">{contrib70 != null ? contrib70.toFixed(1) : "—"}</td>
                       <td className="cell-mark">{evalMark != null ? evalMark : "—"}</td>
-                      <td className="cell-avg">{eval30 != null ? eval30.toFixed(1) : "—"}</td>
-                      <td className="cell-final">{final != null ? final.toFixed(1) : "—"}</td>
-                      <td className="cell-grade">{gradeCode}</td>
+                      <td className="cell-avg">{avg10 != null ? avg10.toFixed(1) : "—"}</td>
                     </tr>
                   );
                 })}
@@ -117,7 +105,7 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
 
             <footer className="dar-foot">
               <div>{blockIdx + 1} of {colBlocks.length} · {program.name}{isSessional ? " · " + program.session_label : ""}</div>
-              <div>Each subject: Average = mean of assessments (out of 10 → 100). 70% = Average × 0.7. Evaluation out of 100, ×0.3. Final = 70% + 30%.</div>
+              <div>Assessment Report lists raw marks only. See the Report Card for contributions, final grade, and remark.</div>
             </footer>
           </div>
         </div>

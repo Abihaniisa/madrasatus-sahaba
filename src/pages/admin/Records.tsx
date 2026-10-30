@@ -7,7 +7,7 @@ import { Link, useParams } from "react-router-dom";
 import { SECTIONS } from "../../lib/config";
 import { loadSchool, buildReport, type SchoolData } from "../../lib/data";
 import { buildAllSemesters } from "../../lib/calc";
-import { useRequireAuth } from "../../lib/supabase";
+import { useRequireAuth, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
@@ -15,8 +15,10 @@ import { ReportCard } from "../../documents/ReportCard";
 import { AssessmentRecord } from "../../documents/AssessmentRecord";
 import { Transcript } from "../../documents/Transcript";
 import { AdmissionLetter } from "../../documents/AdmissionLetter";
+import { DauraReport } from "../../documents/DauraReport";
+import { DauraAssessmentReport } from "../../documents/DauraAssessmentReport";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission";
+type DocKey = "report" | "assessment" | "transcript" | "admission" | "daura";
 type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
 
 export default function Records() {
@@ -25,8 +27,39 @@ export default function Records() {
   const [data, setData] = useState<SchoolData | null>(null);
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocKey>("report");
+  const [dauraParticipations, setDauraParticipations] = useState<any[]>([]);
+  const [dauraPrograms, setDauraPrograms] = useState<any[]>([]);
+  const [dauraAssessments, setDauraAssessments] = useState<any[]>([]);
+  const [dauraMarks, setDauraMarks] = useState<any[]>([]);
+  const [dauraLoaded, setDauraLoaded] = useState(false);
 
   useEffect(() => { loadSchool().then(setData); }, []);
+
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      const { data: parts } = await supabase
+        .from("daura_participants")
+        .select("*")
+        .eq("student_id", id);
+      const list = (parts as any[]) ?? [];
+      setDauraParticipations(list);
+      if (list.length === 0) { setDauraLoaded(true); return; }
+      const pids = Array.from(new Set(list.map(p => p.program_id)));
+      const [progs, asses] = await Promise.all([
+        supabase.from("daura_programs").select("*").in("id", pids),
+        supabase.from("daura_assessments").select("*").in("program_id", pids),
+      ]);
+      setDauraPrograms((progs.data as any[]) ?? []);
+      setDauraAssessments((asses.data as any[]) ?? []);
+      const assesIds = ((asses.data as any[]) ?? []).map((a: any) => a.id);
+      if (assesIds.length > 0) {
+        const { data: mks } = await supabase.from("daura_marks").select("*").in("assessment_id", assesIds);
+        setDauraMarks((mks as any[]) ?? []);
+      }
+      setDauraLoaded(true);
+    })();
+  }, [id]);
 
   const student = data?.students.find(s => s.id === id);
 
@@ -58,7 +91,7 @@ export default function Records() {
   const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
   const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
   const semesters = buildAllSemesters(student, data.assessments, data.marks, data.exams);
-  const isSectionLevelDoc = doc === "transcript" || doc === "admission";
+  const isSectionLevelDoc = doc === "transcript" || doc === "admission" || doc === "daura";
 
   return (
     <div>
@@ -88,6 +121,7 @@ export default function Records() {
               <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Reports</button>
               <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
               <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
+              <button className={"chip-f " + (doc === "daura" ? "active" : "")} onClick={() => setDoc("daura")}>Daura</button>
             </div>
           </div>
 
@@ -123,6 +157,38 @@ export default function Records() {
               <AdmissionLetter student={student} enrollments={data.enrollments} />
             ) : doc === "transcript" ? (
               <Transcript student={student} semesters={semesters} />
+            ) : doc === "daura" ? (
+              !dauraLoaded ? (
+                <div className="card pad"><div className="sub">Loading Daura records…</div></div>
+              ) : dauraParticipations.length === 0 ? (
+                <div className="card"><div className="empty"><div className="t">No Daura programmes</div><div className="d">This student has not participated in any Daura.</div></div></div>
+              ) : (
+                dauraParticipations.map((part: any) => {
+                  const prog = dauraPrograms.find((pr: any) => pr.id === part.program_id);
+                  if (!prog) return null;
+                  const progAssessments = dauraAssessments.filter((a: any) => a.program_id === part.program_id);
+                  const progMarks = dauraMarks.filter((m: any) => m.participant_id === part.id);
+                  return (
+                    <div key={part.id} style={{ marginBottom: 20 }}>
+                      <div className="no-print" style={{ padding: "8px 14px", background: "var(--primary-soft)", borderLeft: "3px solid var(--primary)", fontSize: 13, fontWeight: 500, color: "var(--primary)", marginBottom: 8, borderRadius: "var(--r-1)" }}>
+                        {prog.kind === "sessional" ? `Sessional Daura · ${prog.session_label ?? ""}` : prog.name || "Special Daura"}
+                      </div>
+                      <DauraAssessmentReport
+                        participant={part}
+                        program={prog}
+                        assessments={progAssessments}
+                        marks={progMarks}
+                      />
+                      <DauraReport
+                        participant={part}
+                        program={prog}
+                        assessments={progAssessments}
+                        marks={progMarks}
+                      />
+                    </div>
+                  );
+                })
+              )
             ) : !activePeriod ? (
               <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
             ) : (

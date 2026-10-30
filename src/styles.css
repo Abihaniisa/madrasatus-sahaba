@@ -412,7 +412,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .al-doc,
   .doc-stage > .asheet-doc,
   .doc-stage > .crs-doc,
-  .doc-stage > .dr-doc {
+  .doc-stage > .dr-doc,
+  .doc-stage > .dar-doc {
     zoom: min(1, calc(100cqw / 283mm));
   }
   .doc-stage > .rct-doc {
@@ -428,7 +429,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .al-doc,
   .doc-stage > .asheet-doc,
   .doc-stage > .crs-doc,
-  .doc-stage > .dr-doc {
+  .doc-stage > .dr-doc,
+  .doc-stage > .dar-doc {
     zoom: 0.45;
   }
   .doc-stage > .rct-doc {
@@ -467,7 +469,8 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .doc-stage > .crs-doc,
   .doc-stage > .dr-doc,
   .doc-stage > .rct-doc,
-  .doc-stage > .asheet-doc { zoom: 1 !important; }
+  .doc-stage > .asheet-doc,
+  .doc-stage > .dar-doc { zoom: 1 !important; }
 
   .report-card { page-break-inside: avoid; break-inside: avoid; box-shadow: none; margin: 0; }
   .report-card-page-2 .doc-stage { margin: 0; break-after: auto; page-break-after: auto; }

@@ -179,29 +179,17 @@ export function AssessmentRecord({
         {renderInfo()}
         <table className="ar-table">
           <colgroup>
-            <col style={{ width: "10ch" }} />
+            <col style={{ width: "30mm" }} />
             {Array.from({ length: summaryCols }).map((_, i) => (
-              <col key={i} style={{ width: "4ch" }} />
+              <col key={i} style={{ width: "calc((100% - 30mm - 20mm) / " + Math.max(1, summaryCols) + ")" }} />
             ))}
-            <col style={{ width: "5ch" }} />
-            <col style={{ width: "5ch" }} />
-            <col style={{ width: "5ch" }} />
-            <col style={{ width: "5ch" }} />
-            <col style={{ width: "6ch" }} />
-            <col style={{ width: "5ch" }} />
-            <col style={{ width: "8ch" }} />
+            <col style={{ width: "20mm" }} />
           </colgroup>
           <thead>
             <tr>
               <th className="subject">Subject</th>
               {Array.from({ length: summaryCols }).map((_, i) => <th key={i}>{startIdx + i + 1}</th>)}
-              <th>Avg</th>
-              <th>{CONFIG.assessmentWeight * 100}%</th>
-              <th>Exam</th>
-              <th>{CONFIG.examWeight * 100}%</th>
-              <th>Final</th>
-              <th>Grade</th>
-              <th>Remark</th>
+              <th>Average</th>
             </tr>
           </thead>
           <tbody>
@@ -215,40 +203,13 @@ export function AssessmentRecord({
                     return <td key={i} className={"cell-mark " + (a.value != null ? "" : "cell-missing")}>{a.value != null ? a.value : "—"}</td>;
                   })}
                   <td className="cell-avg">{row.assessmentAvg != null ? row.assessmentAvg.toFixed(1) : "—"}</td>
-                  <td className="cell-avg">{row.assessment30 != null ? row.assessment30.toFixed(1) : "—"}</td>
-                  <td className={"cell-mark " + (row.examRaw != null ? "" : "cell-missing")}>{row.examRaw != null ? row.examRaw : "—"}</td>
-                  <td className="cell-avg">{row.exam70 != null ? row.exam70.toFixed(1) : "—"}</td>
-                  <td className="cell-final">{row.final != null ? row.final.toFixed(1) : "—"}</td>
-                  <td className="cell-grade">{row.grade?.code ?? "—"}</td>
-                  <td>{row.pending ? "Pending" : (row.grade?.label ?? "—")}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        <div className="ar-summary">
-          <div>
-            <small>Semester Average</small>
-            <strong>{average != null && !pending ? average.toFixed(1) : "—"}</strong>
-            <em>out of 100</em>
-          </div>
-          <div>
-            <small>Overall Grade</small>
-            <strong>{pending ? "—" : (average != null ? (average >= 75 ? "A" : average >= 60 ? "B" : average >= 50 ? "C" : "D") : "—")}</strong>
-            <em>{pending ? "Provisional" : (average != null ? (average >= 75 ? "Distinction" : average >= 60 ? "Credit" : average >= 50 ? "Pass" : "Fail") : "—")}</em>
-          </div>
-          <div>
-            <small>Assessments</small>
-            <strong>{maxAssessments}</strong>
-            <em>per subject</em>
-          </div>
-        </div>
         <footer className="ar-foot">
-          <div>
-            <strong>Final score</strong> = {CONFIG.assessmentWeight * 100}% of assessments + {CONFIG.examWeight * 100}% of exam.
-            <strong> Assessments average</strong> = sum of all marks ÷ count, out of {CONFIG.assessmentMax}.
-            <strong> Grade:</strong> A (75+) · B (60–74) · C (50–59) · D (below 50).
-          </div>
+          <div><strong>Average</strong> = mean of the assessment marks, scaled to 100. Assessment Report lists raw marks only — see the Report Card for final grades.</div>
         </footer>
       </div></div>
     </>
