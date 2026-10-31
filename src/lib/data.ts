@@ -6,6 +6,7 @@ import { supabase, deleteStudentCompletely as rawDeleteStudent, deleteDauraProgr
 import type { Assessment, Enrollment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "../types";
 import { CONFIG, SECTIONS } from "./config";
 import { getSettings, loadSettings, invalidateSettingsCache } from "./settings";
+export { currentFeeYear } from "./settings";
 import { getEffectiveSemester } from "./calendar";
 import {
   subjectResult, semesterAvg, hasPending,

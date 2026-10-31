@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
 import { supabase, useRequireAuth, amISuperAdmin } from "../../lib/supabase";
-import { getCurrentSchoolSessionFromDB, loadSchool, invalidateSchoolCache } from "../../lib/data";
+import { getCurrentSchoolSessionFromDB, loadSchool, invalidateSchoolCache, currentFeeYear } from "../../lib/data";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
@@ -121,7 +121,7 @@ export default function StudentForm() {
       status: "active", started: newStudent.joined,
     });
     await supabase.from("fees").insert({
-      student_id: newStudent.id, year: CONFIG.regYear,
+      student_id: newStudent.id, year: currentFeeYear(),
       amount: CONFIG.registrationFee, status: "unpaid",
     });
     invalidateSchoolCache();

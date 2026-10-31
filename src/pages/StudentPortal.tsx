@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS } from "../lib/config";
 import { PublicNav, PublicTabBar, I } from "../ui/Shell";
 import { getStudentSession, clearStudentSession, fetchStudentPortal, supabase, type StudentPortalData } from "../lib/supabase";
-import { buildReport } from "../lib/data";
+import { buildReport, currentFeeYear } from "../lib/data";
 import { buildAllSemesters } from "../lib/calc";
 import { getEffectiveSemester } from "../lib/calendar";
 import { getSettings, loadSettings } from "../lib/settings";
@@ -132,9 +132,9 @@ export default function StudentPortal() {
 
   function feeSummary() {
     if (!student) return { amount: 0, paid: 0, balance: 0 };
-    const f = (fees as any[]).find(x => x.student_id === student.id && x.year === CONFIG.regYear);
+    const f = (fees as any[]).find(x => x.student_id === student.id && x.year === currentFeeYear());
     const amount = f?.amount ?? CONFIG.registrationFee;
-    const paid = paymentRows.filter(p => p.year === CONFIG.regYear).reduce((s, p) => s + p.amount, 0);
+    const paid = paymentRows.filter(p => p.year === currentFeeYear()).reduce((s, p) => s + p.amount, 0);
     return { amount, paid, balance: Math.max(0, amount - paid) };
   }
 

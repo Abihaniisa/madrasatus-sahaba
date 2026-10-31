@@ -6,7 +6,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
-import { buildReport, loadSchool, currentSchoolSession, deleteStudentCompletely, updateStudent, type SchoolData } from "../../lib/data";
+import { buildReport, loadSchool, currentSchoolSession, deleteStudentCompletely, updateStudent, currentFeeYear, type SchoolData } from "../../lib/data";
 import { fmtNGN } from "../../lib/calc";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
@@ -39,7 +39,7 @@ export default function StudentPage() {
   if (!s) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 
   const report = buildReport(s, data.assessments, data.marks, data.exams, undefined, undefined, undefined, data.enrollments);
-  const fee = data.fees.find(f => f.student_id === s.id && f.year === CONFIG.regYear);
+  const fee = data.fees.find(f => f.student_id === s.id && f.year === currentFeeYear());
   const feePaid = fee ? data.feePayments.filter(p => p.student_id === s.id && p.year === fee.year).reduce((sum, p) => sum + p.amount, 0) : 0;
   const feeBalance = fee ? Math.max(0, fee.amount - feePaid) : 0;
   const phone = (s.student_phone || s.guardian_phone || "").replace(/[^0-9+]/g, "");

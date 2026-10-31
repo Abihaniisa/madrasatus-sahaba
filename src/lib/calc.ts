@@ -3,6 +3,7 @@
 
 import type { Assessment, Enrollment, Exam, Fee, FeePayment, Grade, Mark, Student, SubjectResult } from "../types";
 import { CONFIG } from "./config";
+import { currentFeeYear } from "./settings";
 
 export function gradeFor(p: number | null): Grade {
   if (p == null) return { min: 0, label: "—", tone: "neutral", code: "—" } as Grade;
@@ -126,10 +127,10 @@ export function fmtNGN(n: number): string {
 export type FeeStatus = "unpaid" | "partial" | "paid" | "scholarship";
 
 export function feeFor(student_id: string, fees: Fee[]): Fee | undefined {
-  return fees.find(f => f.student_id === student_id && f.year === CONFIG.regYear);
+  return fees.find(f => f.student_id === student_id && f.year === currentFeeYear());
 }
 export function paymentsFor(student_id: string, payments: FeePayment[]): FeePayment[] {
-  return payments.filter(p => p.student_id === student_id && p.year === CONFIG.regYear)
+  return payments.filter(p => p.student_id === student_id && p.year === currentFeeYear())
     .sort((a, b) => a.paid_on.localeCompare(b.paid_on));
 }
 export function computeFee(student_id: string, fees: Fee[], payments: FeePayment[]) {

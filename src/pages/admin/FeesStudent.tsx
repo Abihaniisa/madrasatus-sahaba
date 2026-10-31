@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
-import { loadSchool, type SchoolData } from "../../lib/data";
+import { loadSchool, currentFeeYear, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase, nextReceiptNo } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -60,10 +60,10 @@ export default function FeesStudent() {
     const n = parseInt(amount, 10);
     if (!n || n <= 0) { setErr("Amount must be greater than 0."); return; }
     setBusy(true); setErr(null);
-    const rn = await nextReceiptNo(student.id, CONFIG.regYear, student.reg_no);
+    const rn = await nextReceiptNo(student.id, currentFeeYear(), student.reg_no);
     if (rn.error) { setBusy(false); setErr("Receipt number: " + rn.error); return; }
     const { error } = await supabase.from("fee_payments").insert({
-      student_id: student.id, year: CONFIG.regYear, amount: n, method,
+      student_id: student.id, year: currentFeeYear(), amount: n, method,
       reference: reference.trim() || null, note: note.trim() || null, paid_on: paidOn,
       receipt_no: rn.receiptNo,
     });
@@ -82,7 +82,7 @@ export default function FeesStudent() {
   if (!ready || !data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
   if (!student) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 
-  const fee = data.fees.find(f => f.student_id === student.id && f.year === CONFIG.regYear);
+  const fee = data.fees.find(f => f.student_id === student.id && f.year === currentFeeYear());
   const feeAmount = fee?.amount ?? CONFIG.registrationFee;
   const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
   const balance = Math.max(0, feeAmount - totalPaid);

@@ -28,6 +28,12 @@ export function getSettings(): SchoolSettings {
   return cache;
 }
 
+export function currentFeeYear(): string {
+  const s = getSettings().session_label;
+  const y = s.split("/")[0];
+  return y || CONFIG.regYear;
+}
+
 export function invalidateSettingsCache(): void {
   loaded = false;
   inflight = null;
