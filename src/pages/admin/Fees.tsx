@@ -21,6 +21,18 @@ export default function Fees() {
 
   useEffect(() => { loadSchool().then(setData); }, []);
 
+  const overall = useMemo(() => {
+    if (!data) return { total: 0, paid: 0, unpaid: 0, outstanding: 0 };
+    let total = 0, paid = 0, unpaid = 0, outstanding = 0;
+    for (const s of data.students) {
+      const c = computeFee(s.id, data.fees, data.feePayments);
+      total++;
+      if (c.status === "paid" || c.status === "scholarship") paid++;
+      else { unpaid++; outstanding += c.balance; }
+    }
+    return { total, paid, unpaid, outstanding };
+  }, [data]);
+
   if (!ready || !data) {
     return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
   }
@@ -39,17 +51,6 @@ export default function Fees() {
   const searchResults = ql.length >= 2
     ? data.students.filter(s => s.name.toLowerCase().includes(ql) || s.reg_no.toLowerCase().includes(ql)).slice(0, 20)
     : [];
-
-  const overall = useMemo(() => {
-    let total = 0, paid = 0, unpaid = 0, outstanding = 0;
-    for (const s of data.students) {
-      const c = computeFee(s.id, data.fees, data.feePayments);
-      total++;
-      if (c.status === "paid" || c.status === "scholarship") paid++;
-      else { unpaid++; outstanding += c.balance; }
-    }
-    return { total, paid, unpaid, outstanding };
-  }, [data]);
 
   const feeYear = currentFeeYear();
   const sessionLabel = currentSchoolSession(data);
