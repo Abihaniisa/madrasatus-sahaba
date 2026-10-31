@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
-import { supabase, useRequireAuth } from "../../lib/supabase";
+import { supabase, useRequireAuth, amISuperAdmin } from "../../lib/supabase";
 import { getCurrentSchoolSessionFromDB, loadSchool, invalidateSchoolCache } from "../../lib/data";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
@@ -15,6 +15,9 @@ export default function StudentForm() {
   const nav = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
+  const [isSuper, setIsSuper] = useState<boolean | null>(null);
+  useEffect(() => { amISuperAdmin().then(setIsSuper).catch(() => setIsSuper(false)); }, []);
+  useEffect(() => { if (isSuper === false) nav("/admin", { replace: true }); }, [isSuper, nav]);
   const [loading, setLoading] = useState(isEdit);
   const [notFound, setNotFound] = useState(false);
   const [original, setOriginal] = useState<Student | null>(null);
@@ -127,7 +130,7 @@ export default function StudentForm() {
     nav(`/admin/student/${newStudent.id}`);
   }
 
-  if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={4} /></div></div>;
+  if (!ready || isSuper === null) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready && isSuper !== null} rows={4} /></div></div>;
   if (loading) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!loading} rows={6} /></div></div>;
   if (notFound) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 

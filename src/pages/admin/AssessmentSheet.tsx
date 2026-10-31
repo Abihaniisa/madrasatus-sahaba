@@ -171,7 +171,7 @@ export default function AssessmentSheet({
                 <div className="sname">{s.name}</div>
                 <div className="sid">{s.reg_no}</div>
               </div>
-              <input className="mark" type="text" inputMode="numeric" maxLength={3}
+              <input className="mark" type="text" inputMode="numeric" maxLength={3} disabled={activeLocked && !isSuper}
                 value={v == null ? "" : String(v)} placeholder="—"
                 onChange={e => onInput(s.id, e.target.value)}
                 onBlur={() => onBlur(s.id)}

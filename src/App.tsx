@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { loadSettings } from "./lib/settings";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./ui/Shell";
 import Home from "./pages/Home";
@@ -31,6 +33,7 @@ import BulkPrint from "./pages/admin/BulkPrint";
 import EditMarks from "./pages/admin/EditMarks";
 
 export default function App() {
+  useEffect(() => { loadSettings(); }, []);
   return (
     <>
       <ScrollToTop />

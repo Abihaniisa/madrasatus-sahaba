@@ -90,3 +90,42 @@ export const TRANSCRIPT_GROUPS: Record<string, string[]> = {
   "Senior Secondary": ["Thanawiyyah 4", "Thanawiyyah 5", "Thanawiyyah 6"],
   "Higher":           ["Aliyyah 1", "Aliyyah 2", "Aliyyah 3", "Aliyyah 4"],
 };
+
+// ═══ Promotion & graduation (Batch 3) ═══
+// Promotion covers all 12 classes. Higher (Aliyyah 1–4) is entry-via-promotion only —
+// you reach it from Thanawiyyah 6, never by direct registration.
+// Kept separate from ALL_CLASSES so that new assessments and StudentForm enrollment
+// remain scoped to the 8 active classes until Higher is officially opened for direct intake.
+export const PROMOTION_CLASSES = [
+  "Tamhid", "I'idad",
+  "Thanawiyyah 1", "Thanawiyyah 2", "Thanawiyyah 3",
+  "Thanawiyyah 4", "Thanawiyyah 5", "Thanawiyyah 6",
+  "Aliyyah 1", "Aliyyah 2", "Aliyyah 3", "Aliyyah 4",
+] as const;
+
+// Classes at which promotion triggers automatic stage graduation.
+export const GRADUATION_BOUNDARIES = ["I'idad", "Thanawiyyah 6", "Aliyyah 4"] as const;
+export type GraduationBoundary = typeof GRADUATION_BOUNDARIES[number];
+
+// Class -> milestone label when graduation happens at that class.
+export const GRADUATION_MILESTONES: Record<string, "Foundation" | "Secondary" | "Higher"> = {
+  "I'idad": "Foundation",
+  "Thanawiyyah 6": "Secondary",
+  "Aliyyah 4": "Higher",
+};
+
+// Class -> next class after promotion. null = graduate from school (no further enrollment).
+export const NEXT_CLASS: Record<string, string | null> = {
+  "Tamhid": "I'idad",
+  "I'idad": "Thanawiyyah 1",
+  "Thanawiyyah 1": "Thanawiyyah 2",
+  "Thanawiyyah 2": "Thanawiyyah 3",
+  "Thanawiyyah 3": "Thanawiyyah 4",
+  "Thanawiyyah 4": "Thanawiyyah 5",
+  "Thanawiyyah 5": "Thanawiyyah 6",
+  "Thanawiyyah 6": "Aliyyah 1",
+  "Aliyyah 1": "Aliyyah 2",
+  "Aliyyah 2": "Aliyyah 3",
+  "Aliyyah 3": "Aliyyah 4",
+  "Aliyyah 4": null,
+};

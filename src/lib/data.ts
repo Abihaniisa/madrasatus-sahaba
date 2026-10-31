@@ -5,8 +5,8 @@
 import { supabase, deleteStudentCompletely as rawDeleteStudent, deleteDauraProgramme as rawDeleteDaura } from "./supabase";
 import type { Assessment, Enrollment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "../types";
 import { CONFIG, SECTIONS } from "./config";
-import { getSettings } from "./settings";
-import { getEffectiveSemester, getSessionLabel } from "./calendar";
+import { getSettings, loadSettings, invalidateSettingsCache } from "./settings";
+import { getEffectiveSemester } from "./calendar";
 import {
   subjectResult, semesterAvg, hasPending,
   buildAllSemesters, cumulativeAvg as calcCumulative,
@@ -219,28 +219,15 @@ export async function listSpecialDauras(): Promise<any[]> {
 // The school's "current session" — derived from active enrollments across all students.
 // Fallback: getSessionLabel(today) if no active enrollments exist yet.
 // This is the single source of truth for "what session is the school in right now."
-export function currentSchoolSession(data: SchoolData): string {
-  const active = data.enrollments.filter(
-    e => (e.status === "active" || e.status === "repeating") && !e.ended
-  );
-  if (active.length === 0) return getSessionLabel(new Date());
-  const sessions = Array.from(new Set(active.map(e => e.session_label))).sort();
-  return sessions[sessions.length - 1];
+export function currentSchoolSession(_data: SchoolData): string {
+  return getSettings().session_label;
 }
 
 // Async — queries DB directly. No SchoolData needed.
 // Used by StudentForm where SchoolData isn't loaded yet.
 export async function getCurrentSchoolSessionFromDB(): Promise<string> {
-  const { data } = await supabase
-    .from("enrollments")
-    .select("session_label")
-    .in("status", ["active", "repeating"])
-    .order("session_label", { ascending: false })
-    .limit(1);
-  if (data && data.length > 0) {
-    return (data[0] as { session_label: string }).session_label;
-  }
-  return getSessionLabel(new Date());
+  const s = await loadSettings();
+  return s.session_label;
 }
 
 // ═══ Write layer — every mutation invalidates the school cache on success.
@@ -270,4 +257,41 @@ export async function deleteDauraProgramme(
   const result = await rawDeleteDaura(programId);
   if (!result.error) invalidateSchoolCache();
   return result;
+}
+
+// ═══ School-wide promotion (Batch 3) ═══
+export type PromoteDecision = {
+  student_id: string;
+  decision: "promote" | "repeat";
+  from_class: string;
+  to_class: string;
+  graduation_milestone: "Foundation" | "Secondary" | "Higher" | null;
+};
+
+export type PromoteResult = {
+  ok: boolean;
+  processed?: number;
+  already_processed?: boolean;
+  from_session?: string;
+  to_session?: string;
+  error?: string;
+};
+
+export async function promoteCohort(
+  decisions: PromoteDecision[],
+  operationId: string,
+  expectedFromSession: string
+): Promise<PromoteResult> {
+  const { data, error } = await supabase.rpc("promote_cohort", {
+    p_decisions: decisions,
+    p_operation_id: operationId,
+    p_expected_from_session: expectedFromSession,
+  });
+  if (error) return { ok: false, error: error.message };
+  const result = data as PromoteResult | null;
+  if (result?.ok) {
+    invalidateSchoolCache();
+    invalidateSettingsCache();
+  }
+  return result ?? { ok: false, error: "No response from promote_cohort" };
 }

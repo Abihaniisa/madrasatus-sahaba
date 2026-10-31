@@ -28,6 +28,11 @@ export function getSettings(): SchoolSettings {
   return cache;
 }
 
+export function invalidateSettingsCache(): void {
+  loaded = false;
+  inflight = null;
+}
+
 export async function loadSettings(): Promise<SchoolSettings> {
   if (loaded) return cache;
   if (inflight) return inflight;
