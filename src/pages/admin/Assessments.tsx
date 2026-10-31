@@ -42,10 +42,13 @@ export default function Assessments() {
     for (const r of (assRows as { label: string }[]) ?? []) {
       labels.set(r.label, (labels.get(r.label) ?? 0) + 1);
     }
-    const list: Row[] = [];
-    for (const [label, count] of labels) {
-      list.push({ label, count, locked: await isAssessmentLocked(label, session, semester) });
-    }
+    const list: Row[] = await Promise.all(
+      Array.from(labels).map(async ([label, count]) => ({
+        label,
+        count,
+        locked: await isAssessmentLocked(label, session, semester),
+      }))
+    );
     list.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
     setRows(list);
   }
@@ -185,7 +188,9 @@ export default function Assessments() {
             )}
           </div>
 
-          {count === 0 ? (
+          {rows === null ? (
+            <div className="card"><div className="empty"><div className="t">Loading…</div></div></div>
+          ) : count === 0 ? (
             <div className="card"><div className="empty"><div className="t">No assessments yet</div><div className="d">Create the first assessment to enable mark entry across all classes.</div></div></div>
           ) : (
             <div className="card" style={{ overflow: "hidden" }}>
