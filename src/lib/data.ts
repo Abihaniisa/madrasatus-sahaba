@@ -2,7 +2,7 @@
 // buildReport and classAverage accept an optional sessionLabel so historical
 // reports can be rendered. Existing callers that omit it get current session.
 
-import { supabase } from "./supabase";
+import { supabase, deleteStudentCompletely as rawDeleteStudent, deleteDauraProgramme as rawDeleteDaura } from "./supabase";
 import type { Assessment, Enrollment, Exam, Fee, FeePayment, Mark, Material, Student, SubjectResult } from "../types";
 import { CONFIG, SECTIONS } from "./config";
 import { getSettings } from "./settings";
@@ -241,4 +241,33 @@ export async function getCurrentSchoolSessionFromDB(): Promise<string> {
     return (data[0] as { session_label: string }).session_label;
   }
   return getSessionLabel(new Date());
+}
+
+// ═══ Write layer — every mutation invalidates the school cache on success.
+// All school-data writes MUST go through these functions.
+// Callers never call invalidateSchoolCache() themselves.
+
+export async function updateStudent(
+  id: string,
+  patch: Record<string, unknown>
+): Promise<{ error: { message: string } | null }> {
+  const result = await supabase.from("students").update(patch).eq("id", id);
+  if (!result.error) invalidateSchoolCache();
+  return { error: result.error as { message: string } | null };
+}
+
+export async function deleteStudentCompletely(
+  studentId: string
+): Promise<{ error: string | null }> {
+  const result = await rawDeleteStudent(studentId);
+  if (!result.error) invalidateSchoolCache();
+  return result;
+}
+
+export async function deleteDauraProgramme(
+  programId: string
+): Promise<{ error: string | null }> {
+  const result = await rawDeleteDaura(programId);
+  if (!result.error) invalidateSchoolCache();
+  return result;
 }

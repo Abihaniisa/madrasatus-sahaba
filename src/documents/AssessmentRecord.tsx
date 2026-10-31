@@ -133,7 +133,7 @@ export function AssessmentRecord({
       .ar-doc .info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; }
       .ar-doc .info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
       .ar-doc .info b { font-size: 10pt; }
-      .ar-table { width: 100%; border-collapse: collapse; table-layout: auto; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
+      .ar-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
       .ar-table th, .ar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1mm; overflow: hidden; }
       .ar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; }
       .ar-table thead th.subject { text-align: left; padding-left: 4mm; }

@@ -6,9 +6,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
-import { buildReport, loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
+import { buildReport, loadSchool, currentSchoolSession, deleteStudentCompletely, updateStudent, type SchoolData } from "../../lib/data";
 import { fmtNGN } from "../../lib/calc";
-import { useRequireAuth, amISuperAdmin, supabase, deleteStudentCompletely } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I, waLink } from "../../ui/Shell";
 import { DelayedSkeleton, Modal } from "../../ui/primitives";
@@ -47,7 +47,7 @@ export default function StudentPage() {
   async function toggleMode() {
     if (!isSuper) return;
     setBusy(true);
-    await supabase.from("students").update({ mode: s!.mode === "online" ? "physical" : "online" }).eq("id", s!.id);
+    await updateStudent(s!.id, { mode: s!.mode === "online" ? "physical" : "online" });
     await reload();
     setBusy(false);
     setConfirmMode(false);

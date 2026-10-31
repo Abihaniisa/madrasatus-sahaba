@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useRequireAuth, amISuperAdmin, supabase, deleteDauraProgramme } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton, Modal } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
-import { loadSchool, type SchoolData } from "../../lib/data";
+import { loadSchool, deleteDauraProgramme, type SchoolData } from "../../lib/data";
 import { DauraReport } from "../../documents/DauraReport";
 import { DauraAssessmentReport } from "../../documents/DauraAssessmentReport";
 import type { DauraProgram, DauraParticipant, DauraAssessment, DauraMark, Student } from "../../types";
