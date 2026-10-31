@@ -438,3 +438,56 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+/* ═══ STUDENT PORTAL (Batch: redesign) ═══ */
+.portal-welcome { margin-bottom: 20px; }
+.portal-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.portal-title { font-family: var(--serif); font-weight: 600; font-size: clamp(26px, 4vw, 38px); line-height: 1.15; letter-spacing: -.02em; margin: 6px 0 4px; color: var(--ink); }
+.portal-profile { display: flex; align-items: center; gap: 16px; padding: 20px 22px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-4); box-shadow: var(--sh-1); margin-bottom: 20px; flex-wrap: wrap; }
+.portal-profile .pav { width: 58px; height: 58px; font-size: 22px; }
+.portal-student-name { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 0 0 6px; color: var(--ink); }
+.portal-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 22px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.portal-tabs::-webkit-scrollbar { display: none; }
+.portal-tab { flex: none; border: 0; border-radius: var(--r-1); background: transparent; color: var(--ink-3); padding: 10px 14px; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.portal-tab.active { background: var(--primary); color: #fff; }
+.portal-sec-head { margin-bottom: 16px; }
+.portal-sec-title { font-family: var(--serif); font-size: 24px; font-weight: 600; margin: 4px 0 3px; color: var(--ink); }
+.portal-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.portal-stat { border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); padding: 16px 18px; min-width: 0; }
+.portal-stat-label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+.portal-stat-value { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--primary); margin-top: 4px; }
+.portal-stat-note { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.portal-quick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.portal-quick-card { display: flex; align-items: flex-start; gap: 12px; text-align: left; width: 100%; border: 1px solid var(--line); border-radius: var(--r-3); background: var(--surface); padding: 16px; transition: border-color .18s, box-shadow .18s, transform .18s; color: inherit; cursor: pointer; font: inherit; }
+.portal-quick-card:hover { border-color: #bdcdbf; box-shadow: var(--sh-2); transform: translateY(-1px); }
+.portal-quick-icon { width: 40px; height: 40px; flex: none; border-radius: var(--r-2); background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-size: 17px; }
+.portal-quick-card h3 { font-family: var(--serif); font-size: 16px; font-weight: 600; margin: 0 0 3px; color: var(--ink); }
+.portal-quick-card p { font-size: 11.5px; line-height: 1.5; color: var(--ink-3); margin: 0; }
+.portal-quick-arrow { color: var(--primary); font-size: 20px; margin-left: auto; align-self: center; }
+.portal-record { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.portal-record:last-child { border-bottom: none; }
+.portal-record-icon { width: 38px; height: 38px; flex: none; border-radius: var(--r-2); background: var(--primary-soft); color: var(--primary); display: grid; place-items: center; font-size: 16px; }
+.portal-record-title { font-size: 13.5px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.portal-record-meta { font-size: 11.5px; color: var(--ink-3); }
+
+@media (max-width: 640px) {
+  .portal-profile { padding: 16px; gap: 12px; border-radius: var(--r-3); }
+  .portal-profile .pav { width: 48px; height: 48px; font-size: 20px; }
+  .portal-student-name { font-size: 19px; }
+  .portal-tabs { margin-bottom: 18px; }
+  .portal-tab { padding: 9px 12px; font-size: 11.5px; }
+  .portal-sec-title { font-size: 21px; }
+  .portal-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-bottom: 20px; }
+  .portal-stat { padding: 12px 9px; }
+  .portal-stat-label { font-size: 8px; letter-spacing: .06em; }
+  .portal-stat-value { font-size: 17px; }
+  .portal-stat-note { font-size: 9.5px; }
+  .portal-quick { grid-template-columns: 1fr; gap: 9px; }
+  .portal-quick-card { padding: 13px; gap: 10px; }
+  .portal-quick-icon { width: 36px; height: 36px; font-size: 15px; }
+  .portal-quick-card h3 { font-size: 15px; }
+  .portal-record { padding: 12px 13px; gap: 10px; flex-wrap: wrap; }
+  .portal-record .btn { margin-left: auto; }
+  .portal-record-title { font-size: 13px; }
+  .portal-record-meta { font-size: 11px; }
+}

@@ -1,367 +1,393 @@
-// src/pages/StudentPortal.tsx — Student view. Same documents as admin Records, no editing.
-// Sign out is a top-right absolute button. Print uses class-based hiding (no DOM paths).
+// src/pages/StudentPortal.tsx — Student portal (mobile-first, real data).
+// Real student from student_portal RPC. Real documents from existing components.
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS } from "../lib/config";
 import { PublicNav, PublicTabBar, I } from "../ui/Shell";
-import { getStudentSession, clearStudentSession, fetchStudentPortal, type StudentPortalData } from "../lib/supabase";
+import { getStudentSession, clearStudentSession, fetchStudentPortal, supabase, type StudentPortalData } from "../lib/supabase";
 import { buildReport } from "../lib/data";
 import { buildAllSemesters } from "../lib/calc";
+import { getEffectiveSemester } from "../lib/calendar";
+import { getSettings, loadSettings } from "../lib/settings";
 import { ReportCard } from "../documents/ReportCard";
-import { AssessmentRecord } from "../documents/AssessmentRecord";
 import { Transcript } from "../documents/Transcript";
 import { AdmissionLetter } from "../documents/AdmissionLetter";
-import type { Assessment, Exam, Mark, Student } from "../types";
-import { DauraReport } from "../documents/DauraReport";
 import { Receipt } from "../documents/Receipt";
-import { supabase } from "../lib/supabase";
+import { DauraReport } from "../documents/DauraReport";
+import type { Assessment, Exam, Mark, Student } from "../types";
 
-type DocKey = "report" | "assessment" | "transcript" | "admission" | "daura" | "receipts";
-type ClassPeriod = { className: string; semesters: { session: string; semester: 1 | 2 }[] };
+type Page = "overview" | "documents" | "payments" | "daura";
+type DocTab = "reports" | "transcripts" | "admission";
+type Viewer =
+  | { kind: "report"; session: string; semester: 1 | 2; className: string }
+  | { kind: "transcript" }
+  | { kind: "admission" }
+  | { kind: "receipt"; paymentId: string }
+  | { kind: "daura"; participantId: string; programId: string }
+  | null;
+type ReportRow = { className: string; session: string; semester: 1 | 2; average: number | null; pending: boolean };
+type PaymentRow = { id: string; year: string; amount: number; method: string; paid_on: string; receipt_no: string | null; reference: string | null; note: string | null };
+type DauraRow = { participantId: string; programId: string; programName: string; kind: "sessional" | "special"; sessionLabel: string | null; status: "open" | "closed" };
 
 export default function StudentPortal() {
   const nav = useNavigate();
   const [data, setData] = useState<StudentPortalData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [activeClass, setActiveClass] = useState<string | null>(null);
-  const [doc, setDoc] = useState<DocKey>("report");
-  const [dauraParticipations, setDauraParticipations] = useState<any[]>([]);
+  const [page, setPage] = useState<Page>("overview");
+  const [docTab, setDocTab] = useState<DocTab>("reports");
+  const [viewer, setViewer] = useState<Viewer>(null);
   const [dauraData, setDauraData] = useState<{ programs: any[]; assessments: any[]; marks: any[] }>({ programs: [], assessments: [], marks: [] });
   const [dauraLoading, setDauraLoading] = useState(false);
-  const [activeDauraId, setActiveDauraId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!CONFIG.studentLoginEnabled) { nav("/login"); return; }
     const s = getStudentSession();
     if (!s) { nav("/login"); return; }
     (async () => {
+      await loadSettings();
       const res = await fetchStudentPortal(s.nin, s.identifier);
       if (!res.ok) { clearStudentSession(); nav("/login"); return; }
       setData(res);
-      setLoading(false);
     })();
   }, [nav]);
 
-  function signOut() { clearStudentSession(); nav("/"); }
-
-  const student = data?.student as Student | undefined;
-  const marks = (data?.marks ?? []) as Mark[];
-  const exams = (data?.exams ?? []) as Exam[];
-  const assessments = (data?.assessments ?? []) as Assessment[];
-  const feePayments = (data?.fee_payments ?? []) as any[];
-  const fees = (data?.fees ?? []) as any[];
-
   useEffect(() => {
-    if (!student) return;
+    const parts = (data?.daura_participations as any[] | undefined) ?? [];
+    if (parts.length === 0) return;
+    const pids = Array.from(new Set(parts.map(p => p.program_id)));
     let cancelled = false;
+    setDauraLoading(true);
     (async () => {
-      const { data: parts } = await supabase.from("daura_participants").select("id, program_id, full_name, external, nin, phone").eq("student_id", student.id);
+      const [progs, asses] = await Promise.all([
+        supabase.from("daura_programs").select("*").in("id", pids),
+        supabase.from("daura_assessments").select("*").in("program_id", pids),
+      ]);
       if (cancelled) return;
-      setDauraParticipations((parts as any[]) ?? []);
+      const assesList = (asses.data as any[]) ?? [];
+      const assesIds = assesList.map(a => a.id);
+      let marksList: any[] = [];
+      if (assesIds.length > 0) {
+        const { data: mks } = await supabase.from("daura_marks").select("*").in("assessment_id", assesIds);
+        marksList = (mks as any[]) ?? [];
+      }
+      setDauraData({ programs: (progs.data as any[]) ?? [], assessments: assesList, marks: marksList });
+      setDauraLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [student?.id]);
+  }, [data?.daura_participations]);
 
-  const semesters = useMemo(() => {
-    if (!student) return [];
-    return buildAllSemesters(student, assessments, marks, exams, data?.enrollments ?? []);
-  }, [student, assessments, marks, exams]);
-
-  const classPeriods: ClassPeriod[] = useMemo(() => {
-    const byClass = new Map<string, { session: string; semester: 1 | 2 }[]>();
-    for (const g of semesters) {
-      if (!byClass.has(g.class_name)) byClass.set(g.class_name, []);
-      byClass.get(g.class_name)!.push({ session: g.session_label, semester: (g.semester === 2 ? 2 : 1) as 1 | 2 });
-    }
-    for (const arr of byClass.values()) {
-      arr.sort((a, b) => {
-        const s = a.session.localeCompare(b.session);
-        return s !== 0 ? s : a.semester - b.semester;
-      });
-    }
-    return Array.from(byClass.entries()).map(([className, semesters]) => ({ className, semesters }));
-  }, [semesters]);
-
-  useEffect(() => {
-    if (!activeClass && classPeriods.length > 0) setActiveClass(classPeriods[classPeriods.length - 1].className);
-  }, [classPeriods, activeClass]);
-
-  if (loading) return <div className="body"><div className="wrap"><div style={{ minHeight: 80 }} /></div></div>;
-  if (!data || !student) return null;
-
-  const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
-  const isGraduated = student.status === "graduated";
+  const student = data?.student as Student | undefined;
+  const assessments = (data?.assessments ?? []) as Assessment[];
+  const marks = (data?.marks ?? []) as Mark[];
+  const exams = (data?.exams ?? []) as Exam[];
   const enrollments = (data?.enrollments ?? []) as any[];
-  const lastEnroll = isGraduated ? enrollments.filter((e: any) => e.student_id === student.id && (e.status === "completed" || e.status === "graduated")).sort((a: any, b: any) => b.session_label.localeCompare(a.session_label))[0] : null;
-  const activePeriod = classPeriods.find(p => p.className === activeClass) ?? null;
-  const isSectionLevelDoc = doc === "transcript" || doc === "admission" || doc === "daura" || doc === "receipts";
+  const payments = (data?.fee_payments ?? []) as any[];
+  const fees = (data?.fees ?? []) as any[];
 
-  return (
-    <>
-      <style>{`
-        @media print {
-          @page { size: A4 landscape; margin: 6mm; }
-          html, body, #root { background: #fff !important; margin: 0 !important; padding: 0 !important; }
-          .no-print, .nav, .tabbar, .foot { display: none !important; }
-          .student-portal-page { min-height: 0 !important; padding: 0 !important; }
-          .student-portal-page .wrap { padding: 0 !important; max-width: none !important; }
-          .student-portal-page .ph { display: none !important; }
-          .student-portal-page .chip-line { display: none !important; }
-          .student-portal-page .print-hint { display: none !important; }
-          .student-portal-page .cert-print-wrapper { padding: 0 !important; margin: 0 !important; border: none !important; background: transparent !important; }
-        }
-      `}</style>
+  const sessionLabel = getSettings().session_label;
+  const semesterLabel = getEffectiveSemester() === 1 ? "First" : "Second";
+  const sectionName = student ? (SECTIONS.find(s => s.id === student.section)?.name ?? student.section) : "";
+
+  const reports: ReportRow[] = useMemo(() => {
+    if (!student) return [];
+    const groups = buildAllSemesters(student, assessments, marks, exams, enrollments);
+    return groups
+      .map(g => {
+        const r = buildReport(student, assessments, marks, exams, g.semester === 2 ? 2 : 1, g.session_label, g.class_name, enrollments);
+        return { className: g.class_name, session: g.session_label, semester: (g.semester === 2 ? 2 : 1) as 1 | 2, average: r.avg, pending: r.pending };
+      })
+      .sort((a, b) => {
+        const s = b.session.localeCompare(a.session);
+        return s !== 0 ? s : b.semester - a.semester;
+      });
+  }, [student, assessments, marks, exams, enrollments]);
+
+  const transcripts = useMemo(() => {
+    const bySection = new Map<string, Set<string>>();
+    for (const r of reports) {
+      const sec = SECTIONS.find(s => s.classes.includes(r.className));
+      if (!sec) continue;
+      if (!bySection.has(sec.name)) bySection.set(sec.name, new Set());
+      bySection.get(sec.name)!.add(r.className);
+    }
+    return Array.from(bySection.entries()).map(([name, classSet]) => ({ sectionName: name, classes: Array.from(classSet) }));
+  }, [reports]);
+
+  const paymentRows: PaymentRow[] = useMemo(() => (payments as any[])
+    .map(p => ({ id: p.id, year: p.year, amount: Number(p.amount ?? 0), method: p.method, paid_on: p.paid_on, receipt_no: p.receipt_no, reference: p.reference, note: p.note }))
+    .sort((a, b) => (b.paid_on ?? "").localeCompare(a.paid_on ?? "")), [payments]);
+
+  const dauraRows: DauraRow[] = useMemo(() => {
+    const parts = (data?.daura_participations as any[] | undefined) ?? [];
+    const out: DauraRow[] = [];
+    for (const p of parts) {
+      const prog = dauraData.programs.find((x: any) => x.id === p.program_id);
+      if (!prog) continue;
+      out.push({ participantId: p.id, programId: p.program_id, programName: prog.name ?? "Daura programme", kind: prog.kind ?? "special", sessionLabel: prog.session_label ?? null, status: prog.status ?? "closed" });
+    }
+    return out;
+  }, [data?.daura_participations, dauraData.programs]);
+
+  function signOut() { clearStudentSession(); nav("/"); }
+
+  function feeSummary() {
+    if (!student) return { amount: 0, paid: 0, balance: 0 };
+    const f = (fees as any[]).find(x => x.student_id === student.id && x.year === CONFIG.regYear);
+    const amount = f?.amount ?? CONFIG.registrationFee;
+    const paid = paymentRows.filter(p => p.year === CONFIG.regYear).reduce((s, p) => s + p.amount, 0);
+    return { amount, paid, balance: Math.max(0, amount - paid) };
+  }
+
+  function renderViewer() {
+    if (!viewer || !student) return null;
+    if (viewer.kind === "report") {
+      const r = buildReport(student, assessments, marks, exams, viewer.semester, viewer.session, viewer.className, enrollments);
+      return <ReportCard student={{ ...student, class_name: viewer.className }} results={r.results} average={r.avg} pending={r.pending} sessionLabel={viewer.session} semester={viewer.semester} assessments={assessments} marks={marks} exams={exams} />;
+    }
+    if (viewer.kind === "transcript") {
+      const groups = buildAllSemesters(student, assessments, marks, exams, enrollments);
+      return <Transcript student={student} semesters={groups} />;
+    }
+    if (viewer.kind === "admission") return <AdmissionLetter student={student} enrollments={enrollments} />;
+    if (viewer.kind === "receipt") {
+      const p = paymentRows.find(x => x.id === viewer.paymentId);
+      if (!p) return null;
+      const fee = feeSummary();
+      return <Receipt student={student} payment={p as any} amount={fee.amount} paid={fee.paid} balance={fee.balance} />;
+    }
+    if (viewer.kind === "daura") {
+      const part = ((data?.daura_participations as any[]) ?? []).find(p => p.id === viewer.participantId);
+      const prog = dauraData.programs.find(p => p.id === viewer.programId);
+      if (!part || !prog) return null;
+      const progAssessments = dauraData.assessments.filter((a: any) => a.program_id === viewer.programId);
+      const progMarks = dauraData.marks.filter((m: any) => m.participant_id === viewer.participantId);
+      return <DauraReport participant={part} program={prog} assessments={progAssessments} marks={progMarks} />;
+    }
+    return null;
+  }
+
+  if (!data || !student) {
+    return (<>
       <PublicNav onSignOut={signOut} />
-      <section className="section student-portal-page" style={{ minHeight: "80vh" }}>
-        <div className="wrap" style={{ maxWidth: 1160 }}>
-          <div className="ph no-print">
-            <div className="pav">{(student.name[0] ?? "") + (student.name.split(/\s+/)[1]?.[0] ?? "")}</div>
-            <div className="pinfo">
-              <h1>{student.name}</h1>
-              <div className="pmeta">
-                <span>Reg. No. <strong>{student.reg_no}</strong></span>
-                {isGraduated && lastEnroll ? (
-                  <>
-                    <span>Status <strong>Graduated</strong></span>
-                    <span>From <strong>{lastEnroll.class_name}</strong></span>
-                    <span>Class of <strong>{lastEnroll.session_label}</strong></span>
-                  </>
-                ) : (
-                  <>
-                    <span>Class <strong>{student.class_name}</strong></span>
-                    <span>Section <strong>{sectionName}</strong></span>
-                  </>
-                )}
-              </div>
+      <div className="body"><div className="wrap"><div className="empty"><div className="t">Loading…</div></div></div></div>
+    </>);
+  }
+
+  if (viewer) {
+    return (<>
+      <PublicNav onSignOut={signOut} />
+      <div className="no-print" style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", gap: 8, alignItems: "center", background: "var(--surface)", position: "sticky", top: 0, zIndex: 50 }}>
+        <button className="btn btn-secondary btn-sm" onClick={() => setViewer(null)}>{I.back} Back</button>
+        <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print</button>
+      </div>
+      <div className="cert-print-wrapper" style={{ padding: "20px 16px" }}>
+        {renderViewer()}
+      </div>
+    </>);
+  }
+
+  const fee = feeSummary();
+  const initials = (student.name[0] ?? "") + (student.name.split(/\s+/)[1]?.[0] ?? "");
+
+  return (<>
+    <PublicNav onSignOut={signOut} />
+    <div className="body" style={{ paddingBottom: 80 }}>
+      <div className="wrap" style={{ maxWidth: 900 }}>
+        <div className="portal-welcome">
+          <div className="portal-eyebrow">Student portal</div>
+          <h1 className="portal-title">Student dashboard</h1>
+          <p className="sub">View your academic records, financial transactions and Daura programme history.</p>
+        </div>
+
+        <div className="portal-profile">
+          <div className="pav">{initials}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h2 className="portal-student-name">{student.name}</h2>
+            <div className="pmeta">
+              <span>Reg. No. <strong>{student.reg_no}</strong></span>
+              <span>Class <strong>{student.class_name}</strong></span>
+              <span>Section <strong>{sectionName}</strong></span>
+              <span>Session <strong>{sessionLabel}</strong></span>
             </div>
           </div>
+          <span className="pill pill-success pill-dot" style={{ whiteSpace: "nowrap" }}>Active</span>
+        </div>
 
-          <div className="no-print" style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-              Document type
-            </div>
-            <div className="chip-line" style={{ marginBottom: 0 }}>
-              <button className={"chip-f " + (doc === "report" ? "active" : "")} onClick={() => setDoc("report")}>Reports</button>
-              <button className={"chip-f " + (doc === "transcript" ? "active" : "")} onClick={() => setDoc("transcript")}>Transcript</button>
-              <button className={"chip-f " + (doc === "admission" ? "active" : "")} onClick={() => setDoc("admission")}>Admission Letter</button>
-              {dauraParticipations.length > 0 && (<button className={"chip-f " + (doc === "daura" ? "active" : "")} onClick={() => setDoc("daura")}>Daura</button>)}
-              {feePayments.length > 0 && (<button className={"chip-f " + (doc === "receipts" ? "active" : "")} onClick={() => setDoc("receipts")}>Receipts</button>)}
-            </div>
+        <div className="portal-tabs">
+          <button className={"portal-tab " + (page === "overview" ? "active" : "")} onClick={() => setPage("overview")}>Overview</button>
+          <button className={"portal-tab " + (page === "documents" ? "active" : "")} onClick={() => setPage("documents")}>Academic documents</button>
+          <button className={"portal-tab " + (page === "payments" ? "active" : "")} onClick={() => setPage("payments")}>Payments &amp; fees</button>
+          <button className={"portal-tab " + (page === "daura" ? "active" : "")} onClick={() => setPage("daura")}>Daura history</button>
+        </div>
+
+        {page === "overview" && (<>
+          <div className="portal-sec-head">
+            <div className="portal-eyebrow">Current enrolment</div>
+            <h2 className="portal-sec-title">Academic summary</h2>
+            <p className="sub">Your current academic information.</p>
+          </div>
+          <div className="portal-stats">
+            <div className="portal-stat"><div className="portal-stat-label">Academic session</div><div className="portal-stat-value">{sessionLabel}</div><div className="portal-stat-note">Current session</div></div>
+            <div className="portal-stat"><div className="portal-stat-label">Semester</div><div className="portal-stat-value">{semesterLabel}</div><div className="portal-stat-note">Current semester</div></div>
+            <div className="portal-stat"><div className="portal-stat-label">Current class</div><div className="portal-stat-value">{student.class_name}</div><div className="portal-stat-note">{sectionName} section</div></div>
           </div>
 
-          {!isSectionLevelDoc && (
-            <div className="no-print" style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--ink-3)", marginBottom: 6 }}>
-                Class
+          <div className="portal-sec-head" style={{ marginTop: 24 }}>
+            <h2 className="portal-sec-title">Student records</h2>
+            <p className="sub">Select a category to view your records.</p>
+          </div>
+          <div className="portal-quick">
+            <button className="portal-quick-card" onClick={() => setPage("documents")}>
+              <div className="portal-quick-icon">▤</div>
+              <div style={{ flex: 1, textAlign: "left" }}>
+                <h3>Reports &amp; transcripts</h3>
+                <p>Semester reports and stage transcripts, including previous academic sessions.</p>
               </div>
-              {classPeriods.length === 0 ? (
-                <div className="card pad"><p className="sub">No records yet. Your marks will appear here as teachers enter them.</p></div>
+              <div className="portal-quick-arrow">›</div>
+            </button>
+            <button className="portal-quick-card" onClick={() => { setDocTab("admission"); setPage("documents"); }}>
+              <div className="portal-quick-icon">✉</div>
+              <div style={{ flex: 1, textAlign: "left" }}>
+                <h3>Admission letter</h3>
+                <p>View and print your official admission letter.</p>
+              </div>
+              <div className="portal-quick-arrow">›</div>
+            </button>
+            <button className="portal-quick-card" onClick={() => setPage("payments")}>
+              <div className="portal-quick-icon">₦</div>
+              <div style={{ flex: 1, textAlign: "left" }}>
+                <h3>Payments &amp; fees</h3>
+                <p>Review school fees and registration fee transactions by session.</p>
+              </div>
+              <div className="portal-quick-arrow">›</div>
+            </button>
+            <button className="portal-quick-card" onClick={() => setPage("daura")}>
+              <div className="portal-quick-icon">✦</div>
+              <div style={{ flex: 1, textAlign: "left" }}>
+                <h3>Daura programme</h3>
+                <p>Access sessional and special Daura records.</p>
+              </div>
+              <div className="portal-quick-arrow">›</div>
+            </button>
+          </div>
+        </>)}
+
+        {page === "documents" && (<>
+          <div className="portal-sec-head">
+            <div className="portal-eyebrow">Academic records</div>
+            <h2 className="portal-sec-title">Documents</h2>
+            <p className="sub">View available documents.</p>
+          </div>
+          <div className="chip-line">
+            <button className={"chip-f " + (docTab === "reports" ? "active" : "")} onClick={() => setDocTab("reports")}>Reports</button>
+            <button className={"chip-f " + (docTab === "transcripts" ? "active" : "")} onClick={() => setDocTab("transcripts")}>Transcripts</button>
+            <button className={"chip-f " + (docTab === "admission" ? "active" : "")} onClick={() => setDocTab("admission")}>Admission letter</button>
+          </div>
+
+          {docTab === "reports" && (
+            <div className="card" style={{ overflow: "hidden", marginTop: 12 }}>
+              {reports.length === 0 ? (
+                <div className="empty"><div className="t">No reports yet</div><div className="d">Reports will appear once marks are entered.</div></div>
               ) : (
-                <div className="chip-line" style={{ marginBottom: 0 }}>
-                  {classPeriods.map(p => (
-                    <button key={p.className} className={"chip-f " + (p.className === activePeriod?.className ? "active" : "")} onClick={() => setActiveClass(p.className)}>
-                      {p.className}
-                    </button>
-                  ))}
-                </div>
+                reports.map((r, i) => (
+                  <div key={`${r.session}-${r.semester}-${r.className}`} className="portal-record">
+                    <div className="portal-record-icon">▤</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="portal-record-title">{r.className} · {r.semester === 1 ? "First" : "Second"} semester report</div>
+                      <div className="portal-record-meta">{r.session} · {r.pending ? "Pending" : (r.average != null ? r.average.toFixed(1) + "%" : "—")}</div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "report", session: r.session, semester: r.semester, className: r.className })}>View</button>
+                  </div>
+                ))
               )}
             </div>
           )}
 
-          <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 14 }}>
-            <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this document set</button>
-          </div>
+          {docTab === "transcripts" && (
+            <div className="card" style={{ overflow: "hidden", marginTop: 12 }}>
+              {transcripts.length === 0 ? (
+                <div className="empty"><div className="t">No transcripts yet</div></div>
+              ) : (
+                transcripts.map(t => (
+                  <div key={t.sectionName} className="portal-record">
+                    <div className="portal-record-icon">▥</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="portal-record-title">{t.sectionName} transcript</div>
+                      <div className="portal-record-meta">{t.classes.join(" · ")}</div>
+                    </div>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "transcript" })}>View</button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
 
-          <div className="print-hint no-print">
-            <div><strong>Print setup:</strong> Landscape · A4 · Default margins. Report cards print as 2 pages each (cover + data).</div>
-          </div>
+          {docTab === "admission" && (
+            <div className="card" style={{ overflow: "hidden", marginTop: 12 }}>
+              <div className="portal-record">
+                <div className="portal-record-icon">✉</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="portal-record-title">Official admission letter</div>
+                  <div className="portal-record-meta">{student.reg_no} · {student.joined}</div>
+                </div>
+                <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "admission" })}>View</button>
+              </div>
+            </div>
+          )}
+        </>)}
 
-          <div className="cert-print-wrapper">
-            {doc === "admission" ? (
-              <AdmissionLetter student={student} enrollments={data?.enrollments ?? []} />
-            ) : doc === "transcript" ? (
-              <Transcript student={student} semesters={semesters} />
-            ) : !activePeriod ? (
-              <div className="card pad"><div className="empty"><div className="t">No class selected</div></div></div>
+        {page === "payments" && (<>
+          <div className="portal-sec-head">
+            <div className="portal-eyebrow">Financial records</div>
+            <h2 className="portal-sec-title">Payments &amp; fees</h2>
+            <p className="sub">Current session fee: ₦{fee.amount.toLocaleString()} · Paid: ₦{fee.paid.toLocaleString()} · Balance: ₦{fee.balance.toLocaleString()}</p>
+          </div>
+          <div className="card" style={{ overflow: "hidden" }}>
+            {paymentRows.length === 0 ? (
+              <div className="empty"><div className="t">No payments yet</div></div>
             ) : (
-              activePeriod.semesters.map(({ session, semester }) => {
-                const report = buildReport(student, assessments, marks, exams, semester, session, activePeriod.className, data?.enrollments ?? []);
-                const periodAssessments = assessments.filter(a =>
-                  a.class_name === activePeriod.className && a.session_label === session && a.semester === semester
-                );
-                const periodExams = exams.filter(e =>
-                  e.class_name === activePeriod.className && e.session_label === session && e.semester === semester
-                );
-                if (doc === "report") {
-                  return (
-                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <ReportCard student={{ ...student, class_name: activePeriod.className }} results={report.results} average={report.avg} pending={report.pending} sessionLabel={session} semester={semester} assessments={assessments} marks={marks} exams={exams} />
-                    </div>
-                  );
-                }
-                if (doc === "assessment") {
-                  return (
-                    <div key={`${session}-${semester}`} style={{ marginBottom: 8 }}>
-                      <AssessmentRecord student={{ ...student, class_name: activePeriod.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={session} semester={semester} average={report.avg} pending={report.pending} />
-                    </div>
-                  );
-                }
-                return null;
-              })
-            )}
-            {doc === "daura" && (
-              <DauraView participations={dauraParticipations} data={dauraData} setData={setDauraData} loading={dauraLoading} setLoading={setDauraLoading} activeId={activeDauraId} setActiveId={setActiveDauraId} />
-            )}
-            {doc === "receipts" && (
-              <ReceiptsView student={student} payments={feePayments} fees={fees} />
+              paymentRows.map(p => (
+                <div key={p.id} className="portal-record">
+                  <div className="portal-record-icon">₦</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="portal-record-title">₦{p.amount.toLocaleString()} · {p.method === "cash" ? "Cash" : p.method === "transfer" ? "Bank transfer" : p.method === "pos" ? "POS" : "Other"}</div>
+                    <div className="portal-record-meta">{new Date(p.paid_on).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}{p.receipt_no ? " · " + p.receipt_no : ""}</div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "receipt", paymentId: p.id })}>Receipt</button>
+                </div>
+              ))
             )}
           </div>
-        </div>
-        <PublicTabBar />
-      </section>
-    </>
-  );
-}
+        </>)}
 
-function DauraView({ participations, data, setData, loading, setLoading, activeId, setActiveId }: {
-  participations: any[];
-  data: { programs: any[]; assessments: any[]; marks: any[] };
-  setData: (d: { programs: any[]; assessments: any[]; marks: any[] }) => void;
-  loading: boolean;
-  setLoading: (v: boolean) => void;
-  activeId: string | null;
-  setActiveId: (v: string | null) => void;
-}) {
-  useEffect(() => {
-    if (participations.length === 0) { setData({ programs: [], assessments: [], marks: [] }); return; }
-    const pids = participations.map((p: any) => p.program_id);
-    let cancelled = false;
-    setLoading(true);
-    (async () => {
-      const [progs, asses, marksRes] = await Promise.all([
-        supabase.from("daura_programs").select("*").in("id", pids),
-        supabase.from("daura_assessments").select("*").in("program_id", pids),
-        supabase.from("daura_marks").select("*"),
-      ]);
-      if (cancelled) return;
-      const aidSet = new Set(((asses.data as any[]) ?? []).map((a: any) => a.id));
-      const filteredMarks = ((marksRes.data as any[]) ?? []).filter((m: any) => aidSet.has(m.assessment_id));
-      setData({ programs: (progs.data as any[]) ?? [], assessments: (asses.data as any[]) ?? [], marks: filteredMarks });
-      setLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [participations.length]);
+        {page === "daura" && (<>
+          <div className="portal-sec-head">
+            <div className="portal-eyebrow">Programme records</div>
+            <h2 className="portal-sec-title">Daura history</h2>
+            <p className="sub">Records of sessional and special Daura programmes.</p>
+          </div>
+          <div className="card" style={{ overflow: "hidden" }}>
+            {dauraLoading ? (
+              <div className="empty"><div className="t">Loading Daura records…</div></div>
+            ) : dauraRows.length === 0 ? (
+              <div className="empty"><div className="t">No Daura programmes</div><div className="d">Your Daura participation will appear when the school adds you.</div></div>
+            ) : (
+              dauraRows.map(d => (
+                <div key={d.participantId} className="portal-record">
+                  <div className="portal-record-icon">✦</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="portal-record-title">{d.programName}</div>
+                    <div className="portal-record-meta">{d.kind === "sessional" ? "Sessional" : "Special"} · {d.sessionLabel ?? "—"} · {d.status === "open" ? "Open" : "Closed"}</div>
+                  </div>
+                  <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "daura", participantId: d.participantId, programId: d.programId })}>View</button>
+                </div>
+              ))
+            )}
+          </div>
+        </>)}
 
-  if (participations.length === 0) {
-    return <div className="card pad"><div className="empty"><div className="t">No Daura programmes</div><div className="d">Your Daura participation will appear here when the school adds you.</div></div></div>;
-  }
-
-  const activeParticipant = participations.find((p: any) => p.program_id === activeId) ?? null;
-  const activeProgram = activeParticipant ? data.programs.find((pr: any) => pr.id === activeParticipant.program_id) : null;
-
-  if (!activeParticipant || !activeProgram) {
-    return (
-      <div>
-        <div className="chip-line no-print" style={{ marginBottom: 12 }}>
-          {participations.map((p: any) => {
-            const prog = data.programs.find((pr: any) => pr.id === p.program_id);
-            return (
-              <button key={p.program_id} className={"chip-f " + (activeId === p.program_id ? "active" : "")} onClick={() => setActiveId(p.program_id)}>
-                {prog?.name ?? "Daura programme"}
-              </button>
-            );
-          })}
-        </div>
-        {loading && <div className="card pad"><div className="sub">Loading…</div></div>}
-      </div>
-    );
-  }
-
-  const programAssessments = data.assessments.filter((a: any) => a.program_id === activeParticipant.program_id);
-  const programMarks = data.marks.filter((m: any) => m.participant_id === activeParticipant.id);
-
-  return (
-    <div>
-      <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-        <div className="chip-line" style={{ marginBottom: 0 }}>
-          {participations.map((p: any) => {
-            const prog = data.programs.find((pr: any) => pr.id === p.program_id);
-            return (
-              <button key={p.program_id} className={"chip-f " + (activeId === p.program_id ? "active" : "")} onClick={() => setActiveId(p.program_id)}>
-                {prog?.name ?? "Daura programme"}
-              </button>
-            );
-          })}
-        </div>
-        <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this card</button>
-      </div>
-      <DauraReport
-        participant={activeParticipant as any}
-        program={activeProgram as any}
-        assessments={programAssessments as any}
-        marks={programMarks as any}
-      />
-    </div>
-  );
-}
-
-function ReceiptsView({ student, payments, fees }: {
-  student: any;
-  payments: any[];
-  fees: any[];
-}) {
-  const [selected, setSelected] = useState<any | null>(null);
-
-  if (payments.length === 0) {
-    return <div className="card pad"><div className="empty"><div className="t">No receipts yet</div><div className="d">Fee payments recorded by the school will appear here.</div></div></div>;
-  }
-
-  function feeFor(year: string) {
-    const f = fees.find(x => x.year === year);
-    const amount = f?.amount ?? 0;
-    const paid = payments.filter(p => p.year === year).reduce((sum, p) => sum + p.amount, 0);
-    return { amount, paid, balance: Math.max(0, amount - paid) };
-  }
-
-  if (selected) {
-    const { amount, paid, balance } = feeFor(selected.year);
-    return (
-      <div>
-        <div className="no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setSelected(null)}>← All receipts</button>
-          <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print this receipt</button>
-        </div>
-        <div className="cert-print-wrapper">
-          <Receipt student={student} payment={selected} amount={amount} paid={paid} balance={balance} />
-        </div>
-      </div>
-    );
-  }
-
-  const sorted = [...payments].sort((a, b) => (b.paid_on ?? "").localeCompare(a.paid_on ?? ""));
-
-  return (
-    <div>
-      <div className="card" style={{ overflow: "hidden" }}>
-        {sorted.map(p => (
-          <button key={p.id} onClick={() => setSelected(p)}
-            style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto auto", alignItems: "center", gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--line)", background: "none", border: 0, borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: "var(--line)", width: "100%", textAlign: "left", cursor: "pointer", color: "inherit", font: "inherit" }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 500, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {new Date(p.paid_on).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-              </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink-3)" }}>
-                {p.receipt_no ? "Receipt " + p.receipt_no : p.reference || p.year}
-              </div>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
-              ₦{Number(p.amount).toLocaleString("en-NG")}
-            </div>
-            <div style={{ color: "var(--ink-4)" }}>{I.arrow}</div>
-          </button>
-        ))}
       </div>
     </div>
-  );
+    <PublicTabBar />
+  </>);
 }
