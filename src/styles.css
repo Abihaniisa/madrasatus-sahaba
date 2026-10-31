@@ -387,7 +387,7 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 .pub-mobile-nav { display: none; }
 @media (max-width: 820px) {
   .pub-nav { height: 68px; }
-  .pub-nav-links, .pub-portal-link { display: none; }
+  .pub-nav-links, .pub-portal-link:not(.pub-signout) { display: none; }
   .pub-programmes { gap: 12px; }
   .pub-programme-image { height: 160px; }
 }
@@ -490,4 +490,14 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   .portal-record .btn { margin-left: auto; }
   .portal-record-title { font-size: 13px; }
   .portal-record-meta { font-size: 11px; }
+}
+
+/* Portal profile: Reg. No. | Class  /  Section | Session — 2×2 grid */
+.portal-profile .pmeta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 14px;
+}
+@media (max-width: 640px) {
+  .portal-profile .pmeta { gap: 2px 10px; font-size: 10.5px; }
 }

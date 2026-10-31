@@ -61,7 +61,7 @@ export function PublicNav({ onSignOut }: { onSignOut?: () => void } = {}) {
           <Link to="/login" className={on("/login")}>Portal</Link>
         </nav>
         {onSignOut ? (
-          <button className="pub-portal-link" onClick={onSignOut} title="Sign out">Sign out</button>
+          <button className="pub-portal-link pub-signout" onClick={onSignOut} title="Sign out">Sign out</button>
         ) : (
           <Link className="pub-portal-link" to="/login">Enter portal&nbsp; ↗</Link>
         )}

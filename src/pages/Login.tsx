@@ -93,7 +93,8 @@ export default function Login() {
               className="input login-input"
               type="text"
               value={identifier}
-              onChange={e => setIdentifier(e.target.value)}
+              onChange={e => setIdentifier(showStudentPlaceholders ? e.target.value.replace(/[^0-9]/g, "").slice(0, 11) : e.target.value)}
+              maxLength={showStudentPlaceholders ? 11 : undefined}
               placeholder={showStudentPlaceholders ? "11-digit NIN" : "you@school.edu.ng"}
               required
               autoComplete="username"
