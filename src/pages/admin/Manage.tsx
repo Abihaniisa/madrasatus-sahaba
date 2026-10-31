@@ -1,7 +1,7 @@
 // src/pages/admin/Manage.tsx — super-admin hub. Settings, Access, Promotion, Fees.
 
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { amISuperAdmin, useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
@@ -22,7 +22,19 @@ export default function Manage() {
   useEffect(() => { amISuperAdmin().then(setIsSuper).catch(() => setIsSuper(false)); }, []);
 
   if (!ready || isSuper === null) return <div className="body"><div className="wrap"><DelayedSkeleton ready={false} rows={3} /></div></div>;
-  if (!isSuper) return <Navigate to="/admin" replace />;
+  if (!isSuper) return (
+    <div>
+      <AdminTop />
+      <div className="body">
+        <div className="wrap">
+          <div className="card pad"><div className="empty">
+            <div className="t">Permission denied</div>
+            <div className="d">This page is only accessible to super administrators.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div>

@@ -57,3 +57,29 @@ export function DelayedSkeleton({ ready, rows = 4, delay = 200 }: { ready: boole
   if (ready || !show) return null;
   return <Skeleton rows={rows} />;
 }
+
+export function OfflineBanner() {
+  const [online, setOnline] = useState(typeof navigator !== "undefined" ? navigator.onLine : true);
+  useEffect(() => {
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+  if (online) return null;
+  return (
+    <div role="status" aria-live="polite" style={{
+      position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
+      background: "#7f2b25", color: "#fff", padding: "10px 16px",
+      borderRadius: 10, fontSize: 13, fontWeight: 500,
+      boxShadow: "0 8px 24px rgba(0,0,0,.18)", zIndex: 300,
+      maxWidth: "calc(100vw - 32px)", textAlign: "center",
+    }}>
+      You're offline — some features may not work.
+    </div>
+  );
+}

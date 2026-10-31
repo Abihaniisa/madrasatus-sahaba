@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { loadSettings } from "./lib/settings";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ScrollToTop from "./ui/Shell";
+import { OfflineBanner } from "./ui/primitives";
 import Home from "./pages/Home";
 import Curriculum from "./pages/Curriculum";
 import Materials from "./pages/Materials";
@@ -72,6 +73,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <OfflineBanner />
     </>
   );
 }

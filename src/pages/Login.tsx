@@ -4,7 +4,7 @@
 // The actual login flow auto-detects from the input, so both tabs work the same.
 
 import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { CONFIG } from "../lib/config";
 import { signIn, supabase, isAuthorized, saveStudentSession, fetchStudentPortal } from "../lib/supabase";
 
@@ -16,7 +16,8 @@ export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
+  const loc = useLocation();
+  const [err, setErr] = useState<string | null>((loc.state as { error?: string } | null)?.error ?? null);
 
   const cleanId = identifier.replace(/\s+/g, "");
   const isStudentId = /^\d{11}$/.test(cleanId);

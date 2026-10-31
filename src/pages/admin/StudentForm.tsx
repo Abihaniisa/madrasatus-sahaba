@@ -17,7 +17,6 @@ export default function StudentForm() {
   const isEdit = !!id;
   const [isSuper, setIsSuper] = useState<boolean | null>(null);
   useEffect(() => { amISuperAdmin().then(setIsSuper).catch(() => setIsSuper(false)); }, []);
-  useEffect(() => { if (isSuper === false) nav("/admin", { replace: true }); }, [isSuper, nav]);
   const [loading, setLoading] = useState(isEdit);
   const [notFound, setNotFound] = useState(false);
   const [original, setOriginal] = useState<Student | null>(null);
@@ -131,6 +130,19 @@ export default function StudentForm() {
   }
 
   if (!ready || isSuper === null) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready && isSuper !== null} rows={4} /></div></div>;
+  if (isSuper === false) return (
+    <div>
+      <AdminTop />
+      <div className="body">
+        <div className="wrap-narrow">
+          <div className="card pad"><div className="empty">
+            <div className="t">Permission denied</div>
+            <div className="d">Only super administrators can add or edit students.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  );
   if (loading) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!loading} rows={6} /></div></div>;
   if (notFound) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 

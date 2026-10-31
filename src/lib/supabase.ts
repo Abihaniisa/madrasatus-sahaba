@@ -50,13 +50,13 @@ export function useRequireAuth(): boolean {
   const [ready, setReady] = useState<boolean>(cache === "authorized");
   useEffect(() => {
     if (cache === "authorized") { setReady(true); return; }
-    if (cache === "denied") { nav("/login"); return; }
+    if (cache === "denied") { nav("/login", { state: { error: "Please sign in to continue." } }); return; }
     let cancelled = false;
     (async () => {
       const result = await ensureChecked();
       if (cancelled) return;
       if (result === "authorized") setReady(true);
-      else nav("/login");
+      else nav("/login", { state: { error: "Please sign in to continue." } });
     })();
     return () => { cancelled = true; };
   }, [nav]);
