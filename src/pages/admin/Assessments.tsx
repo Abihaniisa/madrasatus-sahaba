@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CONFIG, SECTIONS, ALL_CLASSES } from "../../lib/config";
 import { loadSchool, invalidateSchoolCache, currentSchoolSession, type SchoolData } from "../../lib/data";
-import { useRequireAuth, amISuperAdmin, supabase, isAssessmentLocked, setAssessmentLock } from "../../lib/supabase";
+import { useRequireAuth, amISuperAdmin, supabase, isAssessmentLocked, setAssessmentLock, isExamLocked, setExamLock } from "../../lib/supabase";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
 import { AdminTop } from "../../ui/AdminShell";
@@ -28,6 +28,7 @@ export default function Assessments() {
   const [toast, setToast] = useState<string | null>(null);
   const [confirmCreate, setConfirmCreate] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [examLocked, setExamLocked] = useState<boolean | null>(null);
 
   const session = data ? currentSchoolSession(data) : getSettings().session_label;
   const semester = getEffectiveSemester();
@@ -66,6 +67,14 @@ export default function Assessments() {
   useEffect(() => {
     if (!data) return;
     loadRows();
+  }, [data, session, semester]);
+
+  useEffect(() => {
+    if (!data) return;
+    (async () => {
+      const results = await Promise.all(CONFIG.subjects.map(subj => isExamLocked(subj, session, semester)));
+      setExamLocked(results.every(Boolean));
+    })();
   }, [data, session, semester]);
 
   useEffect(() => {
@@ -143,6 +152,16 @@ export default function Assessments() {
     setBusy(false);
   }
 
+  async function toggleExamLock() {
+    if (examLocked === null) return;
+    setBusy(true);
+    const next = !examLocked;
+    await Promise.all(CONFIG.subjects.map(subj => setExamLock(subj, session, semester, next)));
+    setExamLocked(next);
+    setBusy(false);
+    setToast(next ? "All exams locked." : "All exams unlocked.");
+  }
+
   async function deleteAssessment(label: string) {
     setBusy(true);
     await supabase.from("assessments")
@@ -175,7 +194,7 @@ export default function Assessments() {
           </div>
           <div className="phead">
             <div>
-              <h1>Assessments</h1>
+              <h1>Assessments &amp; Exams</h1>
               <p className="sub">
                 School-wide creation. Creating an assessment applies to every active class and every subject.
                 {" "}{session} · Semester {semester} · {count} of {MAX_ASSESSMENTS} created.
@@ -214,6 +233,21 @@ export default function Assessments() {
               Maximum {MAX_ASSESSMENTS} assessments per session. Delete an existing one to create another.
             </div>
           )}
+
+            <div className="d3" style={{ marginTop: 24, marginBottom: 12 }}>Exam locks</div>
+            <div className="card pad">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>All exams — school-wide</div>
+                  <div className="sub" style={{ fontSize: 12, marginTop: 2 }}>
+                    {examLocked === null ? "Loading…" : examLocked ? "Locked — only super admin can enter exam marks" : "Open — teachers can enter exam marks"}
+                  </div>
+                </div>
+                <button className={"btn btn-sm " + (examLocked ? "btn-secondary" : "btn-ghost")} disabled={busy || examLocked === null} onClick={toggleExamLock}>
+                  {examLocked === null ? "…" : examLocked ? "🔒 Locked · Unlock" : "🔓 Open · Lock"}
+                </button>
+              </div>
+            </div>
         </div>
       </div>
 

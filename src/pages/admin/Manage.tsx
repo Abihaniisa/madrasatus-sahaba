@@ -6,10 +6,9 @@ import { amISuperAdmin, useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
-import LocksPanel from "./LocksPanel";
 
 const ITEMS = [
-  { to: "/admin/assessments", title: "Assessments", desc: "Create, lock, or delete assessments for the whole school.", icon: I.check },
+  { to: "/admin/assessments", title: "Assessments & Exams", desc: "Create and lock assessments. Lock all exams school-wide.", icon: I.check },
   { to: "/admin/settings", title: "Settings", desc: "Session start date and Ramadan window.", icon: I.gear },
   { to: "/admin/fees", title: "Fees", desc: "Record payments, print receipts, see balances.", icon: I.money },
   { to: "/admin/access", title: "Access Control", desc: "Choose who can sign in and manage admins.", icon: I.user },
@@ -46,11 +45,6 @@ export default function Manage() {
                 <div className="desc" style={{ marginTop: 8 }}>{it.desc}</div>
               </Link>
             ))}
-          </div>
-
-          <div style={{ marginTop: 24 }}>
-            <div className="d3" style={{ marginBottom: 12 }}>Manage locks</div>
-            <LocksPanel />
           </div>
         </div>
       </div>
