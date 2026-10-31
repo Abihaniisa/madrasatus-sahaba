@@ -3,7 +3,7 @@
 // Top nav: Students · Daura · Content · Manage (super admin nav links inside Manage).
 
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CONFIG } from "../lib/config";
 import { amISuperAdmin, supabase } from "../lib/supabase";
 import { I } from "./Shell";
@@ -13,12 +13,13 @@ export function AdminTop() {
   const p = loc.pathname;
   const on = (k: string) => (p === k || (k !== "/admin" && p.startsWith(k)) ? "active" : "");
   const [superAdmin, setSuperAdmin] = useState(false);
+  const nav = useNavigate();
 
   useEffect(() => { amISuperAdmin().then(setSuperAdmin); }, []);
 
   async function signOut() {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    nav("/", { replace: true });
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useRequireAuth, amISuperAdmin, supabase, deleteDauraProgramme } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton, Modal } from "../../ui/primitives";
@@ -14,6 +14,7 @@ type Tab = "participants" | "marks" | "report";
 export default function DauraProgrammePage() {
   const ready = useRequireAuth();
   const { id } = useParams<{ id: string }>();
+  const nav = useNavigate();
   const [program, setProgram] = useState<DauraProgram | null>(null);
   const [participants, setParticipants] = useState<DauraParticipant[]>([]);
   const [assessments, setAssessments] = useState<DauraAssessment[]>([]);
@@ -50,7 +51,7 @@ export default function DauraProgrammePage() {
     setDeleting(false);
     setConfirmDelete(false);
     if (res.error) { window.alert("Delete failed: " + res.error); return; }
-    window.location.href = "/admin/daura";
+    nav("/admin/daura", { replace: true });
   }
 
   async function toggleStatus() {

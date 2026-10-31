@@ -102,6 +102,7 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
 
 /* ═══ ADMIN ═══ */
 .top { position: sticky; top: 0; z-index: 40; background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .top-inner { display: flex; align-items: center; gap: 12px; height: 52px; }
 .top .brand-logo { width: 34px; height: 34px; }
 .top .brand-name { font-size: 15px; }
