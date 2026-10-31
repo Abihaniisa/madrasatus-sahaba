@@ -1,18 +1,16 @@
-// src/pages/admin/Fees.tsx — landing: global search across all students + class list.
-// Class detail: Paid / Partial / Unpaid filters, checkbox per row, batch print within class.
+// src/pages/admin/Fees.tsx — landing + class detail (session-scoped).
+// Landing: 4 stat cards (total/paid/unpaid/outstanding), search, scope chips, class cards.
+// Class detail: paid/unpaid filter chips, avatar per row, checkbox for batch print.
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS, ALL_CLASSES } from "../../lib/config";
-import { loadSchool, type SchoolData } from "../../lib/data";
+import { loadSchool, currentSchoolSession, currentFeeYear, type SchoolData } from "../../lib/data";
 import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
-import { I, waLink } from "../../ui/Shell";
+import { I } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
-import { computeFee, fmtNGN, type FeeStatus } from "../../lib/calc";
-import { invalidateSchoolCache, currentSchoolSession } from "../../lib/data";
-import { getSettings } from "../../lib/settings";
-import type { Student } from "../../types";
+import { computeFee, fmtNGN } from "../../lib/calc";
 
 export default function Fees() {
   const ready = useRequireAuth();
@@ -20,17 +18,41 @@ export default function Fees() {
   const [scope, setScope] = useState<string>("all");
   const [q, setQ] = useState("");
   const [inClass, setInClass] = useState<string | null>(null);
+
   useEffect(() => { loadSchool().then(setData); }, []);
 
-  if (!ready || !data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
-  if (inClass) return <ClassDetail cls={inClass} data={data} onBack={() => setInClass(null)} />;
+  if (!ready || !data) {
+    return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
+  }
+  if (inClass) {
+    return <ClassDetail cls={inClass} data={data} onBack={() => setInClass(null)} />;
+  }
 
-  const scopes = [{ id: "all", label: "All" }, { id: "foundation", label: "Foundation" }, { id: "secondary", label: "Secondary" }, { id: "higher", label: "Higher" }];
+  const scopes = [
+    { id: "all", label: "All" },
+    { id: "foundation", label: "Foundation" },
+    { id: "secondary", label: "Secondary" },
+    { id: "higher", label: "Higher" },
+  ];
   const classesToShow = scope === "all" ? ALL_CLASSES : (SECTIONS.find(s => s.id === scope)?.classes ?? []);
   const ql = q.trim().toLowerCase();
   const searchResults = ql.length >= 2
     ? data.students.filter(s => s.name.toLowerCase().includes(ql) || s.reg_no.toLowerCase().includes(ql)).slice(0, 20)
     : [];
+
+  const overall = useMemo(() => {
+    let total = 0, paid = 0, unpaid = 0, outstanding = 0;
+    for (const s of data.students) {
+      const c = computeFee(s.id, data.fees, data.feePayments);
+      total++;
+      if (c.status === "paid" || c.status === "scholarship") paid++;
+      else { unpaid++; outstanding += c.balance; }
+    }
+    return { total, paid, unpaid, outstanding };
+  }, [data]);
+
+  const feeYear = currentFeeYear();
+  const sessionLabel = currentSchoolSession(data);
 
   return (
     <div>
@@ -39,7 +61,14 @@ export default function Fees() {
         <div className="wrap">
           <div className="crumb"><Link to="/admin">Portal</Link><span>/</span><span className="current">Fees</span></div>
           <div className="phead">
-            <div><h1>Fees</h1><p className="sub">Registration fee · {data ? currentSchoolSession(data) : getSettings().session_label} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
+            <div><h1>Fees</h1><p className="sub">Session {sessionLabel} · Fee year {feeYear} · {fmtNGN(CONFIG.registrationFee)} per student</p></div>
+          </div>
+
+          <div className="fee-landing-stats">
+            <div className="fee-landing-stat"><div className="lbl">Students</div><div className="val">{overall.total}</div><div className="note">{sessionLabel}</div></div>
+            <div className="fee-landing-stat"><div className="lbl">Paid in full</div><div className="val success">{overall.paid}</div><div className="note">{overall.total > 0 ? Math.round((overall.paid / overall.total) * 100) : 0}% complete</div></div>
+            <div className="fee-landing-stat"><div className="lbl">Not paid</div><div className="val danger">{overall.unpaid}</div><div className="note">Needs follow-up</div></div>
+            <div className="fee-landing-stat"><div className="lbl">Outstanding</div><div className="val warning">{fmtNGN(overall.outstanding)}</div><div className="note">Across all students</div></div>
           </div>
 
           <div style={{ marginBottom: 14 }}>
@@ -70,22 +99,29 @@ export default function Fees() {
             {scopes.map(sc => <button key={sc.id} className={"chip-f " + (scope === sc.id ? "active" : "")} onClick={() => setScope(sc.id)}>{sc.label}</button>)}
           </div>
 
-          <div className="fee-sum">
+          <div className="fee-class-grid">
             {classesToShow.map(cls => {
               const students = data.students.filter(s => s.class_name === cls);
               if (students.length === 0) return null;
-              let paid = 0;
+              let paid = 0, unpaid = 0, outstanding = 0;
               for (const s of students) {
                 const c = computeFee(s.id, data.fees, data.feePayments);
                 if (c.status === "paid" || c.status === "scholarship") paid++;
+                else { unpaid++; outstanding += c.balance; }
               }
-              const unpaid = students.length - paid;
-              const tone = unpaid === 0 ? "paid" : paid === 0 ? "due" : "mixed";
+              const pct = students.length > 0 ? Math.round((paid / students.length) * 100) : 0;
               return (
-                <button key={cls} className="fee-sum-row" onClick={() => setInClass(cls)}>
-                  <div><div className="cname">{cls}</div><div className="cmeta">{students.length} students</div></div>
-                  <div className={"stat " + tone}><div className="num">{paid}</div><div className="lbl">Paid</div></div>
-                  <div className={"stat " + (unpaid === 0 ? "paid" : "due")}><div className="num">{unpaid}</div><div className="lbl">Unpaid</div></div>
+                <button key={cls} className="fee-class-card" onClick={() => setInClass(cls)}>
+                  <div className="fee-class-head">
+                    <div className="fee-class-name">{cls}</div>
+                    <div className="fee-class-meta">{students.length} student{students.length === 1 ? "" : "s"}</div>
+                  </div>
+                  <div className="fee-class-bar"><div className="fee-class-bar-fill" style={{ width: `${pct}%` }} /></div>
+                  <div className="fee-class-foot">
+                    <span className="fee-class-stat success"><b>{paid}</b> paid</span>
+                    <span className="fee-class-stat danger"><b>{unpaid}</b> unpaid</span>
+                    <span className="fee-class-outstanding">{fmtNGN(outstanding)}</span>
+                  </div>
                 </button>
               );
             })}
@@ -129,6 +165,11 @@ function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onB
     navigate(`/admin/fees/print?ids=${selectedIds.join(",")}`);
   }
 
+  const initials = (name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
+  };
+
   return (
     <div>
       <AdminTop />
@@ -140,7 +181,7 @@ function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onB
             <span>/</span><span className="current">{cls}</span>
           </div>
           <div className="phead">
-            <div><h1>{cls}</h1><p className="sub">{students.length} students · {counts.unpaid} not fully paid · {currentSchoolSession(data)}</p></div>
+            <div><h1>{cls}</h1><p className="sub">{students.length} student{students.length === 1 ? "" : "s"} · {counts.unpaid} not fully paid · {currentSchoolSession(data)}</p></div>
             <button className="btn btn-secondary btn-sm" onClick={onBack}>{I.back} All classes</button>
           </div>
 
@@ -163,27 +204,25 @@ function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onB
           {filtered.length === 0 ? (
             <div className="card"><div className="empty"><div className="t">No students {status === "paid" ? "paid in full" : "with outstanding balance"}</div></div></div>
           ) : (
-            <div className="card" style={{ overflow: "hidden" }}>
+            <div className="card fee-class-detail">
               {filtered.map(({ s, c }) => {
                 const tone = c.status === "paid" ? "success" : c.status === "partial" ? "warning" : c.status === "scholarship" ? "info" : "danger";
                 const label = c.status === "paid" ? "Paid in full" : c.status === "partial" ? "Partial" : c.status === "scholarship" ? "Scholarship" : "Unpaid";
                 const canSelect = c.paid > 0;
                 return (
-                  <div key={s.id} style={{ display: "grid", gridTemplateColumns: "24px minmax(0, 1fr) auto", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
-                    <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {canSelect && (
-                        <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggle(s.id)} onClick={e => e.stopPropagation()} style={{ cursor: "pointer", width: 18, height: 18 }} />
-                      )}
+                  <div key={s.id} className="fee-detail-row">
+                    <div className="fee-detail-check">
+                      {canSelect && <input type="checkbox" checked={!!selected[s.id]} onChange={() => toggle(s.id)} />}
                     </div>
-                    <button onClick={() => navigate(`/admin/fees/student/${s.id}`)}
-                      style={{ background: "none", border: 0, textAlign: "left", padding: 0, cursor: "pointer", minWidth: 0, width: "100%" }}>
-                      <div style={{ fontWeight: 500, fontSize: 14, color: "var(--ink)", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, lineHeight: 1.3 }}>{s.name}</div>
-                      <div style={{ fontSize: 11.5, color: "var(--ink-3)", fontFamily: "var(--mono)", marginTop: 2 }}>{s.reg_no}</div>
-                      <div style={{ fontSize: 11.5, color: c.balance > 0 ? "var(--warning)" : "var(--ink-3)", marginTop: 2, fontWeight: c.balance > 0 ? 600 : 400 }}>
+                    <div className="pav fee-detail-avatar">{initials(s.name)}</div>
+                    <button className="fee-detail-body" onClick={() => navigate(`/admin/fees/student/${s.id}`)}>
+                      <div className="fee-detail-name">{s.name}</div>
+                      <div className="fee-detail-reg">{s.reg_no}</div>
+                      <div className={"fee-detail-balance" + (c.balance > 0 ? " owed" : "")}>
                         {c.balance > 0 ? "Balance " + fmtNGN(c.balance) : "Paid in full"}
                       </div>
                     </button>
-                    <span className={"pill pill-dot pill-" + tone} style={{ whiteSpace: "nowrap" }}>{label}</span>
+                    <span className={"pill pill-dot pill-" + tone}>{label}</span>
                   </div>
                 );
               })}
