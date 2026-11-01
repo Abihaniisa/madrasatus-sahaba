@@ -18,6 +18,7 @@ type Props = {
 export default function ExamSheet({ cls, students, initialSubject, onClose }: Props) {
   const [subject, setSubject] = useState(initialSubject || CONFIG.subjects[0]);
   const [marks, setMarks] = useState<Record<string, number | null>>({});
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [isSuper, setIsSuper] = useState(false);
   const [examLocked, setExamLocked] = useState(false);
@@ -55,10 +56,14 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
 
   async function onBlur(sid: string) {
     const value = marks[sid] ?? null;
-    await supabase.from("exams").upsert(
+    const { error } = await supabase.from("exams").upsert(
       { student_id: sid, class_name: cls, subject, session_label: (data ? currentSchoolSession(data) : ""), semester: getEffectiveSemester(), value },
       { onConflict: "student_id,subject,session_label,semester" }
     );
+    if (error) {
+      setSaveError(`Save failed: ${error.message}`);
+      setTimeout(() => setSaveError(null), 5000);
+    }
   }
 
   async function clearExam() {
@@ -139,7 +144,7 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
       </div>
 
       <div className="asheet-foot">
-        <div className="sub" style={{ fontSize: 12 }}>Marks save as you type.</div>
+        <div className="sub" style={{ fontSize: 12 }}>{saveError ? <span style={{ color: "var(--danger)", fontWeight: 600 }}>{saveError}</span> : "Marks save as you type."}</div>
         <button className="btn btn-primary btn-sm" onClick={onClose}>Done</button>
       </div>
     </div>

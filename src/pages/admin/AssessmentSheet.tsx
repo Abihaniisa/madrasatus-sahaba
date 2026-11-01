@@ -22,6 +22,7 @@ export default function AssessmentSheet({
   const [activeLocked, setActiveLocked] = useState(false);
   const [data, setData] = useState<SchoolData | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
   useEffect(() => { loadSchool().then(setData); }, []);
@@ -75,10 +76,14 @@ export default function AssessmentSheet({
 
   async function commit(sid: string, value: number | null) {
     if (!active) return;
-    await supabase.from("marks").upsert(
+    const { error } = await supabase.from("marks").upsert(
       { assessment_id: active.id, student_id: sid, value },
       { onConflict: "assessment_id,student_id" }
     );
+    if (error) {
+      setSaveError(`Save failed: ${error.message}`);
+      setTimeout(() => setSaveError(null), 5000);
+    }
   }
 
   function onInput(sid: string, raw: string) {
@@ -182,7 +187,7 @@ export default function AssessmentSheet({
       </div>
 
       <div className="asheet-foot">
-        <div className="sub" style={{ fontSize: 12 }}>Marks save as you type.</div>
+        <div className="sub" style={{ fontSize: 12 }}>{saveError ? <span style={{ color: "var(--danger)", fontWeight: 600 }}>{saveError}</span> : "Marks save as you type."}</div>
         <div style={{ display: "flex", gap: 8 }}>
           {isSuper && <button className="btn btn-ghost btn-sm" style={{ color: "var(--danger)" }} onClick={() => setConfirmDelete(true)}>Delete</button>}
           <button className="btn btn-primary btn-sm" onClick={onClose}>Done</button>

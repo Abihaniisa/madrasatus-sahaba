@@ -429,10 +429,14 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
     const digits = raw.replace(/[^0-9]/g, "");
     let num = digits === "" ? null : parseInt(digits, 10);
     if (num != null && num > active.max_marks) num = active.max_marks;
-    await supabase.from("daura_marks").upsert(
+    const { error: upsertErr } = await supabase.from("daura_marks").upsert(
       { assessment_id: active.id, participant_id: pid, value: num },
       { onConflict: "assessment_id,participant_id" }
     );
+    if (upsertErr) {
+      setToast(`Save failed: ${upsertErr.message}`);
+      return;
+    }
     const { data } = await supabase.from("daura_marks").select("*").eq("assessment_id", active.id);
     setMarks((data as DauraMark[]) ?? []);
   }
