@@ -349,6 +349,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   const [marks, setMarks] = useState<DauraMark[]>([]);
   const [loadingMarks, setLoadingMarks] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const busyRef = useRef(false);
 
   const inSubject = assessments.filter(a => a.subject === subject);
   const regularAssessments = inSubject.filter(a => !a.is_evaluation);
@@ -374,50 +375,63 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   // Create one assessment across ALL subjects of this programme.
   // Sessional Daura: cap 24. Special Daura: no cap.
   async function addAssessment() {
-    if (program.kind === "sessional" && regularAssessments.length >= 24) {
-      setToast("Maximum 24 assessments for sessional Daura.");
-      return;
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      if (program.kind === "sessional" && regularAssessments.length >= 24) {
+        setToast("Maximum 24 assessments for sessional Daura.");
+        return;
+      }
+      const allRegular = assessments.filter(a => !a.is_evaluation);
+      const numbers = new Set<number>();
+      for (const a of allRegular) {
+        const m = a.label.match(/^Assessment\s+(\d+)$/i);
+        if (m) numbers.add(parseInt(m[1], 10));
+      }
+      let next = 1;
+      while (numbers.has(next)) next++;
+      const label = "Assessment " + next;
+      const rows = subjects.map(subj => ({
+        program_id: program.id,
+        subject: subj,
+        label,
+        max_marks: 10,
+        is_evaluation: false,
+      }));
+      const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject");
+      if (error) { setToast("Failed: " + error.message); return; }
+      const currentRow = (inserted as { id: string; subject: string }[] | null)?.find(r => r.subject === subject);
+      setToast(`${label} created for ${subjects.length} subjects.`);
+      if (currentRow) setActiveId(currentRow.id);
+      onChange();
+    } finally {
+      busyRef.current = false;
     }
-    // Determine next label number based on ALL subjects (not just current)
-    const allRegular = assessments.filter(a => !a.is_evaluation);
-    const numbers = new Set<number>();
-    for (const a of allRegular) {
-      const m = a.label.match(/^Assessment\s+(\d+)$/i);
-      if (m) numbers.add(parseInt(m[1], 10));
-    }
-    let next = 1;
-    while (numbers.has(next)) next++;
-    const label = "Assessment " + next;
-    const rows = subjects.map(subj => ({
-      program_id: program.id,
-      subject: subj,
-      label,
-      max_marks: 10,
-      is_evaluation: false,
-    }));
-    const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject").eq("subject", subject).maybeSingle();
-    if (error) { setToast("Failed: " + error.message); return; }
-    setToast(`${label} created for ${subjects.length} subjects.`);
-    if (inserted) setActiveId((inserted as { id: string }).id);
-    onChange();
   }
 
   // Create evaluation for ALL subjects (only if no evaluation exists for this programme yet).
   async function addEvaluation() {
-    const existingEval = assessments.find(a => a.is_evaluation);
-    if (existingEval) { setToast("Evaluation already exists for this programme."); return; }
-    const rows = subjects.map(subj => ({
-      program_id: program.id,
-      subject: subj,
-      label: "Evaluation",
-      max_marks: 100,
-      is_evaluation: true,
-    }));
-    const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject").eq("subject", subject).maybeSingle();
-    if (error) { setToast("Failed: " + error.message); return; }
-    setToast("Evaluation created for " + subjects.length + " subjects.");
-    if (inserted) setActiveId((inserted as { id: string }).id);
-    onChange();
+    if (busyRef.current) return;
+    busyRef.current = true;
+    try {
+      const existingEval = assessments.find(a => a.is_evaluation);
+      if (existingEval) { setToast("Evaluation already exists for this programme."); return; }
+      const rows = subjects.map(subj => ({
+        program_id: program.id,
+        subject: subj,
+        label: "Evaluation",
+        max_marks: 100,
+        is_evaluation: true,
+      }));
+      const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject");
+      if (error) { setToast("Failed: " + error.message); return; }
+      const currentRow = (inserted as { id: string; subject: string }[] | null)?.find(r => r.subject === subject);
+      setToast("Evaluation created for " + subjects.length + " subjects.");
+      if (currentRow) setActiveId(currentRow.id);
+      onChange();
+    } finally {
+      busyRef.current = false;
+    }
   }
 
   async function removeActive() {
