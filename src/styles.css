@@ -603,3 +603,33 @@ button, a, input, select, textarea, .btn, [role="button"] { touch-action: manipu
   display: flex; justify-content: flex-end; gap: 8px;
   padding-top: 12px; border-top: 1px solid var(--line);
 }
+
+/* DatePicker: month + year views */
+.datepicker-head-title {
+  font-family: var(--serif); font-size: 17px; font-weight: 600; color: var(--ink);
+  background: transparent; border: 0; padding: 4px 10px; border-radius: 8px;
+  cursor: pointer; flex: 1; text-align: center; transition: background .12s;
+}
+.datepicker-head-title:hover { background: var(--primary-soft); }
+.datepicker-month-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;
+}
+.datepicker-month-btn {
+  padding: 14px 0; border-radius: 10px; border: 0;
+  background: var(--muted); color: var(--ink); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.datepicker-month-btn:hover { background: var(--primary-soft); }
+.datepicker-month-btn.selected { background: var(--primary); color: #fff; }
+.datepicker-year-list {
+  max-height: 280px; overflow-y: auto; margin-bottom: 14px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  padding: 4px;
+}
+.datepicker-year-btn {
+  padding: 10px 0; border-radius: 8px; border: 0;
+  background: transparent; color: var(--ink); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.datepicker-year-btn:hover { background: var(--primary-soft); }
+.datepicker-year-btn.selected { background: var(--primary); color: #fff; font-weight: 700; }

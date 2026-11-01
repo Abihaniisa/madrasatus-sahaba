@@ -164,6 +164,7 @@ export function DatePicker({
     }
     return new Date().getUTCMonth();
   });
+  const [view, setView] = useState<"day" | "month" | "year">("day");
 
   useEffect(() => {
     if (!value) return;
@@ -174,7 +175,7 @@ export function DatePicker({
   }, [value]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) { setView("day"); return; }
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -201,10 +202,17 @@ export function DatePicker({
     else setViewMonth(viewMonth + 1);
   }
 
-  function pickToday() {
-    onChange(todayIso);
-    setOpen(false);
+  function pickMonth(m: number) {
+    setViewMonth(m);
+    setView("day");
   }
+
+  function pickYear(y: number) {
+    setViewYear(y);
+    setView("month");
+  }
+
+  const years = Array.from({ length: 100 }, (_, i) => new Date().getUTCFullYear() - i);
 
   function clear() {
     onChange("");
@@ -221,33 +229,57 @@ export function DatePicker({
         <div className="datepicker-backdrop" onClick={() => setOpen(false)}>
           <div className="datepicker-modal" onClick={e => e.stopPropagation()}>
             <div className="datepicker-head">
-              <button type="button" className="datepicker-nav" onClick={prevMonth} aria-label="Previous month">‹</button>
-              <div className="datepicker-month">{monthName}</div>
-              <button type="button" className="datepicker-nav" onClick={nextMonth} aria-label="Next month">›</button>
+              {view === "day" && (
+                <>
+                <button type="button" className="datepicker-nav" onClick={prevMonth} aria-label="Previous month">‹</button>
+                <button type="button" className="datepicker-head-title" onClick={() => setView("month")}>{monthName} ▾</button>
+                <button type="button" className="datepicker-nav" onClick={nextMonth} aria-label="Next month">›</button>
+                </>
+              )}
+              {view === "month" && (
+                <>
+                <button type="button" className="datepicker-nav" onClick={() => setViewYear(viewYear - 1)} aria-label="Previous year">‹</button>
+                <button type="button" className="datepicker-head-title" onClick={() => setView("year")}>{viewYear} ▾</button>
+                <button type="button" className="datepicker-nav" onClick={() => setViewYear(viewYear + 1)} aria-label="Next year">›</button>
+                </>
+              )}
+              {view === "year" && (
+                <button type="button" className="datepicker-head-title" onClick={() => setView("month")}>Select year</button>
+              )}
             </div>
-            <div className="datepicker-weekdays">
-              {weekdays.map((w, i) => <div key={i} className="datepicker-weekday">{w}</div>)}
-            </div>
-            <div className="datepicker-grid">
-              {weeks.map((week, wi) => week.map((day, di) => {
-                if (day === null) return <div key={`${wi}-${di}`} className="datepicker-day empty" />;
-                const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                const isSelected = iso === value;
-                const isToday = iso === todayIso;
-                return (
-                  <button
-                    type="button"
-                    key={`${wi}-${di}`}
-                    className={"datepicker-day" + (isSelected ? " selected" : "") + (isToday ? " today" : "")}
-                    onClick={() => pick(day)}
-                  >
-                    {day}
-                  </button>
-                );
-              }))}
-            </div>
+            {view === "day" && (
+              <>
+                <div className="datepicker-weekdays">
+                  {weekdays.map((w, i) => <div key={i} className="datepicker-weekday">{w}</div>)}
+                </div>
+                <div className="datepicker-grid">
+                  {weeks.map((week, wi) => week.map((day, di) => {
+                    if (day === null) return <div key={`${wi}-${di}`} className="datepicker-day empty" />;
+                    const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                    const isSelected = iso === value;
+                    const isToday = iso === todayIso;
+                    return (
+                      <button type="button" key={`${wi}-${di}`} className={"datepicker-day" + (isSelected ? " selected" : "") + (isToday ? " today" : "")} onClick={() => pick(day)}>{day}</button>
+                    );
+                  }))}
+                </div>
+              </>
+            )}
+            {view === "month" && (
+              <div className="datepicker-month-grid">
+                {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m, i) => (
+                  <button key={m} type="button" className={"datepicker-month-btn" + (i === viewMonth ? " selected" : "")} onClick={() => pickMonth(i)}>{m}</button>
+                ))}
+              </div>
+            )}
+            {view === "year" && (
+              <div className="datepicker-year-list">
+                {years.map(y => (
+                  <button key={y} type="button" className={"datepicker-year-btn" + (y === viewYear ? " selected" : "")} onClick={() => pickYear(y)}>{y}</button>
+                ))}
+              </div>
+            )}
             <div className="datepicker-foot">
-              <button type="button" className="btn btn-ghost btn-sm" onClick={pickToday}>Today</button>
               {clearable && <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>Clear</button>}
               <button type="button" className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>Done</button>
             </div>
