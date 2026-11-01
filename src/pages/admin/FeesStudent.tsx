@@ -59,6 +59,10 @@ export default function FeesStudent() {
     if (!student) return;
     const n = parseInt(amount, 10);
     if (!n || n <= 0) { setErr("Amount must be greater than 0."); return; }
+    if (feeCalc && n > feeCalc.balance) {
+      setErr(`Cannot pay more than the balance. Outstanding: ${fmtNGN(feeCalc.balance)}.`);
+      return;
+    }
     setBusy(true); setErr(null);
     const rn = await nextReceiptNo(student.id, currentFeeYear(), student.reg_no);
     if (rn.error) { setBusy(false); setErr("Receipt number: " + rn.error); return; }
@@ -120,7 +124,7 @@ export default function FeesStudent() {
               <div className="stack g3">
                 <div className="row g3" style={{ flexWrap: "wrap" }}>
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Amount</label>
-                    <input className="input" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} /></div>
+                    <input className="input" inputMode="numeric" value={amount} max={feeCalc?.balance || undefined} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} /></div>
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Date</label>
                     <input className="input" type="date" value={paidOn} onChange={e => setPaidOn(e.target.value)} /></div>
                 </div>
