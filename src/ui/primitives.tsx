@@ -83,3 +83,35 @@ export function OfflineBanner() {
     </div>
   );
 }
+
+import React from "react";
+
+export class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("App crashed:", error, info);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: 24, fontFamily: "system-ui, sans-serif", maxWidth: 700, margin: "40px auto" }}>
+          <h2 style={{ color: "#a33b32", marginBottom: 12 }}>Something went wrong</h2>
+          <p style={{ color: "#4B534C", marginBottom: 16 }}>The page could not be displayed. Please reload or go back.</p>
+          <pre style={{ background: "#f7f6f1", padding: 16, borderRadius: 8, fontSize: 12, overflow: "auto", color: "#7f2b25", whiteSpace: "pre-wrap" }}>
+            {this.state.error.message}
+          </pre>
+          <button onClick={() => window.location.reload()} style={{ marginTop: 16, padding: "10px 16px", background: "#1E4830", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontWeight: 600 }}>
+            Reload page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
