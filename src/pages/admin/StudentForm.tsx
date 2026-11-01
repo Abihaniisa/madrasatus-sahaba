@@ -6,7 +6,7 @@ import { SECTIONS, ALL_CLASSES, CONFIG } from "../../lib/config";
 import { supabase, useRequireAuth, amISuperAdmin } from "../../lib/supabase";
 import { getCurrentSchoolSessionFromDB, loadSchool, invalidateSchoolCache, currentFeeYear } from "../../lib/data";
 import { AdminTop } from "../../ui/AdminShell";
-import { DelayedSkeleton } from "../../ui/primitives";
+import { DelayedSkeleton, DatePicker } from "../../ui/primitives";
 import { I } from "../../ui/Shell";
 import type { Student } from "../../types";
 
@@ -167,13 +167,13 @@ export default function StudentForm() {
             <div className="stack g3">
               <div className="field">
                 <label>Full name</label>
-                <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Ahmadu Bello" autoComplete="off" />
+                <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Abihani Isa" autoComplete="off" />
               </div>
 
               <div className="row g3" style={{ flexWrap: "wrap" }}>
                 <div className="field flex1" style={{ minWidth: 170 }}>
                   <label>Date of birth</label>
-                  <input className="input" type="date" value={dob} onChange={e => setDob(e.target.value)} />
+                  <DatePicker value={dob} onChange={setDob} placeholder="Select date of birth" />
                 </div>
                 <div className="field flex1" style={{ minWidth: 170 }}>
                   <label>Gender</label>

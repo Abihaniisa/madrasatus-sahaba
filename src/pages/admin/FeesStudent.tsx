@@ -8,7 +8,7 @@ import { loadSchool, currentFeeYear, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase, nextReceiptNo } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
-import { DelayedSkeleton, Modal } from "../../ui/primitives";
+import { DelayedSkeleton, Modal, DatePicker } from "../../ui/primitives";
 import { computeFee, fmtNGN, methodLabel } from "../../lib/calc";
 import { Receipt } from "../../documents/Receipt";
 import type { FeePayment } from "../../types";
@@ -126,7 +126,7 @@ export default function FeesStudent() {
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Amount</label>
                     <input className="input" inputMode="numeric" value={amount} max={feeCalc?.balance || undefined} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} /></div>
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Date</label>
-                    <input className="input" type="date" value={paidOn} onChange={e => setPaidOn(e.target.value)} /></div>
+                    <DatePicker value={paidOn} onChange={setPaidOn} placeholder="Select payment date" /></div>
                 </div>
                 <div className="field"><label>Method</label>
                   <div className="chip-line" style={{ marginBottom: 0 }}>
