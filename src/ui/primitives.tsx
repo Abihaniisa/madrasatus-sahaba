@@ -115,3 +115,145 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
     return this.props.children;
   }
 }
+
+// ═══ DatePicker — simple, premium, mobile-first ═══
+// Input looks like a button; tapping opens a calendar modal.
+// Returns ISO string ("2026-11-01") in onChange — matches DB format.
+// Display format: "1 Nov 2026" (unambiguous, mobile-friendly).
+
+function formatDateDisplay(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso + "T00:00:00Z");
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+}
+
+function getMonthGrid(year: number, month: number): (number | null)[][] {
+  const first = new Date(Date.UTC(year, month, 1));
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const startWeekday = first.getUTCDay();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < startWeekday; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+export function DatePicker({
+  value, onChange, placeholder = "Select a date", clearable = false,
+}: {
+  value: string;
+  onChange: (iso: string) => void;
+  placeholder?: string;
+  clearable?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [viewYear, setViewYear] = useState<number>(() => {
+    if (value) {
+      const d = new Date(value + "T00:00:00Z");
+      if (!isNaN(d.getTime())) return d.getUTCFullYear();
+    }
+    return new Date().getUTCFullYear();
+  });
+  const [viewMonth, setViewMonth] = useState<number>(() => {
+    if (value) {
+      const d = new Date(value + "T00:00:00Z");
+      if (!isNaN(d.getTime())) return d.getUTCMonth();
+    }
+    return new Date().getUTCMonth();
+  });
+
+  useEffect(() => {
+    if (!value) return;
+    const d = new Date(value + "T00:00:00Z");
+    if (isNaN(d.getTime())) return;
+    setViewYear(d.getUTCFullYear());
+    setViewMonth(d.getUTCMonth());
+  }, [value]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const weeks = getMonthGrid(viewYear, viewMonth);
+  const monthName = new Date(Date.UTC(viewYear, viewMonth, 1)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+  const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
+
+  function pick(day: number) {
+    const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    onChange(iso);
+    setOpen(false);
+  }
+
+  function prevMonth() {
+    if (viewMonth === 0) { setViewMonth(11); setViewYear(viewYear - 1); }
+    else setViewMonth(viewMonth - 1);
+  }
+
+  function nextMonth() {
+    if (viewMonth === 11) { setViewMonth(0); setViewYear(viewYear + 1); }
+    else setViewMonth(viewMonth + 1);
+  }
+
+  function pickToday() {
+    onChange(todayIso);
+    setOpen(false);
+  }
+
+  function clear() {
+    onChange("");
+    setOpen(false);
+  }
+
+  return (
+    <>
+      <button type="button" className="datepicker-input" onClick={() => setOpen(true)}>
+        {value ? formatDateDisplay(value) : <span className="datepicker-placeholder">{placeholder}</span>}
+        <span className="datepicker-icon">📅</span>
+      </button>
+      {open && (
+        <div className="datepicker-backdrop" onClick={() => setOpen(false)}>
+          <div className="datepicker-modal" onClick={e => e.stopPropagation()}>
+            <div className="datepicker-head">
+              <button type="button" className="datepicker-nav" onClick={prevMonth} aria-label="Previous month">‹</button>
+              <div className="datepicker-month">{monthName}</div>
+              <button type="button" className="datepicker-nav" onClick={nextMonth} aria-label="Next month">›</button>
+            </div>
+            <div className="datepicker-weekdays">
+              {weekdays.map((w, i) => <div key={i} className="datepicker-weekday">{w}</div>)}
+            </div>
+            <div className="datepicker-grid">
+              {weeks.map((week, wi) => week.map((day, di) => {
+                if (day === null) return <div key={`${wi}-${di}`} className="datepicker-day empty" />;
+                const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                const isSelected = iso === value;
+                const isToday = iso === todayIso;
+                return (
+                  <button
+                    type="button"
+                    key={`${wi}-${di}`}
+                    className={"datepicker-day" + (isSelected ? " selected" : "") + (isToday ? " today" : "")}
+                    onClick={() => pick(day)}
+                  >
+                    {day}
+                  </button>
+                );
+              }))}
+            </div>
+            <div className="datepicker-foot">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={pickToday}>Today</button>
+              {clearable && <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>Clear</button>}
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setOpen(false)}>Done</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
