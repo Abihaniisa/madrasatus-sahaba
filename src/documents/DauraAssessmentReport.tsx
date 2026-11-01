@@ -58,10 +58,10 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
               <colgroup>
                 <col style={{ width: "20mm" }} />
                 {block.map((_, i) => (
-                  <col key={i} style={{ width: "calc((100% - 20mm - 16mm - 16mm) / " + Math.max(1, block.length) + ")" }} />
+                  <col key={i} style={{ width: "calc((100% - 20mm - 24mm - 24mm) / " + Math.max(1, block.length) + ")" }} />
                 ))}
-                <col style={{ width: "16mm" }} />
-                <col style={{ width: "16mm" }} />
+                <col style={{ width: "24mm" }} />
+                <col style={{ width: "24mm" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -132,7 +132,7 @@ const STYLES = `
   .dar-head .sess { font-size: 9pt; color: #555; margin-top: 0.8mm; }
   .dar-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, sans-serif; flex: 1 1 auto; min-height: 0; }
   .dar-table th, .dar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10pt; padding: 2mm 1mm; overflow: hidden; }
-  .dar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; font-size: 9.5pt; }
+  .dar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; font-size: 9.5pt; text-align: center; padding: 0 1.5mm; }
   .dar-table thead th.subject { text-align: left; padding-left: 3mm; }
   .dar-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: nowrap; }
   .dar-table tbody tr:nth-child(even) td:not(.subject) { background: #f6f9f6; }

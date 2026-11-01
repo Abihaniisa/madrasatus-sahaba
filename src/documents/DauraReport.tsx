@@ -76,10 +76,10 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
           <colgroup>
             <col style={{ width: "26mm" }} />
             <col style={{ width: "auto" }} />
-            <col style={{ width: "18mm" }} />
-            <col style={{ width: "18mm" }} />
-            <col style={{ width: "22mm" }} />
-            <col style={{ width: "18mm" }} />
+            <col style={{ width: "16mm" }} />
+            <col style={{ width: "16mm" }} />
+            <col style={{ width: "24mm" }} />
+            <col style={{ width: "16mm" }} />
             <col style={{ width: "20mm" }} />
             <col style={{ width: "14mm" }} />
             <col style={{ width: "24mm" }} />
@@ -168,7 +168,7 @@ const STYLES = `
   .dr-info b { font-size: 10pt; overflow: hidden; }
   .dr-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
   .dr-table th, .dr-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1.5mm; overflow: hidden; }
-  .dr-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 10mm; font-size: 10pt; letter-spacing: 0.2pt; }
+  .dr-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 10mm; font-size: 10pt; letter-spacing: 0.2pt; text-align: center; padding: 0 1.5mm; }
   .dr-table thead th.subject { text-align: left; padding-left: 3mm; }
   .dr-table thead th.target { background: #b8923a; text-align: left; padding-left: 3mm; }
   .dr-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11.5pt; background: #f6f9f6; white-space: nowrap; }
