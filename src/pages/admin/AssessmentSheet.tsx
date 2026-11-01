@@ -1,7 +1,7 @@
 // src/pages/admin/AssessmentSheet.tsx — record assessment marks for one class + subject.
 // The 3-second flow: class → subject → assessment label → marks.
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase, amISuperAdmin, isAssessmentLocked } from "../../lib/supabase";
 import { loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { CONFIG } from "../../lib/config";
@@ -23,17 +23,22 @@ export default function AssessmentSheet({
   const [data, setData] = useState<SchoolData | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const dataRef = useRef<SchoolData | null>(null);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
   useEffect(() => { loadSchool().then(setData); }, []);
 
   async function load() {
+    const d = dataRef.current;
+    if (!d) return;
     setReady(false);
     const { data: assRows } = await supabase.from("assessments").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester())
+      .eq("session_label", currentSchoolSession(d)).eq("semester", getEffectiveSemester())
       .order("created_at");
-    const list = (assRows as Assessment[]) ?? [];
+    const list = ((assRows as Assessment[]) ?? []).sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { numeric: true })
+    );
     setAssessments(list);
     const last = list[list.length - 1];
     setActiveId(last?.id ?? null);
@@ -44,6 +49,12 @@ export default function AssessmentSheet({
     setMarks(map);
     setReady(true);
   }
+
+  useEffect(() => {
+    const wasNull = dataRef.current === null;
+    dataRef.current = data;
+    if (data && wasNull) load();
+  }, [data]);
 
   useEffect(() => { load(); }, [cls, subject]);
 
