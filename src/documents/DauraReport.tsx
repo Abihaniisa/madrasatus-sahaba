@@ -1,5 +1,5 @@
 // src/documents/DauraReport.tsx — Daura Report Card (summary only).
-// Per subject: Target · Average/10 · 70% · Evaluation/100 · 30% · Final · Grade · Remark.
+// Per subject: Target · Avg % (0-100) · 70% · Evaluation/100 · 30% · Final · Grade · Remark.
 // No per-assessment columns — those live in DauraAssessmentReport.
 
 import { CONFIG } from "../lib/config";
@@ -28,8 +28,8 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
       if (m?.value != null) { sum += m.value / (a.max_marks || 10); recorded++; }
     }
     const allPresent = regular.length > 0 && recorded === regular.length;
-    const avg10 = allPresent ? Math.round((sum / regular.length) * 10000) / 100 : null;
-    const pct = avg10 != null ? Math.round(avg10 * 100) / 100 : null;
+    const assessmentPct = allPresent ? Math.round((sum / regular.length) * 10000) / 100 : null;
+    const pct = assessmentPct != null ? Math.round(assessmentPct * 100) / 100 : null;
     const contrib70 = pct != null ? Math.round(pct * 0.7 * 100) / 100 : null;
 
     const evalMark = evaluation ? (marks.find(x => x.assessment_id === evaluation.id && x.participant_id === participant.id)?.value ?? null) : null;
@@ -39,7 +39,7 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
     const grade = final != null ? gradeFor(final) : null;
     const pending = !allPresent || evalMark == null;
 
-    return { subject, avg10, contrib70, evalMark, eval30, final, grade, pending, target: targets[subject] ?? "" };
+    return { subject, assessmentPct, contrib70, evalMark, eval30, final, grade, pending, target: targets[subject] ?? "" };
   });
 
   const finals = subjectResults.map(r => r.final).filter((v): v is number => v != null);
@@ -88,7 +88,7 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
             <tr>
               <th className="subject">Subject</th>
               <th className="target">Target</th>
-              <th>Average</th>
+              <th>Avg %</th>
               <th>70%</th>
               <th>Evaluation</th>
               <th>30%</th>
@@ -102,7 +102,7 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
               <tr key={row.subject}>
                 <td className="subject">{row.subject}</td>
                 <td className="target">{row.target || "—"}</td>
-                <td className="cell-avg">{row.avg10 != null ? row.avg10.toFixed(1) : "—"}</td>
+                <td className="cell-avg">{row.assessmentPct != null ? row.assessmentPct.toFixed(1) : "—"}</td>
                 <td className="cell-avg">{row.contrib70 != null ? row.contrib70.toFixed(1) : "—"}</td>
                 <td className="cell-mark">{row.evalMark != null ? row.evalMark : "—"}</td>
                 <td className="cell-avg">{row.eval30 != null ? row.eval30.toFixed(1) : "—"}</td>

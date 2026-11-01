@@ -68,7 +68,7 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                   <th className="subject">Subject</th>
                   {block.map(i => <th key={i}>{i + 1}</th>)}
                   <th>Evaluation</th>
-                  <th>Average</th>
+                  <th>Avg %</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,8 +79,8 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                     if (m?.value != null) { sum += m.value / (a.max_marks || 10); recorded++; }
                   }
                   const allPresent = regular.length > 0 && recorded === regular.length;
-                  const avg10 = allPresent ? Math.round((sum / regular.length) * 10000) / 100 : null;
-                  const pct = avg10 != null ? Math.round(avg10 * 100) / 100 : null;
+                  const assessmentPct = allPresent ? Math.round((sum / regular.length) * 10000) / 100 : null;
+                  const pct = assessmentPct != null ? Math.round(assessmentPct * 100) / 100 : null;
                   const contrib70 = pct != null ? Math.round(pct * 0.7 * 100) / 100 : null;
                   const evalMark = evaluation ? (marks.find(x => x.assessment_id === evaluation.id && x.participant_id === participant.id)?.value ?? null) : null;
                   const eval30 = evalMark != null ? Math.round(evalMark * 0.3 * 100) / 100 : null;
@@ -98,7 +98,7 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                         return <td key={i} className={"cell-mark " + (v == null ? "cell-missing" : "")}>{v != null ? v : "—"}</td>;
                       })}
                       <td className="cell-mark">{evalMark != null ? evalMark : "—"}</td>
-                      <td className="cell-avg">{avg10 != null ? avg10.toFixed(1) : "—"}</td>
+                      <td className="cell-avg">{assessmentPct != null ? assessmentPct.toFixed(1) : "—"}</td>
                     </tr>
                   );
                 })}
