@@ -179,11 +179,11 @@ export function AssessmentRecord({
         {renderInfo()}
         <table className="ar-table">
           <colgroup>
-            <col style={{ width: "30mm" }} />
+            <col style={{ width: "22mm" }} />
             {Array.from({ length: summaryCols }).map((_, i) => (
-              <col key={i} style={{ width: "calc((100% - 30mm - 20mm) / " + Math.max(1, summaryCols) + ")" }} />
+              <col key={i} style={{ width: "calc((100% - 22mm - 16mm) / " + Math.max(1, summaryCols) + ")" }} />
             ))}
-            <col style={{ width: "20mm" }} />
+            <col style={{ width: "16mm" }} />
           </colgroup>
           <thead>
             <tr>

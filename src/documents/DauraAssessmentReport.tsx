@@ -56,10 +56,12 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
 
             <table className="dar-table">
               <colgroup>
-                <col style={{ width: "30mm" }} />
-                {block.map((_, i) => <col key={i} style={{ width: "6mm" }} />)}
-                <col style={{ width: "22mm" }} />
-                <col style={{ width: "22mm" }} />
+                <col style={{ width: "20mm" }} />
+                {block.map((_, i) => (
+                  <col key={i} style={{ width: "calc((100% - 20mm - 16mm - 16mm) / " + Math.max(1, block.length) + ")" }} />
+                ))}
+                <col style={{ width: "16mm" }} />
+                <col style={{ width: "16mm" }} />
               </colgroup>
               <thead>
                 <tr>
