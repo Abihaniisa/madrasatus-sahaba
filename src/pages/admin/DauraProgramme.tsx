@@ -382,9 +382,10 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
       max_marks: 10,
       is_evaluation: false,
     }));
-    const { error } = await supabase.from("daura_assessments").insert(rows);
+    const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject").eq("subject", subject).maybeSingle();
     if (error) { setToast("Failed: " + error.message); return; }
     setToast(`${label} created for ${subjects.length} subjects.`);
+    if (inserted) setActiveId((inserted as { id: string }).id);
     onChange();
   }
 
@@ -399,9 +400,10 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
       max_marks: 100,
       is_evaluation: true,
     }));
-    const { error } = await supabase.from("daura_assessments").insert(rows);
+    const { data: inserted, error } = await supabase.from("daura_assessments").insert(rows).select("id, subject").eq("subject", subject).maybeSingle();
     if (error) { setToast("Failed: " + error.message); return; }
     setToast("Evaluation created for " + subjects.length + " subjects.");
+    if (inserted) setActiveId((inserted as { id: string }).id);
     onChange();
   }
 
@@ -669,8 +671,8 @@ function HistoryPanel({ participant, onClose }: { participant: DauraParticipant;
           ) : (
             <div>
               {programs.map(p => (
-                <Link key={p.program_id} to={`/admin/daura/${p.program_id}`}
-                  style={{ display: "block", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-2)", marginBottom: 8, color: "var(--ink)" }}>
+                <Link key={p.program_id} to={`/admin/daura/${p.program_id}`} onClick={e => e.stopPropagation()}
+                  style={{ display: "block", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-2)", marginBottom: 8, color: "var(--ink)", cursor: "pointer" }}>
                   <div style={{ fontWeight: 500, fontSize: 13.5 }}>{p.name}</div>
                   <div className="sub" style={{ fontSize: 11.5, marginTop: 2 }}>
                     {p.start_date || ""} {p.end_date ? `→ ${p.end_date}` : ""}

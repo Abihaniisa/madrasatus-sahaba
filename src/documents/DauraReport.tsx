@@ -70,7 +70,6 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
           <div><span>Participant</span><b>{participant.full_name}</b></div>
           <div><span>Mode</span><b>{participant.external ? "External" : "Student"}</b></div>
           <div><span>Subjects</span><b>{subjects.join(" · ")}</b></div>
-          <div><span>Grade</span><b>{overall.code} · {overall.label}</b></div>
         </section>
 
         <table className="dr-table">
@@ -163,10 +162,10 @@ const STYLES = `
   .dr-head .school { font-size: 18pt; font-weight: bold; color: #143d27; line-height: 1.15; }
   .dr-head .doc { font-size: 13pt; color: #b8923a; letter-spacing: 3pt; text-transform: uppercase; margin-top: 1mm; font-weight: bold; }
   .dr-head .sess { font-size: 9pt; color: #555; margin-top: 0.8mm; }
-  .dr-info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2mm 5mm; background: #eef3ee; border: 0.3mm solid #c9d6c9; padding: 2mm 4mm; }
+  .dr-info { display: grid; grid-template-columns: 1.2fr 0.7fr 2.1fr; gap: 1.2mm 5mm; background: #eef3ee; border: 0.3mm solid #c9d6c9; padding: 2mm 4mm; }
   .dr-info div { font-size: 9pt; display: flex; gap: 2mm; align-items: baseline; min-width: 0; }
   .dr-info span { color: #5a6a5f; text-transform: uppercase; font-size: 7pt; letter-spacing: 0.6pt; white-space: nowrap; }
-  .dr-info b { font-size: 10pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dr-info b { font-size: 10pt; overflow: hidden; }
   .dr-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: Arial, Helvetica, sans-serif; flex: 1 1 auto; min-height: 0; }
   .dr-table th, .dr-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1.5mm; overflow: hidden; }
   .dr-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 10mm; font-size: 10pt; letter-spacing: 0.2pt; }
