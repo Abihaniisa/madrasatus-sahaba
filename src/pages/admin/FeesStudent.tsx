@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { CONFIG } from "../../lib/config";
-import { loadSchool, currentFeeYear, type SchoolData } from "../../lib/data";
+import { loadSchool, invalidateSchoolCache, currentFeeYear, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase, nextReceiptNo } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
@@ -30,7 +30,7 @@ export default function FeesStudent() {
   const [note, setNote] = useState("");
   const [paidOn, setPaidOn] = useState(new Date().toISOString().slice(0, 10));
 
-  async function reload() { setData(await loadSchool()); }
+  async function reload() { invalidateSchoolCache(); setData(await loadSchool()); }
 
   useEffect(() => {
     loadSchool().then(setData);
@@ -78,7 +78,8 @@ export default function FeesStudent() {
   }
 
   async function deletePayment(pid: string) {
-    await supabase.from("fee_payments").delete().eq("id", pid);
+    const { error } = await supabase.from("fee_payments").delete().eq("id", pid);
+    if (error) { setErr(error.message); return; }
     setConfirmDelete(null);
     await reload();
   }

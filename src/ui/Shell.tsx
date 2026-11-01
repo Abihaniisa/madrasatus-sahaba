@@ -25,7 +25,12 @@ export const I = {
 };
 
 export function waLink(phone: string, text: string) {
-  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  const digits = phone.replace(/\D/g, "");
+  let normalized = digits;
+  if (digits.startsWith("234")) normalized = digits;
+  else if (digits.startsWith("0")) normalized = "234" + digits.slice(1);
+  else if (digits.length === 10) normalized = "234" + digits;
+  return `https://wa.me/${normalized}?text=${encodeURIComponent(text)}`;
 }
 
 export function Logo({ size = 40 }: { size?: number }) {
