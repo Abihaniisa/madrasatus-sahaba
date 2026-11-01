@@ -68,7 +68,7 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                   <th className="subject">Subject</th>
                   {block.map(i => <th key={i}>{i + 1}</th>)}
                   <th>Evaluation</th>
-                  <th>Avg %</th>
+                  <th>Avg /10</th>
                 </tr>
               </thead>
               <tbody>
@@ -98,7 +98,7 @@ export function DauraAssessmentReport({ participant, program, assessments, marks
                         return <td key={i} className={"cell-mark " + (v == null ? "cell-missing" : "")}>{v != null ? v : "—"}</td>;
                       })}
                       <td className="cell-mark">{evalMark != null ? evalMark : "—"}</td>
-                      <td className="cell-avg">{assessmentPct != null ? assessmentPct.toFixed(1) : "—"}</td>
+                      <td className="cell-avg">{assessmentPct != null ? (assessmentPct / 10).toFixed(1) : "—"}</td>
                     </tr>
                   );
                 })}
