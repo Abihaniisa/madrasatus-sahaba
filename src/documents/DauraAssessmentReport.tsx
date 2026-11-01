@@ -134,7 +134,7 @@ const STYLES = `
   .dar-table th, .dar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10pt; padding: 2mm 1mm; overflow: hidden; }
   .dar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; font-size: 9.5pt; text-align: center; padding: 0 1.5mm; }
   .dar-table thead th.subject { text-align: left; padding-left: 3mm; }
-  .dar-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: nowrap; }
+  .dar-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: normal; overflow-wrap: break-word; line-height: 1.25; }
   .dar-table tbody tr:nth-child(even) td:not(.subject) { background: #f6f9f6; }
   .dar-table .cell-mark { font-family: "Courier New", monospace; font-weight: 600; font-size: 10.5pt; color: #143d27; }
   .dar-table .cell-missing { color: #b0731d; }

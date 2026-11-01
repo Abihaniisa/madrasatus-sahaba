@@ -88,7 +88,7 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
             <tr>
               <th className="subject">Subject</th>
               <th className="target">Target</th>
-              <th>Avg %</th>
+              <th>Avg /10</th>
               <th>70%</th>
               <th>Evaluation</th>
               <th>30%</th>
@@ -102,7 +102,7 @@ export function DauraReport({ participant, program, assessments, marks }: Props)
               <tr key={row.subject}>
                 <td className="subject">{row.subject}</td>
                 <td className="target">{row.target || "—"}</td>
-                <td className="cell-avg">{row.assessmentPct != null ? row.assessmentPct.toFixed(1) : "—"}</td>
+                <td className="cell-avg">{row.assessmentPct != null ? (row.assessmentPct / 10).toFixed(1) : "—"}</td>
                 <td className="cell-avg">{row.contrib70 != null ? row.contrib70.toFixed(1) : "—"}</td>
                 <td className="cell-mark">{row.evalMark != null ? row.evalMark : "—"}</td>
                 <td className="cell-avg">{row.eval30 != null ? row.eval30.toFixed(1) : "—"}</td>
@@ -171,7 +171,7 @@ const STYLES = `
   .dr-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 10mm; font-size: 10pt; letter-spacing: 0.2pt; text-align: center; padding: 0 1.5mm; }
   .dr-table thead th.subject { text-align: left; padding-left: 3mm; }
   .dr-table thead th.target { background: #b8923a; text-align: left; padding-left: 3mm; }
-  .dr-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11.5pt; background: #f6f9f6; white-space: nowrap; }
+  .dr-table tbody td.subject { text-align: left; padding-left: 3mm; font-family: Georgia, serif; font-weight: bold; font-size: 11.5pt; background: #f6f9f6; white-space: normal; overflow-wrap: break-word; line-height: 1.25; }
   .dr-table tbody td.target { text-align: left; padding-left: 3mm; font-size: 10pt; color: #143d27; background: #fbf3df; font-style: italic; line-height: 1.35; }
   .dr-table tbody tr:nth-child(even) td:not(.subject):not(.target) { background: #f6f9f6; }
   .dr-table .cell-mark { font-family: "Courier New", monospace; font-weight: 600; font-size: 11pt; color: #143d27; }

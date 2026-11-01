@@ -378,8 +378,8 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
     if (busyRef.current) return;
     busyRef.current = true;
     try {
-      if (program.kind === "sessional" && regularAssessments.length >= 24) {
-        setToast("Maximum 24 assessments for sessional Daura.");
+      if (regularAssessments.length >= 24) {
+        setToast("Maximum 24 assessments per Daura programme.");
         return;
       }
       const allRegular = assessments.filter(a => !a.is_evaluation);
@@ -496,7 +496,12 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
 
       {isSuper && program.status === "open" && (
         <div className="row g2 mb3" style={{ flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-sm" onClick={addAssessment}>{I.plus} Create {nextLabel}</button>
+          {regularAssessments.length < 24 && (
+            <button className="btn btn-primary btn-sm" onClick={addAssessment}>{I.plus} Create {nextLabel}</button>
+          )}
+          {regularAssessments.length >= 24 && (
+            <span className="sub" style={{ fontSize: 12 }}>Maximum 24 assessments reached.</span>
+          )}
           {!evaluation && <button className="btn btn-secondary btn-sm" onClick={addEvaluation}>{I.plus} Create Evaluation</button>}
           {active && <button className="btn btn-ghost btn-sm" onClick={removeActive} style={{ color: "var(--danger)" }}>Delete {active.label}</button>}
         </div>

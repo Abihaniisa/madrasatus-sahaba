@@ -137,7 +137,7 @@ export function AssessmentRecord({
       .ar-table th, .ar-table td { border: 0.25mm solid #9fb3a5; text-align: center; font-size: 10.5pt; padding: 2.5mm 1mm; overflow: hidden; }
       .ar-table thead th { background: #1f5a3a; color: #fff; font-weight: bold; height: 9mm; }
       .ar-table thead th.subject { text-align: left; padding-left: 4mm; }
-      .ar-table tbody td.subject { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: nowrap; }
+      .ar-table tbody td.subject { text-align: left; padding-left: 4mm; font-family: Georgia, serif; font-weight: bold; font-size: 11pt; background: #f6f9f6; white-space: normal; overflow-wrap: break-word; line-height: 1.25; }
       .ar-table tbody tr:nth-child(even) td:not(.subject) { background: #f6f9f6; }
       .ar-table .cell-mark { font-family: "Courier New", monospace; font-weight: 600; font-size: 11pt; color: #143d27; }
       .ar-table .cell-missing { color: #b0731d; }
