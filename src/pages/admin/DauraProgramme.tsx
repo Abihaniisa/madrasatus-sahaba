@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
@@ -133,6 +133,14 @@ function ParticipantsTab({ program, participants, school, isSuper, onChange, onO
   program: DauraProgram; participants: DauraParticipant[]; school: SchoolData | null;
   isSuper: boolean; onChange: () => void; onOpenHistory: (p: DauraParticipant) => void;
 }) {
+  const [localTargets, setLocalTargets] = useState<Record<string, string>>({});
+  const localTargetsRef = useRef<Record<string, string>>({});
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const t = program.targets ?? {};
+    setLocalTargets(t);
+    localTargetsRef.current = t;
+  }, [program.id]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [externalOpen, setExternalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "students" | "external">("all");
@@ -152,7 +160,7 @@ function ParticipantsTab({ program, participants, school, isSuper, onChange, onO
                 <label>{subj}</label>
                 <input
                   className="input"
-                  value={(program.targets?.[subj] ?? "")}
+                  value={(localTargets[subj] ?? "")}
                   placeholder={
                     subj === "Qur'an" ? "e.g. 5 Hizb" :
                     subj === "Hadith" ? "e.g. Arba'un Hadith" :
@@ -161,10 +169,15 @@ function ParticipantsTab({ program, participants, school, isSuper, onChange, onO
                     subj === "Arabic" ? "e.g. Nahwul Wadih Book 1" :
                     "Target for " + subj
                   }
-                  onChange={async e => {
-                    const nextTargets = { ...(program.targets ?? {}), [subj]: e.target.value };
-                    await supabase.from("daura_programs").update({ targets: nextTargets }).eq("id", program.id);
-                    onChange();
+                  onChange={e => {
+                    const val = e.target.value;
+                    setLocalTargets(prev => ({ ...prev, [subj]: val }));
+                    localTargetsRef.current = { ...localTargetsRef.current, [subj]: val };
+                    if (saveTimer.current) clearTimeout(saveTimer.current);
+                    saveTimer.current = setTimeout(async () => {
+                      await supabase.from("daura_programs").update({ targets: localTargetsRef.current }).eq("id", program.id);
+                      onChange();
+                    }, 600);
                   }}
                 />
               </div>
@@ -309,7 +322,7 @@ function ExternalForm({ onCancel, onSave }: { onCancel: () => void; onSave: (v: 
       <div className="d3" style={{ marginBottom: 12 }}>External participant</div>
       <div className="stack g3">
         <div className="field"><label>Full name</label>
-          <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Ahmadu Bello" /></div>
+          <input className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Abihani Isa" /></div>
         <div className="row g3" style={{ flexWrap: "wrap" }}>
           <div className="field flex1" style={{ minWidth: 180 }}><label>Phone <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional)</span></label>
             <input className="input" value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" placeholder="08012345678" /></div>
