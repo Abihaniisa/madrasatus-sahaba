@@ -37,7 +37,7 @@ export function AdminTop() {
             <Link to="/admin/manage" className={on("/admin/manage") || on("/admin/fees") || on("/admin/access") || on("/admin/promotion")}>Manage</Link>
           </div>
           <div className="top-right">
-            <button className="btn btn-ghost btn-sm" onClick={signOut} title="Sign out">Sign out</button>
+            <button className="pub-portal-link pub-signout" onClick={signOut} title="Sign out">Sign out</button>
           </div>
         </div>
       </div>

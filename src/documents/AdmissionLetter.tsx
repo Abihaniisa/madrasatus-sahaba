@@ -81,7 +81,7 @@ export function AdmissionLetter({ student, enrollments = [] }: Props) {
         </div>
 
         <div className="sigs">
-          <div className="sig">Registrar<span>Signature &amp; Date</span></div>
+          <div className="sig">Class Teacher<span>Signature &amp; Date</span></div>
           <div className="sig">Head of School<span>Signature, Stamp &amp; Date</span></div>
         </div>
       </div>
