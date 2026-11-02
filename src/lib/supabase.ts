@@ -66,7 +66,7 @@ export function useRequireAuth(): boolean {
 export type StudentPortalData = {
   ok: boolean; error?: string; student?: any;
   marks?: any[]; exams?: any[]; assessments?: any[];
-  fees?: any[]; fee_payments?: any[]; daura_participations?: any[]; classmates?: any[]; enrollments?: any[];
+  fees?: any[]; fee_payments?: any[]; daura_participations?: any[]; daura_programs?: any[]; daura_assessments?: any[]; daura_marks?: any[]; classmates?: any[]; enrollments?: any[];
 };
 
 const STUDENT_KEY = "madrasah.student";

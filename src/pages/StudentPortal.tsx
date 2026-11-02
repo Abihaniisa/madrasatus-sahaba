@@ -36,8 +36,12 @@ export default function StudentPortal() {
   const [page, setPage] = useState<Page>("overview");
   const [docTab, setDocTab] = useState<DocTab>("reports");
   const [viewer, setViewer] = useState<Viewer>(null);
-  const [dauraData, setDauraData] = useState<{ programs: any[]; assessments: any[]; marks: any[] }>({ programs: [], assessments: [], marks: [] });
-  const [dauraLoading, setDauraLoading] = useState(false);
+  const dauraData = useMemo(() => ({
+    programs: (data?.daura_programs ?? []) as any[],
+    assessments: (data?.daura_assessments ?? []) as any[],
+    marks: (data?.daura_marks ?? []) as any[],
+  }), [data]);
+  const dauraLoading = false;
 
   useEffect(() => {
     if (!CONFIG.studentLoginEnabled) { nav("/login"); return; }
@@ -51,30 +55,6 @@ export default function StudentPortal() {
     })();
   }, [nav]);
 
-  useEffect(() => {
-    const parts = (data?.daura_participations as any[] | undefined) ?? [];
-    if (parts.length === 0) return;
-    const pids = Array.from(new Set(parts.map(p => p.program_id)));
-    let cancelled = false;
-    setDauraLoading(true);
-    (async () => {
-      const [progs, asses] = await Promise.all([
-        supabase.from("daura_programs").select("*").in("id", pids),
-        supabase.from("daura_assessments").select("*").in("program_id", pids),
-      ]);
-      if (cancelled) return;
-      const assesList = (asses.data as any[]) ?? [];
-      const assesIds = assesList.map(a => a.id);
-      let marksList: any[] = [];
-      if (assesIds.length > 0) {
-        const { data: mks } = await supabase.from("daura_marks").select("*").in("assessment_id", assesIds);
-        marksList = (mks as any[]) ?? [];
-      }
-      setDauraData({ programs: (progs.data as any[]) ?? [], assessments: assesList, marks: marksList });
-      setDauraLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [data?.daura_participations]);
 
   const student = data?.student as Student | undefined;
   const assessments = (data?.assessments ?? []) as Assessment[];
