@@ -7,7 +7,7 @@ import { Link, useParams } from "react-router-dom";
 import { CONFIG, ALL_CLASSES } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
-import { loadSchool, type SchoolData } from "../../lib/data";
+import { loadSchool, invalidateSchoolCache, type SchoolData } from "../../lib/data";
 import { useRequireAuth, amISuperAdmin, supabase } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { DelayedSkeleton } from "../../ui/primitives";
@@ -188,6 +188,7 @@ export default function EditMarks() {
           new_value: { value: num },
         });
       }
+      invalidateSchoolCache();
       const fresh = await loadSchool();
       setData(fresh);
     } finally {

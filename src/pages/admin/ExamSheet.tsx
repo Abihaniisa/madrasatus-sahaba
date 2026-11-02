@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase, amISuperAdmin, isExamLocked } from "../../lib/supabase";
-import { loadSchool, currentSchoolSession, type SchoolData } from "../../lib/data";
+import { loadSchool, invalidateSchoolCache, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { CONFIG } from "../../lib/config";
 import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
@@ -63,6 +63,8 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
     if (error) {
       setSaveError(`Save failed: ${error.message}`);
       setTimeout(() => setSaveError(null), 5000);
+    } else {
+      invalidateSchoolCache();
     }
   }
 
