@@ -71,7 +71,7 @@ export default function Landing() {
     for (const s of data.students) {
       classCounts.set(s.class_name, (classCounts.get(s.class_name) ?? 0) + 1);
     }
-    const sectionCounts = SECTIONS.map(sec => data.students.filter(s => s.section === sec.id).length);
+    const sectionCounts = SECTIONS.map(sec => data.students.filter(s => sec.classes.includes(s.class_name)).length);
     const averages = new Map<string, ReturnType<typeof classAverage>>();
     for (const sec of SECTIONS) {
       if (sec.inactive) continue;
