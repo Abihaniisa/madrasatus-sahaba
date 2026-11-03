@@ -346,6 +346,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   const subjects = program.subjects ?? [];
   const [subject, setSubject] = useState<string>(subjects[0] ?? "");
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeLabel, setActiveLabel] = useState<string | null>(null);
   const [marks, setMarks] = useState<DauraMark[]>([]);
   const [loadingMarks, setLoadingMarks] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -354,7 +355,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
   const inSubject = assessments.filter(a => a.subject === subject);
   const regularAssessments = inSubject.filter(a => !a.is_evaluation);
   const evaluation = inSubject.find(a => a.is_evaluation) ?? null;
-  const active = inSubject.find(a => a.id === activeId) ?? inSubject[inSubject.length - 1] ?? null;
+  const active = inSubject.find(a => a.label === activeLabel) ?? regularAssessments[0] ?? inSubject[0] ?? null;
 
   useEffect(() => {
     if (!active) { setMarks([]); return; }
@@ -515,10 +516,10 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
             <div className="row1">
               <div className="chips">
                 {regularAssessments.map(a => (
-                  <button key={a.id} className={"chip-a " + (a.id === active.id ? "active" : "")} onClick={() => setActiveId(a.id)}>{a.label}</button>
+                  <button key={a.id} className={"chip-a " + (a.id === active.id ? "active" : "")} onClick={() => { setActiveId(a.id); setActiveLabel(a.label); }}>{a.label}</button>
                 ))}
                 {evaluation && (
-                  <button className={"chip-a " + (evaluation.id === active.id ? "active" : "")} onClick={() => setActiveId(evaluation.id)}>
+                  <button className={"chip-a " + (evaluation.id === active.id ? "active" : "")} onClick={() => { setActiveId(evaluation.id); setActiveLabel(evaluation.label); }}>
                     ⭐ Evaluation
                   </button>
                 )}

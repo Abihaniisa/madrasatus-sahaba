@@ -35,6 +35,13 @@ export default function Records() {
 
   useEffect(() => { loadSchool().then(setData); }, []);
 
+  // BFCache: force fresh fetch when browser restores page from back button.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) loadSchool().then(setData); };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   useEffect(() => {
     if (!id) return;
     (async () => {

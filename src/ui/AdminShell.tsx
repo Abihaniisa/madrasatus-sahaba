@@ -7,19 +7,23 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CONFIG } from "../lib/config";
 import { amISuperAdmin, supabase } from "../lib/supabase";
 import { I } from "./Shell";
+import { Modal } from "./primitives";
 
 export function AdminTop() {
   const loc = useLocation();
   const p = loc.pathname;
   const on = (k: string) => (p === k || (k !== "/admin" && p.startsWith(k)) ? "active" : "");
   const [superAdmin, setSuperAdmin] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
   const nav = useNavigate();
 
   useEffect(() => { amISuperAdmin().then(setSuperAdmin); }, []);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    nav("/", { replace: true });
+  function requestSignOut() { setConfirmSignOut(true); }
+  async function doSignOut() {
+    setConfirmSignOut(false);
+      await supabase.auth.signOut();
+      nav("/", { replace: true });
   }
 
   return (
@@ -37,7 +41,7 @@ export function AdminTop() {
             <Link to="/admin/manage" className={on("/admin/manage") || on("/admin/fees") || on("/admin/access") || on("/admin/promotion")}>Manage</Link>
           </div>
           <div className="top-right">
-            <button className="pub-portal-link pub-signout" onClick={signOut} title="Sign out">Sign out</button>
+            <button className="pub-portal-link pub-signout" onClick={requestSignOut} title="Sign out">Sign out</button>
           </div>
         </div>
       </div>
@@ -49,6 +53,15 @@ export function AdminTop() {
           <Link to="/admin/manage" className={on("/admin/manage") || on("/admin/fees") || on("/admin/access") || on("/admin/promotion")}>{I.gear}Manage</Link>
         </div>
       </div>
+    <Modal
+      open={confirmSignOut}
+      title="Sign out?"
+      message="You will need to log in again."
+      confirmLabel="Sign out"
+      tone="danger"
+      onConfirm={doSignOut}
+      onCancel={() => setConfirmSignOut(false)}
+    />
     </>
   );
 }

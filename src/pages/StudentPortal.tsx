@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CONFIG, SECTIONS } from "../lib/config";
 import { PublicNav, PublicTabBar, I } from "../ui/Shell";
+import { Modal } from "../ui/primitives";
 import { getStudentSession, clearStudentSession, fetchStudentPortal, supabase, type StudentPortalData } from "../lib/supabase";
 import { buildReport, currentFeeYear } from "../lib/data";
 import { buildAllSemesters } from "../lib/calc";
@@ -36,6 +37,16 @@ export default function StudentPortal() {
   const [page, setPage] = useState<Page>("overview");
   const [docTab, setDocTab] = useState<DocTab>("reports");
   const [viewer, setViewer] = useState<Viewer>(null);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
+
+  // Back button closes viewer instead of navigating away
+  useEffect(() => {
+    if (!viewer) return;
+    window.history.pushState({ viewer: true }, "");
+    const onPop = () => setViewer(null);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [viewer]);
   const dauraData = useMemo(() => ({
     programs: (data?.daura_programs ?? []) as any[],
     assessments: (data?.daura_assessments ?? []) as any[],
@@ -108,7 +119,8 @@ export default function StudentPortal() {
     return out;
   }, [data?.daura_participations, dauraData.programs]);
 
-  function signOut() { clearStudentSession(); nav("/"); }
+  function requestSignOut() { setConfirmSignOut(true); }
+  function doSignOut() { setConfirmSignOut(false); clearStudentSession(); nav("/"); }
 
   function feeSummary() {
     if (!student) return { amount: 0, paid: 0, balance: 0 };
@@ -148,14 +160,14 @@ export default function StudentPortal() {
 
   if (!data || !student) {
     return (<>
-      <PublicNav onSignOut={signOut} />
+      <PublicNav onSignOut={requestSignOut} />
       <div className="body"><div className="wrap"><div className="empty"><div className="t">Loading…</div></div></div></div>
     </>);
   }
 
   if (viewer) {
     return (<>
-      <PublicNav onSignOut={signOut} />
+      <PublicNav onSignOut={requestSignOut} />
       <div className="no-print" style={{ padding: "12px 16px", borderBottom: "1px solid var(--line)", display: "flex", gap: 8, alignItems: "center", background: "var(--surface)", position: "sticky", top: 0, zIndex: 50 }}>
         <button className="btn btn-secondary btn-sm" onClick={() => setViewer(null)}>{I.back} Back</button>
         <button className="btn btn-primary btn-sm" onClick={() => window.print()}>{I.print} Print</button>
@@ -170,7 +182,7 @@ export default function StudentPortal() {
   const initials = (student.name[0] ?? "") + (student.name.split(/\s+/)[1]?.[0] ?? "");
 
   return (<>
-    <PublicNav onSignOut={signOut} />
+    <PublicNav onSignOut={requestSignOut} />
     <div className="body" style={{ paddingBottom: 80 }}>
       <div className="wrap" style={{ maxWidth: 900 }}>
         <div className="portal-welcome">
@@ -369,5 +381,14 @@ export default function StudentPortal() {
       </div>
     </div>
     <PublicTabBar />
+  <Modal
+    open={confirmSignOut}
+    title="Sign out?"
+    message="You will need to log in again."
+    confirmLabel="Sign out"
+    tone="danger"
+    onConfirm={doSignOut}
+    onCancel={() => setConfirmSignOut(false)}
+  />
   </>);
 }

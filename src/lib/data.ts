@@ -27,6 +27,7 @@ let schoolInflight: Promise<SchoolData> | null = null;
 
 export function invalidateSchoolCache(): void {
   schoolCache = { data: null, at: 0 };
+  schoolInflight = null;
 }
 
 async function fetchSchool(): Promise<SchoolData> {

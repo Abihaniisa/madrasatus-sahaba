@@ -56,6 +56,13 @@ export default function AssessmentSheet({
     if (data && wasNull) load();
   }, [data]);
 
+  useEffect(() => {
+    setAssessments([]);
+    setMarks({});
+    setActiveId(null);
+    setReady(false);
+  }, [subject]);
+
   useEffect(() => { load(); }, [cls, subject]);
 
   async function loadMarksFor(id: string) {
@@ -121,7 +128,7 @@ export default function AssessmentSheet({
     });
   }
 
-  if (!ready && assessments.length === 0) return <div className="asheet"><div className="empty"><div className="t">Loading…</div></div></div>;
+  if (!ready) return <div className="asheet"><div className="empty"><div className="t">Loading…</div></div></div>;
 
   if (!active) {
     return (

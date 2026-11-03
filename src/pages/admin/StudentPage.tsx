@@ -32,6 +32,14 @@ export default function StudentPage() {
     amISuperAdmin().then(setIsSuper);
   }, []);
 
+  // BFCache: browser restores page from back button without re-running useEffect.
+  // Force a fresh fetch when restored.
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) loadSchool().then(setData); };
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, []);
+
   if (!ready) return <div className="body"><div className="wrap"><DelayedSkeleton ready={ready} rows={5} /></div></div>;
   if (!data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
 
