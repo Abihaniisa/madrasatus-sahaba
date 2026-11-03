@@ -77,7 +77,7 @@ export default function FeesPrint() {
       <div className="print-area">
         {rows.map(({ student, payment, amount, paid, balance }) => (
           <div key={payment.id} className="cert-print-wrapper" style={{ marginBottom: 12 }}>
-            <Receipt student={student} payment={payment} amount={amount} paid={paid} balance={balance} />
+            <Receipt student={student} payment={payment} />
           </div>
         ))}
       </div>

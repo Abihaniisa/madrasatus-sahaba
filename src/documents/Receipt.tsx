@@ -9,9 +9,6 @@ import { fmtNGN, methodLabel } from "../lib/calc";
 type Props = {
   student: Student;
   payment: FeePayment;
-  amount: number;
-  paid: number;
-  balance: number;
 };
 
 function derivedReceiptNo(p: FeePayment, regNo: string): string {
@@ -29,12 +26,18 @@ function fmtDate(iso: string | null | undefined, style: "long" | "short" = "long
     : { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function Receipt({ student, payment, amount, paid, balance }: Props) {
-  const sectionName = SECTIONS.find(s => s.id === student.section)?.name ?? student.section;
+export function Receipt({ student, payment }: Props) {
+  const classAtPayment = payment.class_name ?? student.class_name;
+  const sectionForClass = SECTIONS.find(s => s.classes.includes(classAtPayment))?.name ?? student.section;
+  const sectionName = sectionForClass;
   const receiptNo = derivedReceiptNo(payment, student.reg_no);
   const issued = fmtDate(new Date().toISOString());
   const paidOn = fmtDate(payment.paid_on);
   const regSeq = student.reg_no.split(/[-/]/).pop() || "—";
+  const feeDue = payment.fee_due_at_payment ?? 0;
+  const totalPaid = payment.total_paid_after ?? 0;
+  const balance = Math.max(0, feeDue - totalPaid);
+  const classDisplay = classAtPayment;
 
   return (
     <div className="doc-stage">
@@ -58,7 +61,7 @@ export function Receipt({ student, payment, amount, paid, balance }: Props) {
         <section className="rct-info">
           <div><span>Student</span><b>{student.name}</b></div>
           <div><span>Reg. No.</span><b className="mono">{student.reg_no}</b></div>
-          <div><span>Class</span><b>{student.class_name}</b></div>
+          <div><span>Class</span><b>{classDisplay}</b></div>
           <div><span>Section</span><b>{sectionName}</b></div>
           <div><span>Session</span><b>{payment.year}</b></div>
         </section>
@@ -82,11 +85,11 @@ export function Receipt({ student, payment, amount, paid, balance }: Props) {
         <section className="rct-summary">
           <div>
             <small>Fee Due</small>
-            <strong>{fmtNGN(amount)}</strong>
+            <strong>{fmtNGN(feeDue)}</strong>
           </div>
           <div>
             <small>Total Paid (session)</small>
-            <strong>{fmtNGN(paid)}</strong>
+            <strong>{fmtNGN(totalPaid)}</strong>
           </div>
           <div>
             <small>Balance</small>

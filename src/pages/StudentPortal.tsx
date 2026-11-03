@@ -145,7 +145,7 @@ export default function StudentPortal() {
       const p = paymentRows.find(x => x.id === viewer.paymentId);
       if (!p) return null;
       const fee = feeSummary();
-      return <Receipt student={student} payment={p as any} amount={fee.amount} paid={fee.paid} balance={fee.balance} />;
+      return <Receipt student={student} payment={p as any} />;
     }
     if (viewer.kind === "daura") {
       const part = ((data?.daura_participations as any[]) ?? []).find(p => p.id === viewer.participantId);

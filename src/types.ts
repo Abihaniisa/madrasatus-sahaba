@@ -74,6 +74,10 @@ export type FeePayment = {
   receipt_no: string | null;
   recorded_by: string | null;
   created_at: string;
+  class_name: string | null;
+  session_label: string | null;
+  fee_due_at_payment: number | null;
+  total_paid_after: number | null;
 };
 
 export type Material = {

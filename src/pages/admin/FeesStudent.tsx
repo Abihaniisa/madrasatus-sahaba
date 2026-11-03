@@ -170,7 +170,7 @@ export default function FeesStudent() {
                     </div>
                   </div>
                   <div className="cert-print-wrapper">
-                    <Receipt student={student} payment={p} amount={feeAmount} paid={totalPaid} balance={balance} />
+                    <Receipt student={student} payment={p} />
                   </div>
                 </div>
               ))}
