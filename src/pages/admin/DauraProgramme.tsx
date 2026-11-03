@@ -454,6 +454,35 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
     return m?.value ?? null;
   }
 
+  async function saveAllPending() {
+    if (!active) return;
+    const inputs = document.querySelectorAll<HTMLInputElement>('.asheet-body input.mark[data-pid]');
+    const pending: { pid: string; value: number | null }[] = [];
+    inputs.forEach(inp => {
+      const pid = inp.getAttribute("data-pid");
+      if (!pid) return;
+      const digits = inp.value.replace(/[^0-9]/g, "");
+      let num = digits === "" ? null : parseInt(digits, 10);
+      if (num != null && num > active.max_marks) num = active.max_marks;
+      pending.push({ pid, value: num });
+    });
+    if (pending.length === 0) return;
+    const results = await Promise.all(pending.map(({ pid, value }) =>
+      supabase.from("daura_marks").upsert(
+        { assessment_id: active.id, participant_id: pid, value },
+        { onConflict: "assessment_id,participant_id" }
+      )
+    ));
+    const failed = results.filter(r => r.error);
+    if (failed.length > 0) {
+      setToast(`Save failed: ${failed[0].error?.message ?? "unknown"}`);
+    } else {
+      setToast(`Saved ${pending.length} mark${pending.length === 1 ? "" : "s"}`);
+      const { data } = await supabase.from("daura_marks").select("*").eq("assessment_id", active.id);
+      setMarks((data as DauraMark[]) ?? []);
+    }
+  }
+
   async function onBlur(pid: string, raw: string) {
     if (!active) return;
     const digits = raw.replace(/[^0-9]/g, "");
@@ -491,7 +520,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
     <div>
       <div className="chip-line" style={{ marginBottom: 12 }}>
         {subjects.map(s => (
-          <button key={s} className={"chip-f " + (subject === s ? "active" : "")} onClick={() => { setSubject(s); setActiveId(null); }}>{s}</button>
+          <button key={s} className={"chip-f " + (subject === s ? "active" : "")} onClick={async () => { await saveAllPending(); setSubject(s); setActiveId(null); }}>{s}</button>
         ))}
       </div>
 
@@ -516,10 +545,10 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
             <div className="row1">
               <div className="chips">
                 {regularAssessments.map(a => (
-                  <button key={a.id} className={"chip-a " + (a.id === active.id ? "active" : "")} onClick={() => { setActiveId(a.id); setActiveLabel(a.label); }}>{a.label}</button>
+                  <button key={a.id} className={"chip-a " + (a.id === active.id ? "active" : "")} onClick={async () => { await saveAllPending(); setActiveId(a.id); setActiveLabel(a.label); }}>{a.label}</button>
                 ))}
                 {evaluation && (
-                  <button className={"chip-a " + (evaluation.id === active.id ? "active" : "")} onClick={() => { setActiveId(evaluation.id); setActiveLabel(evaluation.label); }}>
+                  <button className={"chip-a " + (evaluation.id === active.id ? "active" : "")} onClick={async () => { await saveAllPending(); setActiveId(evaluation.id); setActiveLabel(evaluation.label); }}>
                     ⭐ Evaluation
                   </button>
                 )}
@@ -548,7 +577,7 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
                     <div className="sname">{p.full_name}</div>
                     <div className="sid">{p.external ? "External" : "Student"}</div>
                   </div>
-                  <input className="mark" type="text" inputMode="numeric" maxLength={3}
+                  <input className="mark" data-pid={p.id} type="text" inputMode="numeric" maxLength={3}
                     defaultValue={v == null ? "" : String(v)} placeholder="—"
                     disabled={program.status === "closed" || !isSuper}
                     onBlur={e => onBlur(p.id, e.target.value)}
@@ -556,6 +585,10 @@ function MarksTab({ program, participants, assessments, isSuper, onChange }: {
                 </div>
               );
             })}
+          </div>
+          <div className="asheet-foot">
+            <div className="sub" style={{ fontSize: 12 }}>Marks save on blur and on switch. Click Done to re-save any failed ones.</div>
+            <button className="btn btn-primary btn-sm" onClick={saveAllPending}>Done</button>
           </div>
         </div>
       )}
