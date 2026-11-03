@@ -29,6 +29,7 @@ export default function FeesStudent() {
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [paidOn, setPaidOn] = useState(new Date().toISOString().slice(0, 10));
+  const [selectedSession, setSelectedSession] = useState("");
 
   async function reload() { invalidateSchoolCache(); setData(await loadSchool()); }
 
@@ -46,36 +47,79 @@ export default function FeesStudent() {
       .sort((a, b) => (b.paid_on ?? "").localeCompare(a.paid_on ?? ""));
   }, [data, student]);
 
-  const feeCalc = useMemo(() => {
-    if (!data || !student) return null;
-    return computeFee(student.id, data.fees, data.feePayments);
+  const availableSessions = useMemo(() => {
+    if (!data || !student) return [];
+    const sessions = Array.from(new Set(data.enrollments.filter(e => e.student_id === student.id).map(e => e.session_label))).sort().reverse();
+    return sessions.length > 0 ? sessions : [currentFeeYear() + "/" + (parseInt(currentFeeYear()) + 1)];
   }, [data, student]);
 
   useEffect(() => {
-    if (feeCalc && !showAdd) setAmount(String(feeCalc.balance || CONFIG.registrationFee));
-  }, [feeCalc, showAdd]);
+    if (availableSessions.length > 0 && !selectedSession) {
+      setSelectedSession(availableSessions[0]);
+    }
+  }, [availableSessions, selectedSession]);
+
+  const currentYearPart = selectedSession ? selectedSession.split('/')[0] : currentFeeYear();
+
+  const sessionPayments = useMemo(() => {
+    return payments.filter(p => p.year === currentYearPart);
+  }, [payments, currentYearPart]);
+
+  const feeAmount = useMemo(() => {
+    const feeRow = data?.fees.find(f => f.student_id === student?.id && f.year === currentYearPart);
+    return feeRow?.amount ?? CONFIG.registrationFee;
+  }, [data, student, currentYearPart]);
+
+  const totalPaid = useMemo(() => sessionPayments.reduce((s, p) => s + p.amount, 0), [sessionPayments]);
+  const balance = Math.max(0, feeAmount - totalPaid);
+
+  useEffect(() => {
+    if (!showAdd) setAmount(String(balance || CONFIG.registrationFee));
+  }, [balance, showAdd]);
 
   async function addPayment() {
     if (!student) return;
     const n = parseInt(amount, 10);
     if (!n || n <= 0) { setErr("Amount must be greater than 0."); return; }
-    if (feeCalc && n > feeCalc.balance) {
-      setErr(`Cannot pay more than the balance. Outstanding: ${fmtNGN(feeCalc.balance)}.`);
+    if (n > balance) {
+      setErr(`Cannot pay more than the balance. Outstanding: ${fmtNGN(balance)}.`);
       return;
     }
     setBusy(true); setErr(null);
-    const rn = await nextReceiptNo(student.id, currentFeeYear(), student.reg_no);
+    
+    const yearPart = currentYearPart;
+    
+    const existingFee = data?.fees.find(f => f.student_id === student.id && f.year === yearPart);
+    if (!existingFee) {
+      const { error: feeErr } = await supabase.from("fees").insert({
+        student_id: student.id, year: yearPart, amount: CONFIG.registrationFee, status: "unpaid"
+      });
+      if (feeErr) { setBusy(false); setErr("Failed to create fee record: " + feeErr.message); return; }
+    }
+    const feeDue = existingFee ? existingFee.amount : CONFIG.registrationFee;
+    
+    const enrollment = data?.enrollments.find(e => e.student_id === student.id && e.session_label === selectedSession);
+    const classAtPayment = enrollment ? enrollment.class_name : student.class_name;
+    const totalPaidAfter = totalPaid + n;
+
+    const rn = await nextReceiptNo(student.id, yearPart, student.reg_no);
     if (rn.error) { setBusy(false); setErr("Receipt number: " + rn.error); return; }
+    
     const { error } = await supabase.from("fee_payments").insert({
-      student_id: student.id, year: currentFeeYear(), amount: n, method,
+      student_id: student.id, year: yearPart, amount: n, method,
       reference: reference.trim() || null, note: note.trim() || null, paid_on: paidOn,
       receipt_no: rn.receiptNo,
+      class_name: classAtPayment,
+      session_label: selectedSession,
+      fee_due_at_payment: feeDue,
+      total_paid_after: totalPaidAfter
     });
     setBusy(false);
     if (error) { setErr(error.message); return; }
     setShowAdd(false); setReference(""); setNote("");
     await reload();
   }
+
 
   async function deletePayment(pid: string) {
     const { error } = await supabase.from("fee_payments").delete().eq("id", pid);
@@ -87,10 +131,6 @@ export default function FeesStudent() {
   if (!ready || !data) return <div className="body"><div className="wrap"><DelayedSkeleton ready={!!data} rows={5} /></div></div>;
   if (!student) return <div className="body"><div className="wrap"><div className="empty"><div className="t">Student not found</div></div></div></div>;
 
-  const fee = data.fees.find(f => f.student_id === student.id && f.year === currentFeeYear());
-  const feeAmount = fee?.amount ?? CONFIG.registrationFee;
-  const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
-  const balance = Math.max(0, feeAmount - totalPaid);
 
   return (
     <div>
@@ -124,8 +164,13 @@ export default function FeesStudent() {
               <div className="d3" style={{ marginBottom: 12 }}>Record payment</div>
               <div className="stack g3">
                 <div className="row g3" style={{ flexWrap: "wrap" }}>
+                  <div className="field flex1" style={{ minWidth: 140 }}><label>Session</label>
+                    <select className="input" value={selectedSession} onChange={e => setSelectedSession(e.target.value)}>
+                      {availableSessions.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Amount</label>
-                    <input className="input" inputMode="numeric" value={amount} max={feeCalc?.balance || undefined} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} /></div>
+                    <input className="input" inputMode="numeric" value={amount} max={balance || undefined} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} /></div>
                   <div className="field flex1" style={{ minWidth: 140 }}><label>Date</label>
                     <DatePicker value={paidOn} onChange={setPaidOn} placeholder="Select payment date" /></div>
                 </div>
