@@ -1,10 +1,11 @@
 // src/pages/admin/ExamSheet.tsx — record exam marks for one class + subject.
+// dataRef pattern: always reads latest SchoolData; effect fires on data arrival so
+// first mount of default subject (Quran) fetches marks correctly.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase, amISuperAdmin, isExamLocked } from "../../lib/supabase";
 import { loadSchool, invalidateSchoolCache, currentSchoolSession, type SchoolData } from "../../lib/data";
 import { CONFIG } from "../../lib/config";
-import { getSettings } from "../../lib/settings";
 import { getEffectiveSemester } from "../../lib/calendar";
 import type { Student } from "../../types";
 
@@ -23,26 +24,42 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
   const [isSuper, setIsSuper] = useState(false);
   const [examLocked, setExamLocked] = useState(false);
   const [data, setData] = useState<SchoolData | null>(null);
+  const dataRef = useRef<SchoolData | null>(null);
 
   useEffect(() => { amISuperAdmin().then(setIsSuper); }, []);
-  useEffect(() => { loadSchool().then(setData); }, []);
+
+  useEffect(() => {
+    loadSchool().then(d => {
+      dataRef.current = d;
+      setData(d);
+    });
+  }, []);
 
   async function load() {
+    const d = dataRef.current;
+    if (!d) return;
     setReady(false);
     const { data: exRows } = await supabase.from("exams").select("*")
       .eq("class_name", cls).eq("subject", subject)
-      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester());
+      .eq("session_label", currentSchoolSession(d)).eq("semester", getEffectiveSemester());
     const map: Record<string, number | null> = {};
     for (const e of (exRows ?? []) as any[]) map[e.student_id] = e.value;
     setMarks(map);
     setReady(true);
   }
 
+  useEffect(() => {
+    if (!data) return;
+    dataRef.current = data;
+    load();
+  }, [data]);
+
   useEffect(() => { load(); }, [cls, subject]);
 
   useEffect(() => {
-    isExamLocked(subject, (data ? currentSchoolSession(data) : ""), getEffectiveSemester()).then(setExamLocked);
-  }, [cls, subject]);
+    if (!data) return;
+    isExamLocked(subject, currentSchoolSession(data), getEffectiveSemester()).then(setExamLocked);
+  }, [cls, subject, data]);
 
   const sorted = [...students].sort((a, b) => a.name.localeCompare(b.name));
   const recorded = sorted.filter(s => marks[s.id] != null).length;
@@ -55,9 +72,11 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
   }
 
   async function onBlur(sid: string) {
+    const d = dataRef.current;
+    if (!d) return;
     const value = marks[sid] ?? null;
     const { error } = await supabase.from("exams").upsert(
-      { student_id: sid, class_name: cls, subject, session_label: (data ? currentSchoolSession(data) : ""), semester: getEffectiveSemester(), value },
+      { student_id: sid, class_name: cls, subject, session_label: currentSchoolSession(d), semester: getEffectiveSemester(), value },
       { onConflict: "student_id,subject,session_label,semester" }
     );
     if (error) {
@@ -70,12 +89,14 @@ export default function ExamSheet({ cls, students, initialSubject, onClose }: Pr
 
   async function clearExam() {
     if (!isSuper) return;
+    const d = dataRef.current;
+    if (!d) return;
     const ok = window.confirm(`Clear the exam for ${cls} — ${subject}?\n\nThis will remove every recorded exam mark for this class, this subject, this semester.`);
     if (!ok) return;
     const ids = sorted.map(s => s.id);
     await supabase.from("exams").delete()
       .in("student_id", ids).eq("subject", subject)
-      .eq("session_label", (data ? currentSchoolSession(data) : "")).eq("semester", getEffectiveSemester());
+      .eq("session_label", currentSchoolSession(d)).eq("semester", getEffectiveSemester());
     await load();
   }
 
