@@ -1,6 +1,6 @@
 {
   "cleanUrls": false,
   "rewrites": [
-    { "source": "/((?!assets/|logo|veritas-logo|favicon|apple-touch-icon|icon-|robots\\.txt|sitemap\\.xml|sw\\.js|manifest\\.webmanifest|workbox-|google).*)", "destination": "/index.html" }
+    { "source": "/((?!assets/|images/|logo|veritas-logo|favicon|apple-touch-icon|icon-|robots\\.txt|sitemap\\.xml|sw\\.js|manifest\\.webmanifest|workbox-|google).*)", "destination": "/index.html" }
   ]
 }

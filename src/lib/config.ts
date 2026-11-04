@@ -9,7 +9,7 @@ export const CONFIG = {
   founded: "2020",
   founder: "Sheikh Abdullahi Babayo",
   founderRole: "Founder & Spiritual Guide",
-  founderImage: "https://cxjdisguniygctcznpjs.supabase.co/storage/v1/object/public/images/Sheikh%20Abdullahi%20Babayo.jpg",
+  founderImage: "/images/founder.webp",
   whatsapp: "2348000000000",
   assessmentMax: 10,
   examMax: 100,
@@ -24,7 +24,7 @@ export const CONFIG = {
     fullName: "Isa Yahya Bayero",
     phone: "2347013927783",
     email: "abihaniisa@gmail.com",
-    image: "https://cxjdisguniygctcznpjs.supabase.co/storage/v1/object/public/images/Isa%20Yahya%20Bayero.jpg",
+    image: "/images/builder.webp",
     role: "Founder, Abihani Express · Founder, Veritas",
     bio: "A student at Madrasatus Sahaba Li Tahfizul Qur'an. Founder of Abihani Express and Veritas.",
     projects: [
@@ -60,10 +60,10 @@ export const CONFIG = {
 // Public site imagery — replace any URL with your own photograph.
 // Fallback gradients render automatically if a URL fails.
 export const SITE_IMAGES = {
-  hero: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1800&q=88",
-  foundation: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=900&q=88",
-  secondary: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&w=900&q=88",
-  higher: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=900&q=88",
+  hero: "/images/hero.webp",
+  foundation: "/images/foundation.webp",
+  secondary: "/images/secondary.webp",
+  higher: "/images/higher.webp",
 } as const;
 
 export type SiteImageKey = keyof typeof SITE_IMAGES;

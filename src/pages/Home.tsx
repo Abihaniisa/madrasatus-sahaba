@@ -36,7 +36,7 @@ function SiteImage({ k, alt, className }: { k: SiteImageKey; alt: string; classN
       <img
         src={SITE_IMAGES[k]}
         alt={alt}
-        loading="lazy"
+        loading={k === "hero" ? "eager" : "lazy"}
         onError={e => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
       />
     </div>
