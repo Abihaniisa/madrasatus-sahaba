@@ -9,7 +9,7 @@ import { useRequireAuth, amISuperAdmin, supabase, nextReceiptNo } from "../../li
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
 import { DelayedSkeleton, Modal, DatePicker } from "../../ui/primitives";
-import { computeFee, fmtNGN, methodLabel } from "../../lib/calc";
+import { fmtNGN, methodLabel } from "../../lib/calc";
 import { Receipt } from "../../documents/Receipt";
 import type { FeePayment } from "../../types";
 

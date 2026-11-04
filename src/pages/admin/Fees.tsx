@@ -10,7 +10,7 @@ import { useRequireAuth } from "../../lib/supabase";
 import { AdminTop } from "../../ui/AdminShell";
 import { I } from "../../ui/Shell";
 import { DelayedSkeleton } from "../../ui/primitives";
-import { computeFee, fmtNGN } from "../../lib/calc";
+import { computeLifetimeFee, fmtNGN } from "../../lib/calc";
 
 export default function Fees() {
   const ready = useRequireAuth();
@@ -25,7 +25,7 @@ export default function Fees() {
     if (!data) return { total: 0, paid: 0, unpaid: 0, outstanding: 0 };
     let total = 0, paid = 0, unpaid = 0, outstanding = 0;
     for (const s of data.students) {
-      const c = computeFee(s.id, data.fees, data.feePayments);
+      const c = computeLifetimeFee(s.id, data.fees, data.feePayments);
       total++;
       if (c.status === "paid" || c.status === "scholarship") paid++;
       else { unpaid++; outstanding += c.balance; }
@@ -106,7 +106,7 @@ export default function Fees() {
               if (students.length === 0) return null;
               let paid = 0, unpaid = 0, outstanding = 0;
               for (const s of students) {
-                const c = computeFee(s.id, data.fees, data.feePayments);
+                const c = computeLifetimeFee(s.id, data.fees, data.feePayments);
                 if (c.status === "paid" || c.status === "scholarship") paid++;
                 else { unpaid++; outstanding += c.balance; }
               }
@@ -143,7 +143,7 @@ function ClassDetail({ cls, data, onBack }: { cls: string; data: SchoolData; onB
   const students = data.students.filter(s => s.class_name === cls);
   const withStatus = useMemo(() => {
     return students
-      .map(s => ({ s, c: computeFee(s.id, data.fees, data.feePayments) }))
+      .map(s => ({ s, c: computeLifetimeFee(s.id, data.fees, data.feePayments) }))
       .sort((a, b) => a.s.name.localeCompare(b.s.name));
   }, [students, data]);
 

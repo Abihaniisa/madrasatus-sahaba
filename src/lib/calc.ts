@@ -145,6 +145,24 @@ export function computeFee(student_id: string, fees: Fee[], payments: FeePayment
   const status: FeeStatus = paid === 0 ? "unpaid" : paid >= amount ? "paid" : "partial";
   return { amount, paid, balance, status, payments: list };
 }
+export function computeLifetimeFee(student_id: string, fees: Fee[], payments: FeePayment[]) {
+  const studentFees = fees.filter(f => f.student_id === student_id);
+  const hasScholarship = studentFees.some(f => f.status === "scholarship");
+  const studentPayments = payments.filter(p => p.student_id === student_id);
+  
+  const totalAmount = studentFees.reduce((sum, f) => sum + f.amount, 0);
+  const totalPaid = studentPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  if (hasScholarship) {
+    return { amount: totalAmount, paid: totalPaid, balance: 0, status: "scholarship" as FeeStatus };
+  }
+
+  const balance = Math.max(0, totalAmount - totalPaid);
+  const status: FeeStatus = totalPaid === 0 ? "unpaid" : totalPaid >= totalAmount ? "paid" : "partial";
+  
+  return { amount: totalAmount, paid: totalPaid, balance, status };
+}
+
 export function methodLabel(m: FeePayment["method"]): string {
   return m === "cash" ? "Cash" : m === "transfer" ? "Bank transfer" : m === "pos" ? "POS" : "Other";
 }
