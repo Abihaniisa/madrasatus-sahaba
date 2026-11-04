@@ -10,7 +10,7 @@ export const CONFIG = {
   founder: "Sheikh Abdullahi Babayo",
   founderRole: "Founder & Spiritual Guide",
   founderImage: "/images/founder.webp",
-  whatsapp: "2348000000000",
+  whatsapp: "07067551684",
   assessmentMax: 10,
   examMax: 100,
   assessmentWeight: 0.30,
