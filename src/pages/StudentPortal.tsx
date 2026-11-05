@@ -120,6 +120,8 @@ export default function StudentPortal() {
       if (!prog) continue;
       out.push({ participantId: p.id, programId: p.program_id, programName: prog.name ?? "Daura programme", kind: prog.kind ?? "special", sessionLabel: prog.session_label ?? null, status: prog.status ?? "closed" });
     }
+    // Sort newest session first (descending)
+    out.sort((a, b) => (b.sessionLabel ?? "").localeCompare(a.sessionLabel ?? ""));
     return out;
   }, [data?.daura_participations, dauraData.programs]);
 
