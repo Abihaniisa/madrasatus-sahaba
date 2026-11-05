@@ -16,16 +16,20 @@ import { Transcript } from "../documents/Transcript";
 import { AdmissionLetter } from "../documents/AdmissionLetter";
 import { Receipt } from "../documents/Receipt";
 import { DauraReport } from "../documents/DauraReport";
+import { DauraAssessmentReport } from "../documents/DauraAssessmentReport";
+import { AssessmentRecord } from "../documents/AssessmentRecord";
 import type { Assessment, Exam, Mark, Student } from "../types";
 
 type Page = "overview" | "documents" | "payments" | "daura";
 type DocTab = "reports" | "transcripts" | "admission";
 type Viewer =
   | { kind: "report"; session: string; semester: 1 | 2; className: string }
+  | { kind: "assessment"; session: string; semester: 1 | 2; className: string }
   | { kind: "transcript" }
   | { kind: "admission" }
   | { kind: "receipt"; paymentId: string }
   | { kind: "daura"; participantId: string; programId: string }
+  | { kind: "daura-assessment"; participantId: string; programId: string }
   | null;
 type ReportRow = { className: string; session: string; semester: 1 | 2; average: number | null; pending: boolean };
 type PaymentRow = { id: string; year: string; amount: number; method: string; paid_on: string; receipt_no: string | null; reference: string | null; note: string | null };
@@ -136,6 +140,16 @@ export default function StudentPortal() {
       const r = buildReport(student, assessments, marks, exams, viewer.semester, viewer.session, viewer.className, enrollments);
       return <ReportCard student={{ ...student, class_name: viewer.className }} results={r.results} average={r.avg} pending={r.pending} sessionLabel={viewer.session} semester={viewer.semester} assessments={assessments} marks={marks} exams={exams} />;
     }
+    if (viewer.kind === "assessment") {
+      const r = buildReport(student, assessments, marks, exams, viewer.semester, viewer.session, viewer.className, enrollments);
+      const periodAssessments = assessments.filter(a =>
+        a.class_name === viewer.className && a.session_label === viewer.session && a.semester === viewer.semester
+      );
+      const periodExams = exams.filter(e =>
+        e.class_name === viewer.className && e.session_label === viewer.session && e.semester === viewer.semester
+      );
+      return <AssessmentRecord student={{ ...student, class_name: viewer.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={viewer.session} semester={viewer.semester} average={r.avg} pending={r.pending} />;
+    }
     if (viewer.kind === "transcript") {
       const groups = buildAllSemesters(student, assessments, marks, exams, enrollments);
       return <Transcript student={student} semesters={groups} />;
@@ -154,6 +168,14 @@ export default function StudentPortal() {
       const progAssessments = dauraData.assessments.filter((a: any) => a.program_id === viewer.programId);
       const progMarks = dauraData.marks.filter((m: any) => m.participant_id === viewer.participantId);
       return <DauraReport participant={part} program={prog} assessments={progAssessments} marks={progMarks} />;
+    }
+    if (viewer.kind === "daura-assessment") {
+      const part = ((data?.daura_participations as any[]) ?? []).find(p => p.id === viewer.participantId);
+      const prog = dauraData.programs.find(p => p.id === viewer.programId);
+      if (!part || !prog) return null;
+      const progAssessments = dauraData.assessments.filter((a: any) => a.program_id === viewer.programId);
+      const progMarks = dauraData.marks.filter((m: any) => m.participant_id === viewer.participantId);
+      return <DauraAssessmentReport program={prog} participant={part} assessments={progAssessments} marks={progMarks} />;
     }
     return null;
   }
@@ -288,7 +310,10 @@ export default function StudentPortal() {
                       <div className="portal-record-title">{r.className} · {r.semester === 1 ? "First" : "Second"} semester report</div>
                       <div className="portal-record-meta">{r.session} · {r.pending ? "Pending" : (r.average != null ? r.average.toFixed(1) + "%" : "—")}</div>
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "report", session: r.session, semester: r.semester, className: r.className })}>View</button>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "report", session: r.session, semester: r.semester, className: r.className })}>Report</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "assessment", session: r.session, semester: r.semester, className: r.className })}>Assessment</button>
+                    </div>
                   </div>
                 ))
               )}
@@ -371,7 +396,10 @@ export default function StudentPortal() {
                     <div className="portal-record-title">{d.programName}</div>
                     <div className="portal-record-meta">{d.kind === "sessional" ? "Sessional" : "Special"} · {d.sessionLabel ?? "—"} · {d.status === "open" ? "Open" : "Closed"}</div>
                   </div>
-                  <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "daura", participantId: d.participantId, programId: d.programId })}>View</button>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "daura", participantId: d.participantId, programId: d.programId })}>Report</button>
+                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "daura-assessment", participantId: d.participantId, programId: d.programId })}>Assessment</button>
+                  </div>
                 </div>
               ))
             )}
