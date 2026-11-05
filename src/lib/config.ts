@@ -42,7 +42,7 @@ export const CONFIG = {
   ],
   subjects: ["Qur'an", "Hadith", "Fiqh", "Arabic", "Tajweed"],
   calendar: {
-    sessionStart: "2026-03-28",
+    sessionStart: "2026-03-21",
     ramadanStart: "2027-02-20",
     blocks: [
       { type: "teaching", weeks: 18, label: "First Semester" },
