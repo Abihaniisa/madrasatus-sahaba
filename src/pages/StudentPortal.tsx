@@ -138,18 +138,7 @@ export default function StudentPortal() {
     if (!viewer || !student) return null;
     if (viewer.kind === "report") {
       const r = buildReport(student, assessments, marks, exams, viewer.semester, viewer.session, viewer.className, enrollments);
-      const periodAssessments = assessments.filter(a =>
-        a.class_name === viewer.className && a.session_label === viewer.session && a.semester === viewer.semester
-      );
-      const periodExams = exams.filter(e =>
-        e.class_name === viewer.className && e.session_label === viewer.session && e.semester === viewer.semester
-      );
-      return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <ReportCard student={{ ...student, class_name: viewer.className }} results={r.results} average={r.avg} pending={r.pending} sessionLabel={viewer.session} semester={viewer.semester} assessments={assessments} marks={marks} exams={exams} />
-          <AssessmentRecord student={{ ...student, class_name: viewer.className }} assessments={periodAssessments} marks={marks} exams={periodExams} sessionLabel={viewer.session} semester={viewer.semester} average={r.avg} pending={r.pending} />
-        </div>
-      );
+      return <ReportCard student={{ ...student, class_name: viewer.className }} results={r.results} average={r.avg} pending={r.pending} sessionLabel={viewer.session} semester={viewer.semester} assessments={assessments} marks={marks} exams={exams} />;
     }
     if (viewer.kind === "assessment") {
       const r = buildReport(student, assessments, marks, exams, viewer.semester, viewer.session, viewer.className, enrollments);
@@ -338,16 +327,14 @@ export default function StudentPortal() {
               {transcripts.length === 0 ? (
                 <div className="empty"><div className="t">No transcripts yet</div></div>
               ) : (
-                transcripts.map(t => (
-                  <div key={t.sectionName} className="portal-record">
-                    <div className="portal-record-icon">▥</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="portal-record-title">{t.sectionName} transcript</div>
-                      <div className="portal-record-meta">{t.classes.join(" · ")}</div>
-                    </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "transcript" })}>View</button>
+                <div className="portal-record">
+                  <div className="portal-record-icon">▥</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="portal-record-title">Academic Transcript</div>
+                    <div className="portal-record-meta">All sections · {transcripts.map(t => t.sectionName).join(" · ")}</div>
                   </div>
-                ))
+                  <button className="btn btn-secondary btn-sm" onClick={() => setViewer({ kind: "transcript" })}>View</button>
+                </div>
               )}
             </div>
           )}
