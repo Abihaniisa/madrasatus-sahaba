@@ -27,6 +27,7 @@ function buildWeeks(sessionStartISO: string): Week[] {
       weekStart.setUTCDate(start.getUTCDate() + (cursor - 1) * 7);
       const weekEnd = new Date(weekStart);
       weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
+      weekEnd.setUTCHours(23, 59, 59, 999);
       let teachingWeek: number | undefined;
       let weekSemester: 1 | 2 | undefined;
       if (block.type === "teaching") {

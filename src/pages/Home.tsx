@@ -103,7 +103,11 @@ export default function Home() {
                     <span className="pub-stage-number">{stage}</span>
                     <h3 className="pub-programme-title">{sec.name}</h3>
                     <div className="pub-programme-tags">
-                      {sec.classes.slice(0, 2).map(c => <span key={c} className="pub-tag">{c}</span>)}
+                      {sec.classes.length > 3 ? (
+                        <span className="pub-tag">{sec.classes[0]} to {sec.classes[sec.classes.length - 1]}</span>
+                      ) : (
+                        sec.classes.map(c => <span key={c} className="pub-tag">{c}</span>)
+                      )}
                       {sec.inactive && <span className="pub-tag">Opening soon</span>}
                     </div>
                     <p>{sec.desc}</p>
